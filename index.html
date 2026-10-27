@@ -38,8 +38,8 @@ nav button.on::before{content:"";position:absolute;top:0;left:30%;right:30%;heig
 .task b{display:block;font-size:15px;font-weight:600;line-height:1.25;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .task small{color:var(--gold);font-size:13.5px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}.task small s{color:var(--mut);text-decoration:none}
 .pill{display:inline-flex;align-items:center;gap:5px;border:1px solid #2a3a8a;color:#8fa6ff;background:#141c3f;border-radius:999px;padding:2px 8px;font-size:11.5px;font-weight:500}
-.task .btn{box-sizing:border-box;flex:0 0 88px;width:88px;min-width:0;max-width:88px;height:38px;font-size:13px;padding:0 6px;border-radius:12px;white-space:nowrap;display:inline-flex;align-items:center;justify-content:center;gap:5px;overflow:hidden}
-adsgram-task{display:block;width:100%;max-width:100%;min-width:0;box-sizing:border-box;overflow:hidden;margin:0 0 10px}
+.task .btn,adsgram-task::part(button){box-sizing:border-box;flex:0 0 88px;width:88px;min-width:88px;max-width:88px;height:38px;font-size:13px;padding:0 6px;border-radius:12px;white-space:nowrap;display:inline-flex;align-items:center;justify-content:center;gap:5px;overflow:hidden}
+adsgram-task{display:flex;width:100%;max-width:100%;min-width:0;box-sizing:border-box;overflow:hidden;margin:0 0 10px;align-items:center;}
 
 .in{animation:in .45s both}.noan .in{animation:none}@keyframes in{from{opacity:0;transform:translateY(14px)}}
 .qi{display:flex;justify-content:space-between}.qi button{background:none;border:0;color:var(--mut);font:inherit;font-size:13px;font-weight:500;display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;position:relative;width:19%}
@@ -182,7 +182,7 @@ if (!U.id) {
 
 const $=(s,r=document)=>r.querySelector(s),day=()=>new Date().toISOString().slice(0,10),esc=s=>String(s).replace(/[&<>"']/g,c=>'&#'+c.charCodeAt(0)+';');
 const f=n=>(n/1000).toFixed(4);
-let S={b:0,life:0,fs:0,spins:0,ck:{d:'',n:0},day:day(),ad:{},adCd:{},done:{},dn:0,lt:{},pend:{},ms:{},hist:[],inv:0,earn:0,invs:[],refBy:'',wallet:'',wds:[],theme:'auto',lang:'en',world:false,snd:true,boost:false,rot:0,gp:0,gb:0};
+let S={b:0,life:0,fs:0,spins:0,ck:{d:'',n:0},day:day(),ad:{},adCd:{},adGlobalCd:0,done:{},dn:0,lt:{},pend:{},ms:{},hist:[],inv:0,earn:0,invs:[],refBy:'',wallet:'',wds:[],theme:'auto',lang:'en',world:false,snd:true,boost:false,rot:0,gp:0,gb:0};
 let db=null, userRef=null, userStateRef=null, firebaseReady=false, saveQueue=Promise.resolve();
 try {
   if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
@@ -552,10 +552,10 @@ function taskCard(t,type){
   let btn='',sb='';
   if(type=='ad'){
     const c=S.ad[t.id]||0;
-    const cd=Math.max(0,Math.ceil(((S.adCd&&S.adCd[t.id]||0)-Date.now())/1000));
+    const cd=Math.max(0,Math.ceil((Math.max((S.adCd&&S.adCd[t.id]||0),(S.adGlobalCd||0))-Date.now())/1000));
     sb=`${amt(t.r,14)} <s>${c}/${t.max} today</s>`;
     if(cd>0){
-      btn=`<button class="btn dis" style="min-width:84px;font-size:13px">${cd}s…</button>`;
+      btn=`<button class="btn dis" style="width:88px;min-width:88px;max-width:88px;font-size:12px">${Math.floor(cd/3600)>0?Math.floor(cd/3600)+"h ":""}${Math.floor((cd%3600)/60)}m ${cd%60}s</button>`;
     }else if(c>=t.max){
       btn=`<button class="btn dis">Done</button>`;
     }else{
@@ -651,10 +651,10 @@ ad(e){
   if(!t)return;
   if((S.ad[t.id]||0)>=t.max)return;
 
-  // 1. Check 45 seconds cooldown
-  const cdLeft=Math.max(0,Math.ceil(((S.adCd&&S.adCd[t.id]||0)-Date.now())/1000));
+  // Global 1-hour cooldown after a successfully rewarded ad
+  const cdLeft=Math.max(0,Math.ceil((Math.max((S.adCd&&S.adCd[t.id]||0),(S.adGlobalCd||0))-Date.now())/1000));
   if(cdLeft>0){
-    toast('⏳ Please wait '+cdLeft+'s before watching this ad again');
+    toast('⏳ Ads locked. Please wait '+Math.floor(cdLeft/60)+'m '+(cdLeft%60)+'s');
     return;
   }
 
@@ -662,19 +662,21 @@ ad(e){
   const an=CONF.adNetworks||{};
   const blockId=String(t.blockId||(net==='adsgram_int'?(an.adsgramInt||'int-56219'):net==='adsgram_reward'?(an.adsgramReward||'56220'):(an.monetagZone||'12131483'))).trim();
 
-  // 2. Track ad start time for 5-second watch rule
+  // Random anti-cheat watch threshold for this ad: 7–10 seconds
   const adStartTs=Date.now();
+  const minWatchSeconds=7+Math.floor(Math.random()*4);
 
   const handleReward=(label)=>{
     const elapsed=(Date.now()-adStartTs)/1000;
-    // 5-second minimum watch check
-    if(elapsed<5){
-      toast('⚠️ Ad closed too fast! Watch at least 5s to earn reward.');
+    // Random 7–10 second minimum watch check
+    if(elapsed<minWatchSeconds){
+      toast('⚠️ Watch the ad for at least '+minWatchSeconds+' seconds to earn reward.');
       return;
     }
-    // Set 45s cooldown
+    // Start one-hour global ad cooldown after a successful reward
     S.adCd=S.adCd||{};
-    S.adCd[t.id]=Date.now()+45000;
+    S.adCd[t.id]=Date.now()+3600000;
+    S.adGlobalCd=Date.now()+3600000;
     S.ad[t.id]=(S.ad[t.id]||0)+1;
     S.dn++;
     award(t.r,label||t.t||'Sponsor ad',e);
@@ -733,8 +735,8 @@ ad(e){
   }
 
   // Timer / Fallback Demo Countdown
-  let n=Math.max(5,CFG.adWait),ok=false;
-  modal(`<h3><span>Sponsored · Ad</span>${xb}</h3><div class="cr"></div><div class="ring"><svg width="120" height="120"><circle cx="60" cy="60" r="52" stroke="var(--line)" stroke-width="10" fill="none"/><circle id="rc" cx="60" cy="60" r="52" stroke="#2a7bff" stroke-width="10" fill="none" stroke-linecap="round" stroke-dasharray="327" stroke-dashoffset="0" style="transition:stroke-dashoffset 1s linear"/></svg><b id="rn">${n}</b></div><p style="text-align:center;color:var(--mut)">Watch at least 5 seconds to earn ${amt(t.r,14)}</p><button class="btn dis" id="rb" style="width:100%">Please wait…</button>`);
+  let n=7+Math.floor(Math.random()*4),ok=false;
+  modal(`<h3><span>Sponsored · Ad</span>${xb}</h3><div class="cr"></div><div class="ring"><svg width="120" height="120"><circle cx="60" cy="60" r="52" stroke="var(--line)" stroke-width="10" fill="none"/><circle id="rc" cx="60" cy="60" r="52" stroke="#2a7bff" stroke-width="10" fill="none" stroke-linecap="round" stroke-dasharray="327" stroke-dashoffset="0" style="transition:stroke-dashoffset 1s linear"/></svg><b id="rn">${n}</b></div><p style="text-align:center;color:var(--mut)">Watch for ${n} seconds to earn ${amt(t.r,14)}</p><button class="btn dis" id="rb" style="width:100%">Please wait…</button>`);
   const iv=setInterval(()=>{
     if(!$('#rn')){clearInterval(iv);return}
     n--;
@@ -898,7 +900,7 @@ $('#mn').onclick=e=>{const d=e.target.closest('[data-m]');if(!d)return;const k=d
 document.addEventListener('click',e=>{if(!e.target.closest('#mn')&&!e.target.closest('#gr'))$('#mn').classList.remove('on')});
 
 /* Live countdown ticker: 45s timer & task cooldowns refresh smoothly */
-setInterval(()=>{if(busy)return;if(newDay()){save();render(true);return}if(tab=='home'&&!$('#md').classList.contains('on')&&(Object.keys(S.pend).length||Object.keys(S.adCd||{}).some(k=>S.adCd[k]>Date.now())))render(true)},1000);
+setInterval(()=>{if(busy)return;if(newDay()){save();render(true);return}if(tab=='home'&&!$('#md').classList.contains('on')&&(Object.keys(S.pend).length||Object.keys(S.adCd||{}).some(k=>S.adCd[k]>Date.now())||(S.adGlobalCd||0)>Date.now()))render(true)},1000);
 
 boot();
 </script></body></html>
