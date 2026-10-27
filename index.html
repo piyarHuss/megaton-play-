@@ -4,6 +4,10 @@
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <title>MegaTon Play</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap">
+<!-- AdsGram SDK -->
+<script src="https://sad.adsgram.ai/js/sad.min.js"></script>
+<!-- Monetag SDK -->
+<script src="//libtl.com/sdk.js" data-zone="12131483" data-sdk="show_12131483"></script>
 <style>
 :root{--bg:#0a0d14;--bg2:#121722;--card:#131720;--card2:#1b202c;--line:#252b38;--tx:#fff;--mut:#8a92a6;--acc:#1a5cff;--ton:#0098ea;--gold:#ffb21a;--grn:#22c55e;--red:#ef4444;color-scheme:dark}
 :root[data-t=light]{--bg:#f2f4f9;--bg2:#fff;--card:#fff;--card2:#eef1f7;--line:#dde2ec;--tx:#10131a;--mut:#667085;color-scheme:light}
@@ -33,7 +37,6 @@ nav button.on::before{content:"";position:absolute;top:0;left:30%;right:30%;heig
 .am{display:inline-flex;align-items:center;gap:5px;font-weight:600}
 .tbar{flex:1;height:48px;border-radius:14px;background:var(--card2);border:1px solid var(--line);position:relative;overflow:hidden;display:flex;align-items:center;padding:0 14px;font-size:17px;font-weight:600}
 .tbar .f{position:absolute;inset:0 auto 0 0;background:linear-gradient(90deg,rgba(0,152,234,.35),rgba(0,152,234,.65));transition:width .6s cubic-bezier(.2,.9,.3,1)}.tbar span{position:relative;display:flex;align-items:center;gap:6px}.tbar small{color:var(--mut);font-size:14px;font-weight:500}
-/* buttons */
 .btn{font:inherit;font-weight:600;font-size:15px;color:#fff;border:0;border-radius:14px;height:44px;padding:0 18px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;position:relative;overflow:hidden;white-space:nowrap;background:linear-gradient(180deg,#3d86ff,#1a5cff);box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 6px 16px rgba(26,92,255,.32);transition:transform .12s,box-shadow .2s,filter .2s}
 .btn:hover{filter:brightness(1.08)}.btn:active{transform:scale(.96)}
 .btn.grn{background:linear-gradient(180deg,#34d46f,#16a34a);box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 6px 16px rgba(34,197,94,.3)}
@@ -73,7 +76,6 @@ input.in2{width:100%;padding:14px;border-radius:14px;border:1px solid var(--line
 .ring{width:120px;height:120px;margin:10px auto;position:relative}.ring svg{transform:rotate(-90deg)}.ring b{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:34px}
 .cr{height:140px;border-radius:18px;background:linear-gradient(120deg,#0b5fd8,#22d3ee,#0098ea);background-size:200% 200%;animation:gr 5s ease infinite;margin:10px 0}@keyframes gr{50%{background-position:100% 50%}}
 .days{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.days div{background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:10px 2px;text-align:center;font-size:13px;color:var(--mut)}.days div.ok{background:#14341f;border-color:#1f7a3a;color:#7af0a0}.days div.cur{border-color:var(--gold);color:var(--gold);animation:pulse2 1.5s infinite}@keyframes pulse2{50%{box-shadow:0 0 0 4px rgba(255,178,26,.25)}}.days b{display:block;font-size:16px;color:inherit}
-/* wallet */
 .wc{position:relative;overflow:hidden;border-radius:26px;padding:22px 20px 20px;margin-bottom:12px;background:linear-gradient(135deg,#06243b,#0a5a94 55%,#0098ea);background-size:200% 200%;animation:gr 8s ease infinite,in .45s both;color:#fff;box-shadow:0 14px 34px rgba(0,152,234,.28)}
 .noan .wc{animation:gr 8s ease infinite}
 .wc::before{content:"";position:absolute;top:0;left:-70%;width:45%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.18),transparent);transform:skewX(-20deg);animation:sh 4.5s infinite}@keyframes sh{to{left:140%}}
@@ -99,8 +101,6 @@ input.in2{width:100%;padding:14px;border-radius:14px;border:1px solid var(--line
 .gp{display:flex;gap:6px;justify-content:center;margin:0 0 12px;position:relative}.gp i{width:20px;height:8px;border-radius:5px;background:#fff;transition:.4s}.gp i.u{background:rgba(255,255,255,.25)}.gl .am{justify-content:center;position:relative}.gl .btn{background:#fff;color:#065a8c;position:relative}.gl .btn.dis{background:rgba(255,255,255,.18);color:rgba(255,255,255,.7);border-color:transparent}
 .ann{background:linear-gradient(120deg,rgba(255,178,26,.18),rgba(255,178,26,.08));border:1px solid rgba(255,178,26,.4);color:var(--gold);border-radius:16px;padding:12px 14px;margin-bottom:12px;font-size:14.5px}#mt{position:fixed;inset:0;z-index:100;background:var(--bg);display:flex;align-items:center;justify-content:center;text-align:center;padding:30px;color:var(--acc)}#mt h2{color:var(--tx);margin:14px 0 6px}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
-
-/* Full-screen photo splash with visible loading animation and text */
 #splash{position:fixed;inset:0;z-index:999;background:#000 center/cover no-repeat;opacity:1;visibility:visible;transition:opacity .3s ease,visibility .3s ease;display:flex;align-items:flex-end;justify-content:center;padding:0 22px calc(env(safe-area-inset-bottom,0px) + 8vh);overflow:hidden}
 #splash::before{content:"";position:absolute;inset:45% 0 0;background:linear-gradient(180deg,transparent,rgba(0,0,0,.72));pointer-events:none}
 .splash-loader{position:relative;z-index:1;width:min(100%,360px);display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center;color:#fff;text-shadow:0 2px 10px #000}
@@ -113,9 +113,9 @@ input.in2{width:100%;padding:14px;border-radius:14px;border:1px solid var(--line
 @keyframes splashload{0%{transform:translateX(-110%)}100%{transform:translateX(320%)}}
 #splash.fade-out{opacity:0;visibility:hidden;pointer-events:none}
 @media(prefers-reduced-motion:reduce){.splash-spinner,.splash-track i{animation:none}}
+adsgram-task{display:block;width:100%;margin-bottom:10px}
 </style></head>
 <body>
-<!-- Splash: admin-selected full-screen image plus loading animation and text -->
 <div id="splash" aria-label="Loading MegaTon Play">
   <div class="splash-loader">
     <div class="splash-spinner" aria-hidden="true"></div>
@@ -134,7 +134,6 @@ input.in2{width:100%;padding:14px;border-radius:14px;border:1px solid var(--line
 "use strict";
 /* ===== CONFIG ===== */
 const CFG={bot:'MegaTonPlay_bot',app:'ton',channel:'https://t.me/MegaTonPlay',group:'https://t.me/MegaTonPlay',support:'https://t.me/MegaTonPlay',minW:10,spinCost:7,adWait:8,games:10,tix:.1,cap:40,model:'character.jump.glb',jump:'jump.mp3',bgm:'backgroundsound.mp3',cs:64,turn:.9,inv:10,bgmVol:.35,sfxVol:1};
-/* Firebase Realtime Database persistence. Rewards must still be validated server-side for production. */
 const FIREBASE_CONFIG = {
   apiKey: "AIzaSyBJrCE4w_QfBqfF3g4O_RuCK4DbjmL9TRg",
   authDomain: "telegram-69052.firebaseapp.com",
@@ -163,7 +162,6 @@ const U={
   photo_url:(tu&&tu.photo_url)||''
 };
 
-// Fallback ID so testing in browser always registers in Firebase & Admin
 if (!U.id) {
   let savedUid = localStorage.getItem('rh_uid');
   if (!savedUid) {
@@ -226,7 +224,6 @@ async function loadUserState(){
       if(val&&val.state) Object.assign(S,val.state);
       else if(val) Object.assign(S,val);
     }else{
-      // First time user registration: save immediately so Admin sees them instantly!
       await save();
     }
     newDay();
@@ -269,15 +266,15 @@ const xb=`<button class="x" data-a="x">${ic('x',18)}</button>`;
 const fmtT=ts=>{const d=new Date(ts);return d.toLocaleDateString(undefined,{month:'short',day:'numeric'}).toUpperCase()+'|'+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')};
 document.addEventListener('pointerdown',e=>{const b=e.target.closest('.btn');if(!b||b.classList.contains('dis'))return;const r=b.getBoundingClientRect(),d=Math.max(r.width,r.height)*2,s=document.createElement('span');s.className='rp';s.style.cssText=`width:${d}px;height:${d}px;left:${e.clientX-r.left-d/2}px;top:${e.clientY-r.top-d/2}px`;b.appendChild(s);setTimeout(()=>s.remove(),600)});
 /* ===== data (rewards in milli-TON) ===== */
-const ADS=[{id:'ad1',t:'Watch a sponsor video',r:3,max:15,ic:'play',bg:'linear-gradient(135deg,#6d4aff,#c026d3)'},{id:'ad2',t:'Watch an ad and wait 15 seconds',r:2,max:10,ic:'clock',bg:'linear-gradient(135deg,#3b3b8a,#6366f1)'},{id:'ad3',t:'Watch a short promo clip',r:3,max:10,ic:'film',bg:'linear-gradient(135deg,#16a34a,#22c55e)'}];
-const LT=[{id:'t1',t:'Play to explore the bonus game',r:3,url:CFG.channel,ic:'target',bg:'linear-gradient(135deg,#f59e0b,#16a34a)',tag:'new'},{id:'t2',t:'Join our Telegram channel',r:4,url:CFG.channel,ic:'send',bg:'linear-gradient(135deg,#2a7bff,#1a5cff)',tag:'new'},{id:'t3',t:'Join the community group',r:4,url:CFG.group,ic:'msg',bg:'linear-gradient(135deg,#8b5cf6,#7c3aed)'},{id:'t4',t:'Open the partner mini app',r:8,url:CFG.channel,ic:'grid',bg:'linear-gradient(135deg,#38bdf8,#0ea5e9)',tag:'limited'},{id:'t5',t:'Daily FREE reward just for visiting',r:4,url:CFG.channel,ic:'link',bg:'linear-gradient(135deg,#3b82f6,#2a7bff)',daily:true}];
-const WT=[{id:'w1',t:'World task: follow a partner channel',r:5,url:CFG.channel,ic:'globe',bg:'linear-gradient(135deg,#06b6d4,#0891b2)',tag:'new'},{id:'w2',t:'World task: try a partner app',r:6,url:CFG.channel,ic:'globe',bg:'linear-gradient(135deg,#8b5cf6,#7c3aed)',tag:'limited'}];
+const ADS=[{id:'ad1',t:'Watch AdsGram video sponsor',net:'adsgram_reward',blockId:'56220',r:3,max:15,ic:'play',bg:'linear-gradient(135deg,#6d4aff,#c026d3)'},{id:'ad2',t:'Watch AdsGram interstitial',net:'adsgram_int',blockId:'int-56219',r:2,max:10,ic:'clock',bg:'linear-gradient(135deg,#3b3b8a,#6366f1)'},{id:'ad3',t:'Watch Monetag popup sponsor',net:'monetag_pop',blockId:'12131483',r:3,max:10,ic:'film',bg:'linear-gradient(135deg,#16a34a,#22c55e)'}];
+const LT=[{id:'t_adsg',t:'AdsGram Partner Mission',net:'adsgram_task',blockId:'task-56221',r:5,url:'',img:'',ic:'zap',bg:'linear-gradient(135deg,#6366f1,#a855f7)',tag:'new'},{id:'t1',t:'Play to explore the bonus game',net:'link',blockId:'',r:3,url:CFG.channel,ic:'target',bg:'linear-gradient(135deg,#f59e0b,#16a34a)',tag:'new'},{id:'t2',t:'Join our Telegram channel',net:'link',blockId:'',r:4,url:CFG.channel,ic:'send',bg:'linear-gradient(135deg,#2a7bff,#1a5cff)',tag:'new'},{id:'t3',t:'Join the community group',net:'link',blockId:'',r:4,url:CFG.group,ic:'msg',bg:'linear-gradient(135deg,#8b5cf6,#7c3aed)'},{id:'t4',t:'Open the partner mini app',net:'link',blockId:'',r:8,url:CFG.channel,ic:'grid',bg:'linear-gradient(135deg,#38bdf8,#0ea5e9)',tag:'limited'},{id:'t5',t:'Daily FREE reward just for visiting',net:'link',blockId:'',r:4,url:CFG.channel,ic:'link',bg:'linear-gradient(135deg,#3b82f6,#2a7bff)',daily:true}];
+const WT=[{id:'w1',t:'World task: follow a partner channel',net:'link',blockId:'',r:5,url:CFG.channel,ic:'globe',bg:'linear-gradient(135deg,#06b6d4,#0891b2)',tag:'new'},{id:'w2',t:'World task: try a partner app',net:'link',blockId:'',r:6,url:CFG.channel,ic:'globe',bg:'linear-gradient(135deg,#8b5cf6,#7c3aed)',tag:'limited'}];
 const allLT=()=>S.world&&FT('m_world')?[...LT,...WT]:LT;
 const ST=[{n:'Alex',h:'@alex_92',tk:6637,iv:140,sp:420},{n:'Sarah',h:'@sarah_k',tk:6015,iv:96,sp:388},{n:'William',h:'@will_x',tk:6001,iv:88,sp:402},{n:'Emily',h:'@emily_t',tk:6000,iv:75,sp:350},{n:'Robert',h:'@rob_m',tk:5987,iv:70,sp:341},{n:'Priya',h:'@priya_s',tk:5800,iv:64,sp:330},{n:'Chen',h:'@chen_w',tk:5710,iv:60,sp:315}];
 const AVC=['#6d4aff','#f59e0b','#ef4444','#0ea5e9','#22c55e','#ec4899','#14b8a6'];
 const SEG=[{l:'+'+f(5),k:'m',v:5,w:20,c:'#2a5cd8'},{l:'+'+f(1),k:'m',v:1,w:8,c:'#0ea5e9'},{l:'+'+f(10),k:'m',v:10,w:10,c:'#f59e0b'},{l:'Free Spin',k:'fs',w:8,c:'#22c55e'},{l:'+'+f(2),k:'m',v:2,w:4,c:'#ec4899'},{l:'2× Boost',k:'bo',w:10,c:'#a855f7'},{l:'+'+f(3),k:'m',v:3,w:25,c:'#14b8a6'},{l:'Try again',k:'no',w:15,c:'#475569'}];
-/* ===== admin config (config.json) ===== */
-const CONF={},DEFT={nav_home:'HOME',nav_game:'GAME',nav_wallet:'WALLET',nav_invite:'INVITE',nav_rank:'RANK',appName:'MegaTon Play',banner1:'Each friend joins & watches ads → +0.0100 TON',banner2:'They get a bonus too · Win real prizes',inviteBtn:'Invite Friends',inviteSub:'Earn 0.01 TON per invite',shareText:'🎮 Join MegaTon Play on Telegram! Jump high, complete tasks and earn real TON coin prizes! 🚀',gameTitle:'Sky Jump',gameSub:'Jump higher and collect TON coins',walletLabel:'TOTAL BALANCE',rankTitle:'Leaderboard',wdOff:'Withdrawals are temporarily disabled'};
+/* ===== admin config ===== */
+const CONF={adNetworks:{adsgramReward:'56220',adsgramInt:'int-56219',adsgramTask:'task-56221',monetagZone:'12131483',monetagInApp:true,inAppFrequency:2,inAppCapping:0.1,inAppInterval:30,inAppTimeout:5}},DEFT={nav_home:'HOME',nav_game:'GAME',nav_wallet:'WALLET',nav_invite:'INVITE',nav_rank:'RANK',appName:'MegaTon Play',banner1:'Each friend joins & watches ads → +0.0100 TON',banner2:'They get a bonus too · Win real prizes',inviteBtn:'Invite Friends',inviteSub:'Earn 0.01 TON per invite',shareText:'🎮 Join MegaTon Play on Telegram! Jump high, complete tasks and earn real TON coin prizes! 🚀',gameTitle:'Sky Jump',gameSub:'Jump higher and collect TON coins',walletLabel:'TOTAL BALANCE',rankTitle:'Leaderboard',wdOff:'Withdrawals are temporarily disabled'};
 const T=k=>(CONF.text&&CONF.text[k]!=null&&CONF.text[k]!=='')?CONF.text[k]:DEFT[k],FT=k=>!(CONF.ft&&CONF.ft[k]===false),mm=x=>{const n=Number(x)||0;return n>=0.5?n:Math.round(n*10000)/10};
 const CHK=()=>CONF.checkin&&CONF.checkin.length==7?CONF.checkin.map(mm):[1,1,2,2,2,3,3];
 const MD=()=>CONF.mDay?CONF.mDay.map(([n,r])=>[n,mm(r)]):[[3,6],[5,12],[8,18],[12,24]],MI=()=>CONF.mInv?CONF.mInv.map(([n,r])=>[n,mm(r)]):[[3,6],[5,12],[10,8],[25,30],[50,20]];
@@ -294,12 +291,18 @@ function applyConf(c){
   ['model','jump','bgm'].forEach(k=>{if(g[k])CFG[k]=g[k]});
   ['cs','turn','bgmVol','sfxVol'].forEach(k=>{if(g[k]!=null)CFG[k]=+g[k]});
   Object.entries(th).forEach(([k,v])=>{if(v)document.documentElement.style.setProperty('--'+k,v)});
+  if(c.adNetworks){
+    CONF.adNetworks=Object.assign(CONF.adNetworks||{},c.adNetworks);
+    initMonetagInApp();
+  }
   if(Array.isArray(c.ads)){
     ADS.length=0;
     c.ads.filter(a=>a.on!==false).forEach(a=>{
       ADS.push({
         ...a,
         r:mm(a.r),
+        net:a.net||'adsgram_reward',
+        blockId:a.blockId||'',
         bg:a.bg||(a.c1&&a.c2?`linear-gradient(135deg,${a.c1},${a.c2})`:'linear-gradient(135deg,#6d4aff,#c026d3)')
       });
     });
@@ -311,6 +314,8 @@ function applyConf(c){
       const taskObj={
         ...t,
         r:mm(t.r),
+        net:t.net||'link',
+        blockId:t.blockId||'',
         img:t.img||'',
         url:t.url||CFG.channel,
         bg:t.bg||(t.c1&&t.c2?`linear-gradient(135deg,${t.c1},${t.c2})`:'linear-gradient(135deg,#2a7bff,#1a5cff)')
@@ -326,8 +331,6 @@ function applyConf(c){
   if(c.splash)initSplash(c.splash);
 }
 
-
-/* ===== Minimal full-screen image splash ===== */
 function initSplash(sp){
   sp=sp||CONF.splash||{};
   const el=$('#splash');
@@ -350,7 +353,6 @@ function initSplash(sp){
     el.dispatchEvent(new Event('splashphoto'));
   };
   probe.onerror=()=>{
-    console.warn('[Splash] Could not load admin image:',url);
     el.dataset.photoReady='1';
     el.dispatchEvent(new Event('splashphoto'));
   };
@@ -368,14 +370,12 @@ function hideSplash(durationSec){
     let started=false;
     const startOnce=()=>{if(started)return;started=true;begin()};
     el.addEventListener('splashphoto',startOnce,{once:true});
-    // Never leave the splash stuck forever if the image host fails.
     setTimeout(startOnce,5000);
     return;
   }
   begin();
 }
 
-/* ===== Professional Referral Reward System ===== */
 function getReferrerId(){
   let raw='';
   try{if(tg&&tg.initDataUnsafe&&tg.initDataUnsafe.start_param)raw=tg.initDataUnsafe.start_param}catch(e){}
@@ -429,23 +429,9 @@ async function creditReferrer(refId,rewardAmount){
     });
     if(histList.length>60)histList=histList.slice(0,60);
 
-    const updates={
-      inv:newInv,
-      invites:newInv,
-      earn:newEarn,
-      b:newB,
-      balance:newB,
-      life:newLife,
-      totalEarned:newLife,
-      invs:invs,
-      hist:histList
-    };
-
-    if(hasState){
-      await targetRef.child('state').update(updates);
-    }else{
-      await targetRef.update(updates);
-    }
+    const updates={inv:newInv,invites:newInv,earn:newEarn,b:newB,balance:newB,life:newLife,totalEarned:newLife,invs:invs,hist:histList};
+    if(hasState) await targetRef.child('state').update(updates);
+    else await targetRef.update(updates);
   }catch(err){
     console.warn('[Referral] Failed to credit referrer:',err);
   }
@@ -454,8 +440,7 @@ async function creditReferrer(refId,rewardAmount){
 async function checkAndApplyReferral(){
   const refId=getReferrerId();
   if(!refId)return;
-  if(S.refBy)return; // Already registered with a referrer
-
+  if(S.refBy)return;
   S.refBy=refId;
   const reward=CFG.inv||10;
   S.b+=reward;
@@ -463,7 +448,6 @@ async function checkAndApplyReferral(){
   hist('+'+f(reward)+' TON','Referral Welcome Bonus','t');
   await save();
   await creditReferrer(refId,reward);
-
   setTimeout(()=>{
     confetti();
     toast('🎉 Welcome bonus +'+f(reward)+' TON added!');
@@ -472,36 +456,48 @@ async function checkAndApplyReferral(){
   },1500);
 }
 
+function initMonetagInApp(){
+  const an=CONF.adNetworks||{};
+  if(an.monetagInApp!==false&&typeof window.show_12131483==='function'){
+    try{
+      window.show_12131483({
+        type:'inApp',
+        inAppSettings:{
+          frequency:Number(an.inAppFrequency)||2,
+          capping:Number(an.inAppCapping)||0.1,
+          interval:Number(an.inAppInterval)||30,
+          timeout:Number(an.inAppTimeout)||5,
+          everyPage:false
+        }
+      });
+      console.log('[Monetag] In-App Interstitial initialized');
+    }catch(e){
+      console.warn('[Monetag In-App Error]',e);
+    }
+  }
+}
+
 async function boot(){
   initSplash();
   await loadUserState();
   let c=null;
-
-  // 1. Fetch live config directly from Firebase Realtime Database
   try{
     if(db){
       const snap=await db.ref('appConfig/current').once('value');
-      if(snap.exists()){
-        c=snap.val();
-      }
+      if(snap.exists()) c=snap.val();
     }
   }catch(e){
     console.warn('Firebase config read failed, falling back to local:',e);
   }
-
-  // 2. Fallback to local config.json if Firebase was not populated yet
   if(!c){
     try{
       const r=await fetch('config.json?v='+Date.now(),{cache:'no-store'});
       if(r.ok)c=await r.json();
     }catch(e){}
   }
-
   if(c){
     try{applyConf(c)}catch(e){console.warn('config error',e)}
   }
-
-  // 3. Live realtime listener: updates ads, tasks, rewards, banners instantly when admin changes them!
   if(db){
     db.ref('appConfig/current').on('value',snap=>{
       if(snap.exists()){
@@ -511,22 +507,23 @@ async function boot(){
           render(true);
           const mtEl=$('#mt');
           if(CONF.maint){
-            if(!mtEl){
-              document.body.insertAdjacentHTML('beforeend',`<div id="mt"><div>${ic('shield',52)}<h2>${esc(T('appName'))}</h2><p style="color:var(--mut)">${esc(CONF.maintMsg||'')}</p></div></div>`);
-            }else{
-              const p=mtEl.querySelector('p');
-              if(p)p.textContent=esc(CONF.maintMsg||'');
-              mtEl.style.display='flex';
-            }
-          }else if(mtEl){
-            mtEl.remove();
-          }
+            if(!mtEl) document.body.insertAdjacentHTML('beforeend',`<div id="mt"><div>${ic('shield',52)}<h2>${esc(T('appName'))}</h2><p style="color:var(--mut)">${esc(CONF.maintMsg||'')}</p></div></div>`);
+            else{const p=mtEl.querySelector('p');if(p)p.textContent=esc(CONF.maintMsg||'');mtEl.style.display='flex';}
+          }else if(mtEl) mtEl.remove();
         }
       }
     });
   }
-
   await checkAndApplyReferral();
+  initMonetagInApp();
+  document.addEventListener('reward',(e)=>{
+    const bId=String(e.detail||'');
+    const tk=[...LT,...WT].find(t=>String(t.blockId)===bId);
+    const rew=tk?tk.r:5;
+    const name=tk?tk.t:'AdsGram Task';
+    award(rew,name);
+    toast('🎉 AdsGram Task rewarded! +'+f(rew)+' TON');
+  });
   GM.reinit();
   render();
   const splashDur=(c&&c.splash&&c.splash.duration)||2.5;
@@ -536,13 +533,44 @@ async function boot(){
   }
 }
 /* ===== tasks ===== */
-function taskCard(t,type){let btn='',sb='';
-if(type=='ad'){const c=S.ad[t.id]||0;sb=`${amt(t.r,14)} <s>${c}/${t.max} today</s>`;btn=c>=t.max?`<button class="btn dis">Done</button>`:`<button class="btn" data-a="ad" data-id="${t.id}">${ic('play',15)}Watch</button>`}
-else{const done=t.daily?S.done[t.id]:S.lt[t.id],rd=S.pend[t.id];sb=`${amt(t.r,14)}${t.tag?`<span class="pill">${t.tag=='new'?'New':'Limited'}</span>`:''}`;
-if(done)btn=`<button class="btn dis">${ic('check',15)}Claimed</button>`;else if(rd&&Date.now()>=rd)btn=`<button class="btn grn" data-a="claim" data-id="${t.id}">${ic('check',15)}Claim</button>`;else if(rd)btn=`<button class="btn dis">${Math.max(1,Math.ceil((rd-Date.now())/1000))}s…</button>`;else btn=`<button class="btn" data-a="go" data-id="${t.id}">Go${ic('up',15)}</button>`}
-const customImg=(t.img||'').trim();
-const icHtml=customImg?`<div class="ic" style="background:var(--card2);overflow:hidden;border:1px solid var(--line);padding:2px"><img src="${esc(customImg)}" style="width:100%;height:100%;object-fit:cover;border-radius:12px" onerror="this.onerror=null;this.parentElement.innerHTML='${ic(t.ic,24)}'"></div>`:`<div class="ic" style="background:${t.bg}">${ic(t.ic,24)}</div>`;
-return `<div class="task in ${type=='ad'?'hot':''}">${icHtml}<div class="t"><b>${t.t}</b><small>${sb}</small></div>${btn}</div>`}
+function taskCard(t,type){
+  if(t.net==='adsgram_task'){
+    const bId=t.blockId||'task-56221';
+    return `<adsgram-task data-block-id="${esc(bId)}" data-debug="false" class="task in">
+      <span slot="reward" class="am">${TON(14)}${f(t.r)}</span>
+      <button slot="button" class="btn" style="min-width:88px;height:38px;font-size:13.5px">Go${ic('up',14)}</button>
+      <button slot="claim" class="btn grn" style="min-width:88px;height:38px;font-size:13.5px">${ic('check',14)}Claim</button>
+      <button slot="done" class="btn dis" style="min-width:88px;height:38px;font-size:13.5px">Done</button>
+    </adsgram-task>`;
+  }
+
+  let btn='',sb='';
+  if(type=='ad'){
+    const c=S.ad[t.id]||0;
+    sb=`${amt(t.r,14)} <s>${c}/${t.max} today</s>`;
+    btn=c>=t.max?`<button class="btn dis">Done</button>`:`<button class="btn" data-a="ad" data-id="${t.id}">${ic('play',15)}Watch</button>`;
+  } else {
+    const done=t.daily?S.done[t.id]:S.lt[t.id],rd=S.pend[t.id];
+    sb=`${amt(t.r,14)}${t.tag?`<span class="pill">${t.tag=='new'?'New':'Limited'}</span>`:''}`;
+    if(done)btn=`<button class="btn dis">${ic('check',15)}Claimed</button>`;
+    else if(rd&&Date.now()>=rd)btn=`<button class="btn grn" data-a="claim" data-id="${t.id}">${ic('check',15)}Claim</button>`;
+    else if(rd)btn=`<button class="btn dis">${Math.max(1,Math.ceil((rd-Date.now())/1000))}s…</button>`;
+    else btn=`<button class="btn" data-a="go" data-id="${t.id}">Go${ic('up',15)}</button>`;
+  }
+
+  const customImg=(t.img||'').trim();
+  let icHtml='';
+  if(customImg){
+    icHtml=`<div class="ic" style="position:relative;width:50px;height:50px;border-radius:14px;overflow:hidden;background:var(--card2);border:1px solid var(--line);flex:none;display:flex;align-items:center;justify-content:center;padding:0">
+      <img src="${esc(customImg)}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:13px;display:block" onerror="this.style.display='none';var fb=this.parentElement.querySelector('.fb-ic');if(fb)fb.style.display='flex'">
+      <div class="fb-ic" style="display:none;width:100%;height:100%;align-items:center;justify-content:center;background:${t.bg||'var(--card2)'}">${ic(t.ic||'link',24)}</div>
+    </div>`;
+  }else{
+    icHtml=`<div class="ic" style="background:${t.bg};width:50px;height:50px;border-radius:14px;flex:none">${ic(t.ic||'link',24)}</div>`;
+  }
+
+  return `<div class="task in ${type=='ad'?'hot':''}">${icHtml}<div class="t"><b>${esc(t.t)}</b><small>${sb}</small></div>${btn}</div>`;
+}
 const findT=id=>[...ADS,...LT,...WT].find(t=>t.id==id);
 const doneToday=()=>S.dn;
 /* ===== views ===== */
@@ -605,8 +633,95 @@ function drawWheel(){const c=$('#wh');if(!c)return;const g=c.getContext('2d'),r=
 /* ===== actions ===== */
 const A={
 tab(e){if(busy)return;tab=e.dataset.v;closeM();render();snd(500,.05);hap()},sub(e){sub=e.dataset.v;render(true)},sec(e){sec=e.dataset.v;render(true)},flt(e){flt=e.dataset.v;render(true)},lb(e){lb=e.dataset.v;render(true)},
-ad(e){const t=findT(e.dataset.id);if((S.ad[t.id]||0)>=t.max)return;let n=CFG.adWait,ok=false;modal(`<h3><span>Sponsored · demo ad</span>${xb}</h3><div class="cr"></div><div class="ring"><svg width="120" height="120"><circle cx="60" cy="60" r="52" stroke="var(--line)" stroke-width="10" fill="none"/><circle id="rc" cx="60" cy="60" r="52" stroke="#2a7bff" stroke-width="10" fill="none" stroke-linecap="round" stroke-dasharray="327" stroke-dashoffset="0" style="transition:stroke-dashoffset 1s linear"/></svg><b id="rn">${n}</b></div><p style="text-align:center;color:var(--mut)">Watch until the timer ends to earn ${amt(t.r,14)} (placeholder for your ad network)</p><button class="btn dis" id="rb" style="width:100%">Please wait…</button>`);
-const iv=setInterval(()=>{if(!$('#rn')){clearInterval(iv);return}n--;$('#rn').textContent=Math.max(0,n);$('#rc').style.strokeDashoffset=327*(1-n/CFG.adWait);if(n<=0){clearInterval(iv);ok=true;const b=$('#rb');b.className='btn grn';b.innerHTML=ic('check',16)+'Claim +'+f(t.r)+' TON';b.onclick=()=>{if(!ok)return;ok=false;S.ad[t.id]=(S.ad[t.id]||0)+1;S.dn++;closeM();award(t.r,'Sponsor ad',b)}}},1000)},
+ad(e){
+  const t=findT(e.dataset.id);
+  if(!t)return;
+  if((S.ad[t.id]||0)>=t.max)return;
+
+  const net=t.net||(t.id==='ad1'?'adsgram_reward':t.id==='ad2'?'adsgram_int':'monetag_pop');
+  const an=CONF.adNetworks||{};
+  const blockId=String(t.blockId||(net==='adsgram_int'?(an.adsgramInt||'int-56219'):net==='adsgram_reward'?(an.adsgramReward||'56220'):(an.monetagZone||'12131483'))).trim();
+
+  const handleReward=(label)=>{
+    S.ad[t.id]=(S.ad[t.id]||0)+1;
+    S.dn++;
+    award(t.r,label||t.t||'Sponsor ad',e);
+    toast('🎉 Ad reward +'+f(t.r)+' TON added!');
+  };
+
+  // 1. AdsGram Rewarded Video or Interstitial
+  if(net==='adsgram_reward'||net==='adsgram_int'){
+    if(window.Adsgram){
+      toast('Opening AdsGram ad…');
+      try{
+        const adController=window.Adsgram.init({blockId});
+        adController.show().then(result=>{
+          handleReward('AdsGram Ad');
+        }).catch(err=>{
+          console.warn('[AdsGram Error]',err);
+          const msg=(err&&(err.description||err.message))||'Ad was skipped or unavailable';
+          toast('⚠️ '+msg);
+        });
+        return;
+      }catch(err){
+        console.warn('[AdsGram Init Error]',err);
+      }
+    }
+  }
+
+  // 2. Monetag Rewarded Interstitial
+  if(net==='monetag_reward'){
+    const fn=window.show_12131483;
+    if(typeof fn==='function'){
+      toast('Opening Monetag ad…');
+      fn().then(()=>{
+        handleReward('Monetag Rewarded');
+      }).catch(err=>{
+        console.warn('[Monetag Rewarded]',err);
+        toast('⚠️ Ad closed or not available');
+      });
+      return;
+    }
+  }
+
+  // 3. Monetag Rewarded Popup
+  if(net==='monetag_pop'){
+    const fn=window.show_12131483;
+    if(typeof fn==='function'){
+      toast('Opening Monetag popup…');
+      fn('pop').then(()=>{
+        handleReward('Monetag Popup');
+      }).catch(err=>{
+        console.warn('[Monetag Popup]',err);
+        toast('⚠️ Popup closed or not available');
+      });
+      return;
+    }
+  }
+
+  // 4. Fallback Countdown Demo (Jab internet na ho ya direct testing ho)
+  let n=CFG.adWait,ok=false;
+  modal(`<h3><span>Sponsored · Ad</span>${xb}</h3><div class="cr"></div><div class="ring"><svg width="120" height="120"><circle cx="60" cy="60" r="52" stroke="var(--line)" stroke-width="10" fill="none"/><circle id="rc" cx="60" cy="60" r="52" stroke="#2a7bff" stroke-width="10" fill="none" stroke-linecap="round" stroke-dasharray="327" stroke-dashoffset="0" style="transition:stroke-dashoffset 1s linear"/></svg><b id="rn">${n}</b></div><p style="text-align:center;color:var(--mut)">Watch until the timer ends to earn ${amt(t.r,14)}</p><button class="btn dis" id="rb" style="width:100%">Please wait…</button>`);
+  const iv=setInterval(()=>{
+    if(!$('#rn')){clearInterval(iv);return}
+    n--;
+    $('#rn').textContent=Math.max(0,n);
+    $('#rc').style.strokeDashoffset=327*(1-n/CFG.adWait);
+    if(n<=0){
+      clearInterval(iv);
+      ok=true;
+      const b=$('#rb');
+      b.className='btn grn';
+      b.innerHTML=ic('check',16)+'Claim +'+f(t.r)+' TON';
+      b.onclick=()=>{
+        if(!ok)return;
+        ok=false;
+        closeM();
+        handleReward('Sponsored Ad');
+      };
+    }
+  },1000);
+},
 go(e){const t=findT(e.dataset.id);openL(t.url||CFG.channel);S.pend[t.id]=Date.now()+6000;save();render(true)},
 claim(e){const t=findT(e.dataset.id);if(S.pend[t.id]&&Date.now()>=S.pend[t.id]){delete S.pend[t.id];if(t.daily)S.done[t.id]=1;else S.lt[t.id]=1;S.dn++;award(t.r,t.t,e)}},
 qi(e){const k=e.dataset.v;closeM();M[k]()},x:closeM,
