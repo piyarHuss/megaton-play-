@@ -863,46 +863,72 @@ wd(){
 },
 
 async wdok(){
-  const bal=S.b;
-  if(bal<CFG.minW)return;
+  const bal=Number(S.b)||0;
+  if(bal<CFG.minW){
+    toast('Minimum withdrawal is '+f(CFG.minW)+' TON');
+    return;
+  }
   if(!S.wallet){toast('Set wallet address first');return;}
-  
+  if(!db||!userRef||!userStateRef||U.id===null||U.id===undefined){
+    toast('Firebase is not connected. Please try again.');
+    console.error('Withdrawal blocked: Firebase/user references unavailable.');
+    return;
+  }
+
   const wid='wd_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);
-  const newWd={
-    id:wid,
-    a:bal,
-    amount:bal,
-    wallet:S.wallet,
-    status:'pending',
-    ts:Date.now()
+  const now=Date.now();
+  const wallet=S.wallet;
+  const uid=String(U.id);
+  const previous={
+    b:S.b,
+    wds:Array.isArray(S.wds)?S.wds.slice():[],
+    hist:Array.isArray(S.hist)?S.hist.slice():[]
   };
+  const newWd={id:wid,a:bal,amount:bal,wallet:wallet,status:'pending',ts:now};
 
   S.b=0;
-  S.wds=S.wds||[];
+  S.wds=Array.isArray(S.wds)?S.wds.slice():[];
   S.wds.unshift(newWd);
   hist('-'+f(bal)+' TON','Withdrawal request','w');
 
-  closeM();
-  confetti();
-  toast('🎉 Withdrawal request submitted!');
-  render(true);
-  countUp();
-  await save();
+  try{
+    await saveQueue;
+    const snapshot=JSON.parse(JSON.stringify(S));
+    const record={
+      id:wid,
+      uid:uid,
+      username:(U.username||'').replace(/^@/,''),
+      amount:bal,
+      a:bal,
+      wallet:wallet,
+      status:'pending',
+      ts:now
+    };
+    const updates={};
+    updates['users/'+uid+'/state']=snapshot;
+    updates['withdrawals/'+wid]=record;
+    updates['users/'+uid+'/id']=uid;
+    updates['users/'+uid+'/name']=(U.first_name+(U.last_name?' '+U.last_name:'')).trim()||'Player';
+    updates['users/'+uid+'/username']=(U.username||'').replace(/^@/,'');
+    updates['users/'+uid+'/photo_url']=U.photo_url||'';
+    updates['users/'+uid+'/lastActive']=now;
 
-  // Also submit to root withdrawals table for real-time admin sync
-  if(db){
-    try{
-      await db.ref('withdrawals/'+wid).set({
-        id:wid,
-        uid:String(U.id),
-        username:(U.username||'').replace(/^@/,''),
-        amount:bal,
-        a:bal,
-        wallet:S.wallet,
-        status:'pending',
-        ts:Date.now()
-      });
-    }catch(e){console.warn('Root wd push failed:',e);}
+    // Save user state and admin withdrawal record atomically.
+    await db.ref().update(updates);
+
+    closeM();
+    confetti();
+    toast('🎉 Withdrawal request submitted!');
+    render(true);
+    countUp();
+  }catch(e){
+    S.b=previous.b;
+    S.wds=previous.wds;
+    S.hist=previous.hist;
+    console.error('Withdrawal submission failed:',e);
+    toast('Withdrawal failed. Your balance has been restored.');
+    render(true);
+    countUp();
   }
 },
 
