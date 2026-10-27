@@ -30,16 +30,16 @@ nav button svg{transition:transform .25s}nav button.on{color:var(--acc)}nav butt
 nav button.on::before{content:"";position:absolute;top:0;left:30%;right:30%;height:3px;border-radius:0 0 4px 4px;background:var(--acc);animation:in .3s}
 
 /* Uniform Task Cards */
-.task{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:10px 12px;margin-bottom:10px;min-height:72px;box-sizing:border-box}
+.task{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:10px 12px;margin:0 0 10px;width:100%;max-width:100%;min-width:0;min-height:72px;box-sizing:border-box;overflow:hidden}
 .task.hot{border-color:#3a3a66}
 .ic{width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;color:#fff;flex:none;overflow:hidden;padding:0;box-shadow:inset 0 1px 0 rgba(255,255,255,.25)}
 .task .ic img{width:100%;height:100%;object-fit:cover;display:block;border-radius:13px}
-.task .t{flex:1;min-width:0;padding-right:4px}
+.task .t{flex:1 1 0;min-width:0;max-width:100%;padding-right:0;overflow:hidden}
 .task b{display:block;font-size:15px;font-weight:600;line-height:1.25;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .task small{color:var(--gold);font-size:13.5px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}.task small s{color:var(--mut);text-decoration:none}
 .pill{display:inline-flex;align-items:center;gap:5px;border:1px solid #2a3a8a;color:#8fa6ff;background:#141c3f;border-radius:999px;padding:2px 8px;font-size:11.5px;font-weight:500}
-.task .btn{flex:none;min-width:82px;height:38px;font-size:13.5px;padding:0 12px;border-radius:12px}
-adsgram-task{display:block;width:100%;margin-bottom:10px}
+.task .btn{box-sizing:border-box;flex:0 0 88px;width:88px;min-width:0;max-width:88px;height:38px;font-size:13px;padding:0 6px;border-radius:12px;white-space:nowrap;display:inline-flex;align-items:center;justify-content:center;gap:5px;overflow:hidden}
+adsgram-task{display:block;width:100%;max-width:100%;min-width:0;box-sizing:border-box;overflow:hidden;margin:0 0 10px}
 
 .in{animation:in .45s both}.noan .in{animation:none}@keyframes in{from{opacity:0;transform:translateY(14px)}}
 .qi{display:flex;justify-content:space-between}.qi button{background:none;border:0;color:var(--mut);font:inherit;font-size:13px;font-weight:500;display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;position:relative;width:19%}
@@ -543,9 +543,9 @@ function taskCard(t,type){
     const bId=t.blockId||'task-56221';
     return `<adsgram-task data-block-id="${esc(bId)}" data-debug="false" class="task in">
       <span slot="reward" class="am">${TON(14)}${f(t.r)}</span>
-      <button slot="button" class="btn" style="min-width:82px;height:38px;font-size:13.5px">Go${ic('up',14)}</button>
-      <button slot="claim" class="btn grn" style="min-width:82px;height:38px;font-size:13.5px">${ic('check',14)}Claim</button>
-      <button slot="done" class="btn dis" style="min-width:82px;height:38px;font-size:13.5px">Done</button>
+      <button slot="button" class="btn" style="box-sizing:border-box;width:88px;min-width:0;max-width:88px;height:38px;font-size:13px;padding:0 6px;white-space:nowrap;overflow:hidden">Go${ic('up',14)}</button>
+      <button slot="claim" class="btn grn" style="box-sizing:border-box;width:88px;min-width:0;max-width:88px;height:38px;font-size:13px;padding:0 6px;white-space:nowrap;overflow:hidden">${ic('check',14)}Claim</button>
+      <button slot="done" class="btn dis" style="box-sizing:border-box;width:88px;min-width:0;max-width:88px;height:38px;font-size:13px;padding:0 6px;white-space:nowrap;overflow:hidden">Done</button>
     </adsgram-task>`;
   }
 
@@ -778,7 +778,7 @@ shx(){openL('https://twitter.com/intent/tweet?text='+encodeURIComponent('Earn TO
 cpl(){const l=link();(navigator.clipboard?navigator.clipboard.writeText(l):Promise.reject()).then(()=>toast('Link copied!')).catch(()=>{const t=document.createElement('textarea');t.value=l;document.body.appendChild(t);t.select();try{document.execCommand('copy');toast('Link copied!')}catch(e){toast(l)}t.remove()})},
 cm(e){const m=missions().find(x=>x.id==e.dataset.id);if(!m||S.ms[m.id]||m.cur<m.n)return;S.ms[m.id]=1;if(m.u=='Spins'){S.fs+=m.r;hist('+'+m.r+' Free Spins','Mission','t');save();render(true)}else award(m.r,'Mission',e);M.mission()},
 ck(e){const c=S.ck;if(c.d==day())return;const y=new Date(Date.now()-864e5).toISOString().slice(0,10),n=c.d==y?c.n%7+1:1,r=CHK()[n-1];S.ck={d:day(),n};award(r,'Daily check-in',e);M.checkin()}};
-const link=()=>`https://t.me/${CFG.bot}/${CFG.app}?startapp=ref_${U.id}`;
+const link=()=>`https://t.me/MegaTonPlay_bot/ton?startapp=ref_${encodeURIComponent(U.id)}`;
 const M={checkin(){const c=S.ck,ok=c.d==day(),y=new Date(Date.now()-864e5).toISOString().slice(0,10),nx=ok?c.n:(c.d==y?c.n%7+1:1);const R7=CHK();
 modal(`<h3><span>${ic('cal',22)}Daily check-in</span>${xb}</h3><p style="color:var(--mut);margin-top:0">Check in every day: up to +${f(R7.reduce((a,b)=>a+b,0))} TON over 7 days.</p><div class="days">${R7.map((r,i)=>`<div class="${i<(ok?c.n:nx-1)?'ok':i==nx-1&&!ok?'cur':''}">Day ${i+1}<b>+${f(r)}</b></div>`).join('')}<div style="display:flex;align-items:center;justify-content:center;color:var(--gold)">${ic('gift',24)}</div></div><button class="btn ${ok?'dis':''}" data-a="ck" style="width:100%;margin-top:14px;height:48px">${ok?'Claimed today':'Claim +'+f(R7[nx-1])+' TON'}</button>`)},
 mission(){const ms=missions(),sc=a=>ms.filter(m=>m.g==a).map(m=>`<div class="task" style="margin-bottom:8px"><div class="ic" style="background:var(--card2);color:var(--acc);width:44px;height:44px">${ic(m.g=='inv'?'users':m.g=='ads'?'play':'check',20)}</div><div class="t"><b style="font-size:15px">${m.t}</b><small>${m.u?`+${m.r} Free Spins`:amt(m.r,14)} · <s>${Math.min(m.cur,m.n)}/${m.n}</s></small></div>${S.ms[m.id]?`<button class="btn dis" style="min-width:76px">${ic('check',16)}</button>`:m.cur>=m.n?`<button class="btn grn" data-a="cm" data-id="${m.id}" style="min-width:76px">Claim</button>`:`<button class="btn dis" style="min-width:76px">${Math.min(m.cur,m.n)}/${m.n}</button>`}</div>`).join('');
