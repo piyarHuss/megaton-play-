@@ -229,7 +229,7 @@ if (!U.id) {
 
 const $=(s,r=document)=>r.querySelector(s),day=()=>new Date().toISOString().slice(0,10),esc=s=>String(s).replace(/[&<>"']/g,c=>'&#'+c.charCodeAt(0)+';');
 const f=n=>(n/1000).toFixed(4);
-let S={b:0,life:0,fs:0,spins:0,ck:{d:'',n:0},day:day(),ad:{},adCd:{},done:{},dn:0,lt:{},pend:{},ms:{},hist:[],inv:0,earn:0,invs:[],refBy:'',wallet:'',wds:[],theme:'auto',lang:'en',world:false,snd:true,boost:false,rot:0,gp:0,gb:0};
+let S={b:0,life:0,fs:0,spins:0,ck:{d:'',n:0},day:day(),ad:{},adCd:{},done:{},dn:0,lt:{},pend:{},taskStarted:{},taskRewardPending:{},ms:{},hist:[],inv:0,earn:0,invs:[],refBy:'',wallet:'',wds:[],theme:'auto',lang:'en',world:false,snd:true,boost:false,rot:0,gp:0,gb:0};
 let db=null, userRef=null, userStateRef=null, firebaseReady=false, saveQueue=Promise.resolve();
 try {
   if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
@@ -388,6 +388,7 @@ function applyConf(c){
       const taskObj={
         ...t,
         r:mm(t.r),
+        wait:Math.max(1,Math.min(3600,Number(t.wait)||10)),
         net:t.net||'link',
         blockId:t.blockId||'',
         img:t.img||'',
@@ -592,13 +593,35 @@ async function boot(){
   }
   await checkAndApplyReferral();
   initMonetagInApp();
+  // Record when an AdsGram task is actually started, then enforce the admin-configured minimum wait.
+  document.addEventListener('click',e=>{
+    const trigger=e.target&&e.target.closest&&e.target.closest('adsgram-task [slot="button"]');
+    if(!trigger)return;
+    const host=trigger.closest('adsgram-task');
+    if(!host)return;
+    const blockId=String(host.getAttribute('data-block-id')||'');
+    const tk=[...LT,...WT].find(t=>String(t.blockId||'task-56221')===blockId&&t.net==='adsgram_task');
+    if(!tk)return;
+    S.taskStarted=S.taskStarted||{};
+    S.taskStarted[tk.id]=Date.now();
+    save();
+  },true);
   document.addEventListener('reward',(e)=>{
     const bId=String(e.detail||'');
-    const tk=[...LT,...WT].find(t=>String(t.blockId)===bId);
+    const tk=[...LT,...WT].find(t=>String(t.blockId||'task-56221')===bId&&t.net==='adsgram_task');
     const rew=tk?tk.r:5;
     const name=tk?tk.t:'AdsGram Task';
-    award(rew,name);
-    toast('🎉 AdsGram Task rewarded! +'+f(rew)+' TON');
+    if(tk&&((tk.daily&&S.done[tk.id])||S.lt[tk.id]||S.taskRewardPending[tk.id]))return;
+    const wait=tk?Math.max(1,Math.min(3600,Number(tk.wait)||10)):10;
+    const started=tk?Number((S.taskStarted||{})[tk.id]||0):0;
+    const remaining=Math.max(0,wait*1000-(Date.now()-(started||Date.now())));
+    if(tk){S.taskRewardPending=S.taskRewardPending||{};S.taskRewardPending[tk.id]=1;save();}
+    const pay=()=>{
+      if(tk){delete S.taskRewardPending[tk.id];S.lt[tk.id]=1;delete S.taskStarted[tk.id];S.dn++;save();}
+      award(rew,name);
+      toast('AdsGram Task rewarded! +'+f(rew)+' TON');
+    };
+    if(remaining>0){toast('Task completed. Reward in '+Math.ceil(remaining/1000)+'s');setTimeout(pay,remaining)}else pay();
   });
   GM.reinit();
   render();
@@ -613,7 +636,10 @@ async function boot(){
 function taskCard(t,type){
   if(t.net==='adsgram_task'){
     const bId=t.blockId||'task-56221';
-    return `<adsgram-task data-block-id="${esc(bId)}" data-debug="false" class="task in">
+    const wait=Math.max(1,Math.min(3600,Number(t.wait)||10));
+    const started=Number((S.taskStarted||{})[t.id]||0);
+    const left=started?Math.max(0,wait-Math.floor((Date.now()-started)/1000)):0;
+    return `<adsgram-task data-task-id="${esc(t.id)}" data-block-id="${esc(bId)}" data-debug="false" class="task in">
       <span slot="reward" class="am">${TON(14)}${f(t.r)}</span>
       <button slot="button" class="btn">Go${ic('up',14)}</button>
       <button slot="claim" class="btn grn">${ic('check',14)}Claim</button>
@@ -640,7 +666,8 @@ function taskCard(t,type){
     }
   }else{
     const done=t.daily?S.done[t.id]:S.lt[t.id],rd=S.pend[t.id];
-    sb=`${amt(t.r,14)}${t.tag?`<span class="pill">${t.tag=='new'?'New':'Limited'}</span>`:''}`;
+    const wait=Math.max(1,Math.min(3600,Number(t.wait)||10));
+    sb=`${amt(t.r,14)} <s>Watch ${wait}s</s>${t.tag?`<span class="pill">${t.tag=='new'?'New':'Limited'}</span>`:''}`;
     if(done)btn=`<button class="btn dis">${ic('check',14)}Claimed</button>`;
     else if(rd&&Date.now()>=rd)btn=`<button class="btn grn" data-a="claim" data-id="${t.id}">${ic('check',14)}Claim</button>`;
     else if(rd)btn=`<button class="btn dis">${Math.max(1,Math.ceil((rd-Date.now())/1000))}s…</button>`;
@@ -864,8 +891,8 @@ ad(e){
     }
   },1000);
 },
-go(e){const t=findT(e.dataset.id);openL(t.url||CFG.channel);S.pend[t.id]=Date.now()+6000;save();render(true)},
-claim(e){const t=findT(e.dataset.id);if(S.pend[t.id]&&Date.now()>=S.pend[t.id]){delete S.pend[t.id];if(t.daily)S.done[t.id]=1;else S.lt[t.id]=1;S.dn++;award(t.r,t.t,e)}},
+go(e){const t=findT(e.dataset.id);if(!t)return;const wait=Math.max(1,Math.min(3600,Number(t.wait)||10));S.pend[t.id]=Date.now()+wait*1000;save();render(true);openL(t.url||CFG.channel);toast('Task started. Wait '+wait+' seconds before claiming.')},
+claim(e){const t=findT(e.dataset.id);if(!t)return;const until=Number(S.pend[t.id]||0);if(until&&Date.now()>=until){delete S.pend[t.id];if(t.daily)S.done[t.id]=1;else S.lt[t.id]=1;S.dn++;save();award(t.r,t.t,e)}else if(until){toast('Please wait '+Math.max(1,Math.ceil((until-Date.now())/1000))+' seconds');render(true)}},
 qi(e){const k=e.dataset.v;closeM();M[k]()},x:closeM,
 gospin(){if(busy)return;tab='spin';render();setTimeout(()=>A.dospin(),450)},
 dospin(){if(busy)return;if(!S.fs&&S.b<CFG.spinCost){toast('Need '+f(CFG.spinCost)+' TON to spin');snd(150);return}busy=true;if(S.fs)S.fs--;else S.b-=CFG.spinCost;S.spins++;save();
