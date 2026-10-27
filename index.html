@@ -116,7 +116,15 @@ input.in2{width:100%;padding:14px;border-radius:14px;border:1px solid var(--line
 .stats svg{margin:0 auto 6px}.stats b{display:block;font-size:16px}.stats small{color:var(--mut);font-size:12px}
 .wi{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--line)}.wi:last-child{border:0}.wi .ic{width:40px;height:40px;border-radius:12px}.wi div b{display:block;font-size:15px;font-weight:500}.wi small{color:var(--mut)}.wi>span{margin-left:auto;font-weight:600;text-align:right}
 .wd{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line);animation:in .5s both}.wd:last-child{border:0}
-.st{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;color:#ffb21a;background:#2a1f0a;border:1px solid #6b5316;border-radius:999px;padding:3px 10px}.st::before{content:"";width:7px;height:7px;border-radius:50%;background:#ffb21a;animation:pulse 1.4s infinite}
+
+/* Status Badges with Success Support */
+.st{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;color:#ffb21a;background:#2a1f0a;border:1px solid #6b5316;border-radius:999px;padding:4px 10px}
+.st::before{content:"";width:7px;height:7px;border-radius:50%;background:#ffb21a;animation:pulse 1.4s infinite}
+.st.ok{color:#22c55e;background:#0d2818;border-color:#166534}
+.st.ok::before{display:none}
+.st.err{color:#ef4444;background:#2a0f12;border-color:#7f1d1d}
+.st.err::before{display:none}
+
 .addr{display:flex;align-items:center;gap:10px;background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:10px;word-break:break-all;font-size:13.5px}
 .empty{text-align:center;padding:18px 0;color:var(--mut)}.empty svg{margin:0 auto 8px;opacity:.5}
 #gm{position:fixed;inset:0;z-index:60;display:none;background:#0a2a66}#gc{display:block;width:100%;height:100%;touch-action:none}#gx{position:absolute;right:14px;top:calc(env(safe-area-inset-top,0px) + 12px);z-index:2;width:40px;height:40px;background:rgba(10,30,70,.7);color:#fff;border-color:rgba(255,255,255,.25)}
@@ -251,6 +259,26 @@ async function loadUserState(){
     }
     newDay();
     firebaseReady=true;
+
+    // Realtime Listener: Updates withdrawals, balance and wallet live without reload
+    if(userStateRef){
+      userStateRef.on('value',sSnap=>{
+        const stateVal=sSnap.val();
+        if(stateVal && typeof stateVal==='object'){
+          if(Array.isArray(stateVal.wds)){
+            S.wds=stateVal.wds;
+          }
+          if(stateVal.b!==undefined){
+            S.b=Number(stateVal.b)||0;
+          }else if(stateVal.balance!==undefined){
+            S.b=Number(stateVal.balance)||0;
+          }
+          if(stateVal.wallet) S.wallet=stateVal.wallet;
+          if(tab==='wallet') render(true);
+        }
+      });
+    }
+
     const dName = (U.first_name + (U.last_name ? ' ' + U.last_name : '')).trim() || 'Player';
     userRef.update({
       name:dName,
@@ -625,15 +653,42 @@ spin(){const ok=S.b>=CFG.spinCost||S.fs;return `<div class="card in" style="text
 <div class="wheelw"><div class="ptr"></div><canvas id="wh" width="640" height="640" style="transform:rotate(${S.rot}deg)"></canvas><div class="hub">${TON(34)}</div></div>
 <div style="margin:6px 0 12px" class="am">${TON(20)}<span style="font-size:20px">${f(S.b)} TON</span></div>
 <button class="btn ton ${ok?'':'dis'}" id="spb" data-a="dospin" style="width:100%;font-size:17px;height:52px">${S.fs?'Use free spin':'Spin · '+f(CFG.spinCost)+' TON'}</button><p style="color:var(--mut);font-size:13px">Wheel results are generated in the app; production rewards need server-side validation.</p></div>`},
-wallet(){const p=Math.min(100,S.b/CFG.minW*100),wd=S.wds.reduce((a,w)=>a+w.a,0),can=S.b>=CFG.minW;
-return `<div class="wc in"><div class="wglow"></div><div class="coin">${TON(62)}</div><small class="lbl">${esc(T('walletLabel'))}</small><div class="big"><span id="cnt">${f(shown)}</span><em>TON</em></div><div class="pbar"><i style="width:${p}%"></i></div><div class="pl"><span>Minimum withdrawal ${f(CFG.minW)} TON</span><span>${Math.round(p)}%</span></div><button class="btn ${can?'':'dis'}" data-a="wd" style="width:100%;margin-top:16px;height:50px;font-size:16px">${ic('up',18)}Withdraw</button></div>
-<div class="stats"><div>${ic('zap',22)}<b>${f(S.life)}</b><small>Earned</small></div><div>${ic('down',22)}<b>${f(wd)}</b><small>Withdrawn</small></div><div>${ic('clock',22)}<b>${S.wds.length}</b><small>Requests</small></div></div>
-<div class="card in"><div class="sec" style="margin-top:0">${ic('wallet',15)}WITHDRAWAL WALLET</div>${S.wallet?`<div class="addr"><span style="color:var(--grn)">${ic('check',20)}</span><span>${S.wallet}</span></div>`:`<div class="empty" style="padding:8px 0 14px">${ic('wallet',34)}<div>No wallet added yet</div></div>`}<div class="row"><button class="btn ton" data-a="conn" style="flex:1">${ic('link',17)}Connect</button><button class="btn ghost" data-a="manual" style="flex:1">${ic('copy',17)}Enter manually</button></div></div>
-<div class="card in"><div class="sec" style="margin-top:0">${ic('info',15)}WITHDRAWAL INFO</div>
-<div class="wi"><div class="ic" style="background:linear-gradient(135deg,#0ea5e9,#0098ea)">${ic('down',20)}</div><div><b>Minimum</b><small>Lowest amount per request</small></div><span>${amt(CFG.minW,14)}</span></div>
-<div class="wi"><div class="ic" style="background:linear-gradient(135deg,#f59e0b,#d97706)">${ic('clock',20)}</div><div><b>Payout time</b><small>Set by your backend</small></div><span>—</span></div>
-<div class="wi"><div class="ic" style="background:linear-gradient(135deg,#22c55e,#16a34a)">${ic('shield',20)}</div><div><b>Network</b><small>The Open Network</small></div><span>TON</span></div></div>
-<div class="card in"><div class="sec" style="margin-top:0">${ic('list',15)}RECENT WITHDRAWALS</div>${S.wds.length?S.wds.slice(0,6).map((w,i)=>`<div class="wd" style="animation-delay:${i*.08}s"><div class="ic" style="width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,#0ea5e9,#0098ea)">${ic('up',18)}</div><div style="flex:1"><b style="font-weight:600">${amt(w.a,15)}</b><small style="color:var(--mut)">${new Date(w.ts).toLocaleString()}</small></div><span class="st">Pending</span></div>`).join(''):`<div class="empty">${ic('list',34)}<div>No withdrawals yet.<br>Reach ${f(CFG.minW)} TON to make your first one.</div></div>`}</div>`},
+
+/* ===== Wallet Tab with SUCCESS status rendering ===== */
+wallet(){
+  const p=Math.min(100,S.b/CFG.minW*100),wd=S.wds.reduce((a,w)=>a+w.a,0),can=S.b>=CFG.minW;
+  return `<div class="wc in"><div class="wglow"></div><div class="coin">${TON(62)}</div><small class="lbl">${esc(T('walletLabel'))}</small><div class="big"><span id="cnt">${f(shown)}</span><em>TON</em></div><div class="pbar"><i style="width:${p}%"></i></div><div class="pl"><span>Minimum withdrawal ${f(CFG.minW)} TON</span><span>${Math.round(p)}%</span></div><button class="btn ${can?'':'dis'}" data-a="wd" style="width:100%;margin-top:16px;height:50px;font-size:16px">${ic('up',18)}Withdraw</button></div>
+  <div class="stats"><div>${ic('zap',22)}<b>${f(S.life)}</b><small>Earned</small></div><div>${ic('down',22)}<b>${f(wd)}</b><small>Withdrawn</small></div><div>${ic('clock',22)}<b>${S.wds.length}</b><small>Requests</small></div></div>
+  <div class="card in"><div class="sec" style="margin-top:0">${ic('wallet',15)}WITHDRAWAL WALLET</div>${S.wallet?`<div class="addr"><span style="color:var(--grn)">${ic('check',20)}</span><span>${S.wallet}</span></div>`:`<div class="empty" style="padding:8px 0 14px">${ic('wallet',34)}<div>No wallet added yet</div></div>`}<div class="row"><button class="btn ton" data-a="conn" style="flex:1">${ic('link',17)}Connect</button><button class="btn ghost" data-a="manual" style="flex:1">${ic('copy',17)}Enter manually</button></div></div>
+  <div class="card in"><div class="sec" style="margin-top:0">${ic('info',15)}WITHDRAWAL INFO</div>
+  <div class="wi"><div class="ic" style="background:linear-gradient(135deg,#0ea5e9,#0098ea)">${ic('down',20)}</div><div><b>Minimum</b><small>Lowest amount per request</small></div><span>${amt(CFG.minW,14)}</span></div>
+  <div class="wi"><div class="ic" style="background:linear-gradient(135deg,#f59e0b,#d97706)">${ic('clock',20)}</div><div><b>Payout time</b><small>Processed by admin</small></div><span>Fast</span></div>
+  <div class="wi"><div class="ic" style="background:linear-gradient(135deg,#22c55e,#16a34a)">${ic('shield',20)}</div><div><b>Network</b><small>The Open Network</small></div><span>TON</span></div></div>
+  <div class="card in"><div class="sec" style="margin-top:0">${ic('list',15)}RECENT WITHDRAWALS</div>${S.wds.length?S.wds.slice(0,10).map((w,i)=>{
+    const st=String(w.status||'pending').toLowerCase();
+    let badge='<span class="st">Pending</span>';
+    let isSuccess=(st==='paid'||st==='approved'||st==='success');
+    let isRejected=(st==='rejected');
+
+    if(isSuccess){
+      badge=`<span class="st ok">${ic('check',14)}Success</span>`;
+    }else if(isRejected){
+      badge=`<span class="st err">${ic('x',14)}Rejected</span>`;
+    }
+
+    return `<div class="wd" style="animation-delay:${i*.08}s">
+      <div class="ic" style="width:40px;height:40px;border-radius:12px;background:${isSuccess?'linear-gradient(135deg,#16a34a,#22c55e)':isRejected?'linear-gradient(135deg,#ef4444,#dc2626)':'linear-gradient(135deg,#0ea5e9,#0098ea)'}">
+        ${ic(isSuccess?'check':'up',18)}
+      </div>
+      <div style="flex:1">
+        <b style="font-weight:600">${amt(w.a,15)}</b>
+        <small style="color:var(--mut)">${new Date(w.ts).toLocaleString()}</small>
+      </div>
+      ${badge}
+    </div>`;
+  }).join(''):`<div class="empty">${ic('list',34)}<div>No withdrawals yet.<br>Reach ${f(CFG.minW)} TON to make your first one.</div></div>`}</div>`;
+},
+
 invite(){return `<div class="ban in"><span>${esc(T('banner1'))}<em>${esc(T('banner2'))}</em></span></div>
 <div class="row in" style="margin-bottom:12px"><button class="btn" data-a="inv" style="flex:1;justify-content:flex-start;height:62px;padding:0 16px;gap:12px">${ic('gift',28)}<span style="text-align:left"><b style="font-size:17px;display:block">${esc(T('inviteBtn'))}</b><small style="font-size:13px;font-weight:400;opacity:.85">${esc(T('inviteSub'))}</small></span></button><button class="mini" data-a="shx"><span style="font-weight:700;font-size:20px;line-height:22px">𝕏</span>Share</button><button class="mini" data-a="shw">${ic('msg',22)}WhatsApp</button><button class="mini" data-a="cpl">${ic('copy',22)}Copy</button></div>
 <div class="card in row" style="justify-content:space-around"><div class="row"><span style="color:var(--acc)">${ic('users',34)}</span><div><b style="font-size:21px">${S.inv}</b><br><small style="color:var(--mut)">Friends invited</small></div></div><div class="row">${TON(34)}<div><b style="font-size:21px">${f(S.earn)}</b><br><small style="color:var(--mut)">TON earned</small></div></div></div>
@@ -798,9 +853,59 @@ setTimeout(()=>{clearInterval(iv);busy=false;const s=SEG[i];let txt='';
 if(s.k=='m'){S.b+=s.v;S.life+=s.v;txt='+'+f(s.v)+' TON';hist(txt,'Spin prize','p')}else if(s.k=='fs'){S.fs++;txt='1 Free Spin';hist(txt,'Spin','t')}else if(s.k=='bo'){S.boost=true;txt='2× Boost on your next reward';hist(txt,'Spin','t')}else txt='Better luck next time';
 save();if(s.k!='no'){confetti();snd(880,.2);setTimeout(()=>snd(1320,.3),150)}else snd(200,.4,'sawtooth');hap('heavy');
 modal(`<div style="text-align:center"><div style="margin:6px auto 10px;width:64px">${s.k=='no'?`<span style="color:var(--mut)">${ic('x',64)}</span>`:TON(64)}</div><h3 style="justify-content:center">${s.k=='no'?'Try again':'You won!'}</h3><div style="font-size:26px;font-weight:700;color:var(--gold)">${txt}</div><button class="btn" data-a="x" style="margin-top:18px;width:100%">${s.k=='no'?'OK':'Awesome'}</button></div>`);render(true)},5200)},
-wd(){if(!FT('withdraw')){toast(T('wdOff'));return}const bal=S.b;if(bal<CFG.minW)return;if(!S.wallet){toast('Add a withdrawal wallet first');return}
-modal(`<h3><span>Withdraw</span>${xb}</h3><div style="text-align:center;margin:8px 0">${TON(48)}<div style="font-size:30px;font-weight:700;margin-top:6px">${f(bal)} TON</div></div><div class="addr">${S.wallet}</div><p style="color:var(--mut);font-size:13px">Demo: this only creates a pending request locally.</p><button class="btn grn" data-a="wdok" style="width:100%;height:50px">${ic('check',18)}Confirm withdrawal</button>`)},
-wdok(){const bal=S.b;if(bal<CFG.minW)return;S.b=0;S.wds.unshift({a:bal,ts:Date.now()});hist('-'+f(bal)+' TON','Withdrawal request','w');save();closeM();confetti();toast('Withdrawal requested (demo)');render(true);countUp()},
+
+wd(){
+  if(!FT('withdraw')){toast(T('wdOff'));return}
+  const bal=S.b;
+  if(bal<CFG.minW){toast('Minimum withdrawal is '+f(CFG.minW)+' TON');return}
+  if(!S.wallet){toast('Add a withdrawal wallet first');return}
+  modal(`<h3><span>Withdraw TON</span>${xb}</h3><div style="text-align:center;margin:8px 0">${TON(48)}<div style="font-size:30px;font-weight:700;margin-top:6px">${f(bal)} TON</div></div><div class="addr">${S.wallet}</div><p style="color:var(--mut);font-size:13px">Your withdrawal request will be sent to the administrator for review.</p><button class="btn grn" data-a="wdok" style="width:100%;height:50px">${ic('check',18)}Confirm withdrawal</button>`);
+},
+
+async wdok(){
+  const bal=S.b;
+  if(bal<CFG.minW)return;
+  if(!S.wallet){toast('Set wallet address first');return;}
+  
+  const wid='wd_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);
+  const newWd={
+    id:wid,
+    a:bal,
+    amount:bal,
+    wallet:S.wallet,
+    status:'pending',
+    ts:Date.now()
+  };
+
+  S.b=0;
+  S.wds=S.wds||[];
+  S.wds.unshift(newWd);
+  hist('-'+f(bal)+' TON','Withdrawal request','w');
+
+  closeM();
+  confetti();
+  toast('🎉 Withdrawal request submitted!');
+  render(true);
+  countUp();
+  await save();
+
+  // Also submit to root withdrawals table for real-time admin sync
+  if(db){
+    try{
+      await db.ref('withdrawals/'+wid).set({
+        id:wid,
+        uid:String(U.id),
+        username:(U.username||'').replace(/^@/,''),
+        amount:bal,
+        a:bal,
+        wallet:S.wallet,
+        status:'pending',
+        ts:Date.now()
+      });
+    }catch(e){console.warn('Root wd push failed:',e);}
+  }
+},
+
 conn(){if(window.TonConnectUI){toast('Opening TON Connect…')}else toast('TON Connect SDK is not included. Use “Enter manually”.')},
 manual(){modal(`<h3><span>Wallet address</span>${xb}</h3><input class="in2" id="wi" placeholder="UQ… / EQ… (48 characters)" value="${S.wallet}"><button class="btn ton" data-a="wsave" style="width:100%;height:48px">Save address</button>`)},
 wsave(){const v=$('#wi').value.trim();if(!/^(EQ|UQ)[A-Za-z0-9_-]{46}$/.test(v)){toast('Invalid TON address');snd(150);return}S.wallet=v;save();closeM();toast('Wallet saved');render(true)},
