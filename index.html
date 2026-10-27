@@ -455,60 +455,65 @@ function hideSplash(durationSec){
 
 function getReferrerId(){
   let raw='';
-  try{if(tg&&tg.initDataUnsafe&&tg.initDataUnsafe.start_param)raw=tg.initDataUnsafe.start_param}catch(e){}
-  if(!raw){
-    const q=new URLSearchParams(window.location.search);
-    raw=q.get('tgWebAppStartParam')||q.get('startapp')||'';
-  }
-  if(!raw&&window.location.hash){
+  try{
+    if(tg&&tg.initDataUnsafe&&tg.initDataUnsafe.start_param)
+      raw=String(tg.initDataUnsafe.start_param);
+  }catch(e){}
+  const readParams=txt=>{
     try{
-      const hq=new URLSearchParams(window.location.hash.replace(/^#/,''));
-      raw=hq.get('tgWebAppStartParam')||hq.get('startapp')||'';
-    }catch(e){}
-  }
+      const q=new URLSearchParams(txt||'');
+      return q.get('tgWebAppStartParam')||q.get('startapp')||q.get('start_param')||'';
+    }catch(e){return '';}
+  };
+  if(!raw)raw=readParams(window.location.search);
+  if(!raw&&window.location.hash)raw=readParams(window.location.hash.replace(/^#/, ''));
   if(!raw)return null;
-  const clean=String(raw).replace(/^ref_/,'').trim();
-  return (clean&&clean!==String(U.id))?clean:null;
+  try{raw=decodeURIComponent(raw);}catch(e){}
+  const match=String(raw).trim().match(/^ref_(\d+)$/);
+  if(!match)return null;
+  const refId=match[1];
+  return refId!==String(U.id)?refId:null;
 }
 
 async function creditReferrer(refId,rewardAmount){
   if(!db||!refId||String(refId)===String(U.id))return false;
+  // Keep referral writes scoped to the inviter's state node. A transaction on the
+  // entire users/{id} profile can fail when Firebase rules permit state-only writes.
   try{
-    const targetRef=db.ref('users/'+String(refId));
+    const targetRef=db.ref('users/'+String(refId)+'/state');
     let didCredit=false;
     const friendName=(U.first_name+(U.last_name?' '+U.last_name:'')).trim()||'Friend';
     const friendId=String(U.id);
     const amount=Math.max(0,Number(rewardAmount)||0);
-    // A transaction prevents the same Telegram user from being credited twice.
     const result=await targetRef.transaction(current=>{
       didCredit=false;
       if(!current||typeof current!=='object')return;
-      const hasState=!!current.state&&typeof current.state==='object';
-      const st=hasState?{...current.state}:{...current};
+      const st={...current};
       const list=Array.isArray(st.invs)?[...st.invs]:[];
-      if(list.some(x=>String(x&& (x.id||x.uid))===friendId))return current;
-      const newInv=(Number(st.inv||st.invites||0))+1;
-      const newEarn=(Number(st.earn)||0)+amount;
-      const newB=(Number(st.b||st.balance)||0)+amount;
-      const newLife=(Number(st.life||st.totalEarned)||0)+amount;
+      if(list.some(x=>String(x&&(x.id||x.uid))===friendId))return;
+      st.inv=Number(st.inv||st.invites||0)+1;
+      st.invites=st.inv;
+      st.earn=(Number(st.earn)||0)+amount;
+      st.b=(Number(st.b||st.balance)||0)+amount;
+      st.balance=st.b;
+      st.life=(Number(st.life||st.totalEarned)||0)+amount;
+      st.totalEarned=st.life;
       list.unshift({id:friendId,n:friendName,username:(U.username||'').replace(/^@/,''),photo_url:U.photo_url||'',ts:Date.now()});
+      st.invs=list.slice(0,200);
       const history=Array.isArray(st.hist)?[...st.hist]:[];
       history.unshift({a:'+'+f(amount)+' TON',s:'Friend Joined: '+friendName,k:'t',ts:Date.now()});
-      if(history.length>60)history.length=60;
-      Object.assign(st,{inv:newInv,invites:newInv,earn:newEarn,b:newB,balance:newB,life:newLife,totalEarned:newLife,invs:list,hist:history});
-      if(hasState)current.state=st;
-      else Object.assign(current,st);
+      st.hist=history.slice(0,60);
       didCredit=true;
-      return current;
+      return st;
     },undefined,false);
-    if(!result.committed){
-      console.info('[Referral] Already credited or inviter account does not exist:',refId);
+    if(!result.committed||!didCredit){
+      console.info('[Referral] No credit: inviter state missing, duplicate invite, or transaction not committed:',refId);
       return false;
     }
-    console.info('[Referral] Credited inviter:',refId,'amount:',amount);
-    return didCredit;
+    console.info('[Referral] Credited inviter state:',refId,'amount:',amount);
+    return true;
   }catch(err){
-    console.warn('[Referral] Failed to credit referrer. Check Firebase Database Rules:',err);
+    console.warn('[Referral] Failed to credit inviter state. Check Firebase Database Rules for users/{uid}/state:',err);
     return false;
   }
 }
