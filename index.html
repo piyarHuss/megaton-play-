@@ -472,55 +472,59 @@ function getReferrerId(){
 }
 
 async function creditReferrer(refId,rewardAmount){
-  if(!db||!refId||refId===String(U.id))return;
+  if(!db||!refId||String(refId)===String(U.id))return false;
   try{
-    const targetRef=db.ref('users/'+refId);
-    const snap=await targetRef.once('value');
-    if(!snap.exists())return;
-    const val=snap.val()||{};
-    const hasState=!!val.state&&typeof val.state==='object';
-    const s=hasState?val.state:val;
-
-    const newInv=(Number(s.inv||s.invites||0))+1;
-    const newEarn=(Number(s.earn||0))+rewardAmount;
-    const newB=(Number(s.b||s.balance||0))+rewardAmount;
-    const newLife=(Number(s.life||s.totalEarned||0))+rewardAmount;
-
-    let invs=Array.isArray(s.invs)?[...s.invs]:[];
-    if(!invs.some(x=>String(x.id||x.uid)===String(U.id))){
-      invs.unshift({
-        id:String(U.id),
-        n:(U.first_name+(U.last_name?' '+U.last_name:'')).trim()||'Friend',
-        username:(U.username||'').replace(/^@/,''),
-        photo_url:U.photo_url||'',
-        ts:Date.now()
-      });
+    const targetRef=db.ref('users/'+String(refId));
+    let didCredit=false;
+    const friendName=(U.first_name+(U.last_name?' '+U.last_name:'')).trim()||'Friend';
+    const friendId=String(U.id);
+    const amount=Math.max(0,Number(rewardAmount)||0);
+    // A transaction prevents the same Telegram user from being credited twice.
+    const result=await targetRef.transaction(current=>{
+      didCredit=false;
+      if(!current||typeof current!=='object')return;
+      const hasState=!!current.state&&typeof current.state==='object';
+      const st=hasState?{...current.state}:{...current};
+      const list=Array.isArray(st.invs)?[...st.invs]:[];
+      if(list.some(x=>String(x&& (x.id||x.uid))===friendId))return current;
+      const newInv=(Number(st.inv||st.invites||0))+1;
+      const newEarn=(Number(st.earn)||0)+amount;
+      const newB=(Number(st.b||st.balance)||0)+amount;
+      const newLife=(Number(st.life||st.totalEarned)||0)+amount;
+      list.unshift({id:friendId,n:friendName,username:(U.username||'').replace(/^@/,''),photo_url:U.photo_url||'',ts:Date.now()});
+      const history=Array.isArray(st.hist)?[...st.hist]:[];
+      history.unshift({a:'+'+f(amount)+' TON',s:'Friend Joined: '+friendName,k:'t',ts:Date.now()});
+      if(history.length>60)history.length=60;
+      Object.assign(st,{inv:newInv,invites:newInv,earn:newEarn,b:newB,balance:newB,life:newLife,totalEarned:newLife,invs:list,hist:history});
+      if(hasState)current.state=st;
+      else Object.assign(current,st);
+      didCredit=true;
+      return current;
+    },undefined,false);
+    if(!result.committed){
+      console.info('[Referral] Already credited or inviter account does not exist:',refId);
+      return false;
     }
-
-    let histList=Array.isArray(s.hist)?[...s.hist]:[];
-    histList.unshift({
-      a:'+'+f(rewardAmount)+' TON',
-      s:'Friend Joined: '+((U.first_name+(U.last_name?' '+U.last_name:'')).trim()||'Friend'),
-      k:'t',
-      ts:Date.now()
-    });
-    if(histList.length>60)histList=histList.slice(0,60);
-
-    const updates={inv:newInv,invites:newInv,earn:newEarn,b:newB,balance:newB,life:newLife,totalEarned:newLife,invs:invs,hist:histList};
-    if(hasState) await targetRef.child('state').update(updates);
-    else await targetRef.update(updates);
+    console.info('[Referral] Credited inviter:',refId,'amount:',amount);
+    return didCredit;
   }catch(err){
-    console.warn('[Referral] Failed to credit referrer:',err);
+    console.warn('[Referral] Failed to credit referrer. Check Firebase Database Rules:',err);
+    return false;
   }
 }
 
 async function checkAndApplyReferral(){
-  // A start parameter alone does not prove a qualifying referral. Keep the referrer
-  // for display/tracking only; reward credit must be performed by trusted server logic.
   const refId=getReferrerId();
-  if(!refId || S.refBy)return;
-  S.refBy=refId;
-  await save();
+  if(!refId || String(refId)===String(U.id) || S.refBy)return;
+  // Save the referral marker only after attempting the one-time credit.
+  // The inviter's Firebase user record must already exist and rules must allow this write.
+  const credited=await creditReferrer(refId,CFG.inv);
+  if(credited){
+    S.refBy=String(refId);
+    await save();
+  }else{
+    console.warn('[Referral] No reward credited. Confirm inviter has opened the app and Firebase rules allow the transaction.');
+  }
 }
 
 function initMonetagInApp(){
