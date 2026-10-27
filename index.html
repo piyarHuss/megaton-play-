@@ -462,23 +462,21 @@ function getReferrerId(){
   const readParams=txt=>{
     try{
       const q=new URLSearchParams(txt||'');
-      return q.get('tgWebAppStartParam')||q.get('startapp')||q.get('start_param')||'';
+      return q.get('tgWebAppStartParam')||q.get('startapp')||q.get('start_param')||q.get('ref')||'';
     }catch(e){return '';}
   };
   if(!raw)raw=readParams(window.location.search);
   if(!raw&&window.location.hash)raw=readParams(window.location.hash.replace(/^#/, ''));
   if(!raw)return null;
   try{raw=decodeURIComponent(raw);}catch(e){}
-  const match=String(raw).trim().match(/^ref_(\d+)$/);
+  const match=String(raw).trim().match(/(?:ref_)?(\d+)/);
   if(!match)return null;
   const refId=match[1];
-  return refId!==String(U.id)?refId:null;
+  return (refId&&String(refId)!==String(U.id))?refId:null;
 }
 
 async function creditReferrer(refId,rewardAmount){
   if(!db||!refId||String(refId)===String(U.id))return false;
-  // Keep referral writes scoped to the inviter's state node. A transaction on the
-  // entire users/{id} profile can fail when Firebase rules permit state-only writes.
   try{
     const targetRef=db.ref('users/'+String(refId)+'/state');
     let didCredit=false;
@@ -487,7 +485,19 @@ async function creditReferrer(refId,rewardAmount){
     const amount=Math.max(0,Number(rewardAmount)||0);
     const result=await targetRef.transaction(current=>{
       didCredit=false;
-      if(!current||typeof current!=='object')return;
+      if(current===null){
+        didCredit=true;
+        return {
+          b: amount,
+          life: amount,
+          earn: amount,
+          inv: 1,
+          invites: 1,
+          invs: [{id:friendId,n:friendName,username:(U.username||'').replace(/^@/,''),photo_url:U.photo_url||'',ts:Date.now()}],
+          hist: [{a:'+'+f(amount)+' TON',s:'Friend Joined: '+friendName,k:'t',ts:Date.now()}]
+        };
+      }
+      if(typeof current!=='object')return;
       const st={...current};
       const list=Array.isArray(st.invs)?[...st.invs]:[];
       if(list.some(x=>String(x&&(x.id||x.uid))===friendId))return;
@@ -507,13 +517,13 @@ async function creditReferrer(refId,rewardAmount){
       return st;
     },undefined,false);
     if(!result.committed||!didCredit){
-      console.info('[Referral] No credit: inviter state missing, duplicate invite, or transaction not committed:',refId);
+      console.info('[Referral] Already credited or transaction aborted for inviter:',refId);
       return false;
     }
-    console.info('[Referral] Credited inviter state:',refId,'amount:',amount);
+    console.info('[Referral] Successfully credited inviter:',refId,'amount:',amount);
     return true;
   }catch(err){
-    console.warn('[Referral] Failed to credit inviter state. Check Firebase Database Rules for users/{uid}/state:',err);
+    console.warn('[Referral] Failed to credit inviter state. Ensure Firebase rules permit users/{uid}/state:',err);
     return false;
   }
 }
@@ -521,14 +531,14 @@ async function creditReferrer(refId,rewardAmount){
 async function checkAndApplyReferral(){
   const refId=getReferrerId();
   if(!refId || String(refId)===String(U.id) || S.refBy)return;
-  // Save the referral marker only after attempting the one-time credit.
-  // The inviter's Firebase user record must already exist and rules must allow this write.
   const credited=await creditReferrer(refId,CFG.inv);
   if(credited){
     S.refBy=String(refId);
+    award(CFG.inv, 'Referral Welcome Bonus');
     await save();
+    toast('🎉 Joined via referral invite!');
   }else{
-    console.warn('[Referral] No reward credited. Confirm inviter has opened the app and Firebase rules allow the transaction.');
+    console.info('[Referral] Skipped or already registered for:',refId);
   }
 }
 
@@ -971,8 +981,7 @@ shx(){openL('https://twitter.com/intent/tweet?text='+encodeURIComponent('Earn TO
 cpl(){const l=link();(navigator.clipboard?navigator.clipboard.writeText(l):Promise.reject()).then(()=>toast('Link copied!')).catch(()=>{const t=document.createElement('textarea');t.value=l;document.body.appendChild(t);t.select();try{document.execCommand('copy');toast('Link copied!')}catch(e){toast(l)}t.remove()})},
 cm(e){const m=missions().find(x=>x.id==e.dataset.id);if(!m||S.ms[m.id]||m.cur<m.n)return;S.ms[m.id]=1;if(m.u=='Spins'){S.fs+=m.r;hist('+'+m.r+' Free Spins','Mission','t');save();render(true)}else award(m.r,'Mission',e);M.mission()},
 ck(e){const c=S.ck;if(c.d==day())return;const y=dayAt(new Date(Date.now()-864e5)),n=c.d==y?c.n%7+1:1,r=CHK()[n-1];S.ck={d:day(),n};award(r,'Daily check-in',e);M.checkin()}};
-const INVITE_BASE_URL='https://t.me/MegaTonPlay_bot/ton';
-const link=()=>`${INVITE_BASE_URL}?startapp=ref_${encodeURIComponent(String(U.id))}`;
+const link=()=>`https://t.me/${CFG.bot}/${CFG.app}?startapp=ref_${encodeURIComponent(String(U.id))}`;
 const M={checkin(){const c=S.ck,ok=c.d==day(),y=dayAt(new Date(Date.now()-864e5)),nx=ok?c.n:(c.d==y?c.n%7+1:1);const R7=CHK();
 modal(`<h3><span>${ic('cal',22)}Daily check-in</span>${xb}</h3><p style="color:var(--mut);margin-top:0">Check in every day: up to +${f(R7.reduce((a,b)=>a+b,0))} TON over 7 days.</p><div class="days">${R7.map((r,i)=>`<div class="${i<(ok?c.n:nx-1)?'ok':i==nx-1&&!ok?'cur':''}">Day ${i+1}<b>+${f(r)}</b></div>`).join('')}<div style="display:flex;align-items:center;justify-content:center;color:var(--gold)">${ic('gift',24)}</div></div><button class="btn ${ok?'dis':''}" data-a="ck" style="width:100%;margin-top:14px;height:48px">${ok?'Claimed today':'Claim +'+f(R7[nx-1])+' TON'}</button>`)},
 mission(){const ms=missions(),sc=a=>ms.filter(m=>m.g==a).map(m=>`<div class="task" style="margin-bottom:8px"><div class="ic" style="background:var(--card2);color:var(--acc);width:44px;height:44px">${ic(m.g=='inv'?'users':m.g=='ads'?'play':'check',20)}</div><div class="t"><b style="font-size:15px">${m.t}</b><small>${m.u?`+${m.r} Free Spins`:amt(m.r,14)} · <s>${Math.min(m.cur,m.n)}/${m.n}</s></small></div>${S.ms[m.id]?`<button class="btn dis" style="min-width:76px">${ic('check',16)}</button>`:m.cur>=m.n?`<button class="btn grn" data-a="cm" data-id="${m.id}" style="min-width:76px">Claim</button>`:`<button class="btn dis" style="min-width:76px">${Math.min(m.cur,m.n)}/${m.n}</button>`}</div>`).join('');
