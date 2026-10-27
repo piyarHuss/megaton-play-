@@ -38,8 +38,13 @@ nav button.on::before{content:"";position:absolute;top:0;left:30%;right:30%;heig
 .task b{display:block;font-size:15px;font-weight:600;line-height:1.25;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .task small{color:var(--gold);font-size:13.5px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}.task small s{color:var(--mut);text-decoration:none}
 .pill{display:inline-flex;align-items:center;gap:5px;border:1px solid #2a3a8a;color:#8fa6ff;background:#141c3f;border-radius:999px;padding:2px 8px;font-size:11.5px;font-weight:500}
-.task .btn,adsgram-task::part(button){box-sizing:border-box;flex:0 0 88px;width:88px;min-width:88px;max-width:88px;height:38px;font-size:13px;padding:0 6px;border-radius:12px;white-space:nowrap;display:inline-flex;align-items:center;justify-content:center;gap:5px;overflow:hidden}
-adsgram-task{display:flex;width:100%;max-width:100%;min-width:0;box-sizing:border-box;overflow:hidden;margin:0 0 10px;align-items:center;}
+.task .btn{flex:none;min-width:82px;height:38px;font-size:13.5px;padding:0 12px;border-radius:12px}
+.task .btn,.task>button.btn{box-sizing:border-box!important;flex:0 0 88px!important;width:88px!important;min-width:88px!important;max-width:88px!important;height:38px!important;padding:0 6px!important;font-size:13px!important;white-space:nowrap!important;display:inline-flex;align-items:center;justify-content:center;gap:5px;overflow:hidden}
+.task>.t{flex:1 1 0!important;width:0;min-width:0!important;max-width:100%;padding-right:0!important;overflow:hidden}
+.task>button{flex:0 0 88px!important;width:88px!important;min-width:88px!important;max-width:88px!important}
+adsgram-task{display:block;width:100%;max-width:100%;min-width:0;box-sizing:border-box;overflow:hidden;margin:0 0 10px}
+
+adsgram-task{display:block;width:100%;margin-bottom:10px}
 
 .in{animation:in .45s both}.noan .in{animation:none}@keyframes in{from{opacity:0;transform:translateY(14px)}}
 .qi{display:flex;justify-content:space-between}.qi button{background:none;border:0;color:var(--mut);font:inherit;font-size:13px;font-weight:500;display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;position:relative;width:19%}
@@ -138,7 +143,7 @@ input.in2{width:100%;padding:14px;border-radius:14px;border:1px solid var(--line
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <script>
 "use strict";
-const CFG={bot:'MegaTonPlay_bot',app:'ton',channel:'https://t.me/MegaTonPlay',group:'https://t.me/MegaTonPlay',support:'https://t.me/MegaTonPlay',minW:10,spinCost:7,adWait:8,games:10,tix:.1,cap:40,model:'character.jump.glb',jump:'jump.mp3',bgm:'backgroundsound.mp3',cs:64,turn:.9,inv:10,bgmVol:.35,sfxVol:1};
+const CFG={bot:'MegaTonPlay_bot',app:'ton',channel:'https://t.me/MegaTonPlay',group:'https://t.me/MegaTonPlay',support:'https://t.me/MegaTonPlay',minW:10,spinCost:7,adWait:8,adCooldownHours:1,games:10,tix:.1,cap:40,model:'character.jump.glb',jump:'jump.mp3',bgm:'backgroundsound.mp3',cs:64,turn:.9,inv:10,bgmVol:.35,sfxVol:1};
 const FIREBASE_CONFIG = {
   apiKey: "AIzaSyBJrCE4w_QfBqfF3g4O_RuCK4DbjmL9TRg",
   authDomain: "telegram-69052.firebaseapp.com",
@@ -182,7 +187,7 @@ if (!U.id) {
 
 const $=(s,r=document)=>r.querySelector(s),day=()=>new Date().toISOString().slice(0,10),esc=s=>String(s).replace(/[&<>"']/g,c=>'&#'+c.charCodeAt(0)+';');
 const f=n=>(n/1000).toFixed(4);
-let S={b:0,life:0,fs:0,spins:0,ck:{d:'',n:0},day:day(),ad:{},adCd:{},adGlobalCd:0,done:{},dn:0,lt:{},pend:{},ms:{},hist:[],inv:0,earn:0,invs:[],refBy:'',wallet:'',wds:[],theme:'auto',lang:'en',world:false,snd:true,boost:false,rot:0,gp:0,gb:0};
+let S={b:0,life:0,fs:0,spins:0,ck:{d:'',n:0},day:day(),ad:{},adCd:{},done:{},dn:0,lt:{},pend:{},ms:{},hist:[],inv:0,earn:0,invs:[],refBy:'',wallet:'',wds:[],theme:'auto',lang:'en',world:false,snd:true,boost:false,rot:0,gp:0,gb:0};
 let db=null, userRef=null, userStateRef=null, firebaseReady=false, saveQueue=Promise.resolve();
 try {
   if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
@@ -290,7 +295,7 @@ function applyConf(c){
   if(e.minW!=null)CFG.minW=mm(e.minW);
   if(e.tix!=null)CFG.tix=mm(e.tix);
   if(e.invReward!=null)CFG.inv=mm(e.invReward);
-  ['games','cap','adWait'].forEach(k=>{if(e[k]!=null)CFG[k]=+e[k]});
+  ['games','cap','adWait','adCooldownHours'].forEach(k=>{if(e[k]!=null)CFG[k]=+e[k]});
   ['model','jump','bgm'].forEach(k=>{if(g[k])CFG[k]=g[k]});
   ['cs','turn','bgmVol','sfxVol'].forEach(k=>{if(g[k]!=null)CFG[k]=+g[k]});
   Object.entries(th).forEach(([k,v])=>{if(v)document.documentElement.style.setProperty('--'+k,v)});
@@ -543,19 +548,25 @@ function taskCard(t,type){
     const bId=t.blockId||'task-56221';
     return `<adsgram-task data-block-id="${esc(bId)}" data-debug="false" class="task in">
       <span slot="reward" class="am">${TON(14)}${f(t.r)}</span>
-      <button slot="button" class="btn" style="box-sizing:border-box;width:88px;min-width:0;max-width:88px;height:38px;font-size:13px;padding:0 6px;white-space:nowrap;overflow:hidden">Go${ic('up',14)}</button>
-      <button slot="claim" class="btn grn" style="box-sizing:border-box;width:88px;min-width:0;max-width:88px;height:38px;font-size:13px;padding:0 6px;white-space:nowrap;overflow:hidden">${ic('check',14)}Claim</button>
-      <button slot="done" class="btn dis" style="box-sizing:border-box;width:88px;min-width:0;max-width:88px;height:38px;font-size:13px;padding:0 6px;white-space:nowrap;overflow:hidden">Done</button>
+      <button slot="button" class="btn" style="min-width:82px;height:38px;font-size:13.5px">Go${ic('up',14)}</button>
+      <button slot="claim" class="btn grn" style="min-width:82px;height:38px;font-size:13.5px">${ic('check',14)}Claim</button>
+      <button slot="done" class="btn dis" style="min-width:82px;height:38px;font-size:13.5px">Done</button>
     </adsgram-task>`;
   }
 
   let btn='',sb='';
   if(type=='ad'){
-    const c=S.ad[t.id]||0;
-    const cd=Math.max(0,Math.ceil((Math.max((S.adCd&&S.adCd[t.id]||0),(S.adGlobalCd||0))-Date.now())/1000));
+    let c=S.ad[t.id]||0;
+    S.adCd=S.adCd||{};
+    const until=Number(S.adCd[t.id]||0);
+    const cd=Math.max(0,Math.ceil((until-Date.now())/1000));
+    // Reset only this ad's daily counter after its own cooldown ends.
+    if(c>=t.max && cd===0 && until>0){
+      c=0; S.ad[t.id]=0; S.adCd[t.id]=0; save();
+    }
     sb=`${amt(t.r,14)} <s>${c}/${t.max} today</s>`;
-    if(cd>0){
-      btn=`<button class="btn dis" style="width:88px;min-width:88px;max-width:88px;font-size:12px">${Math.floor(cd/3600)>0?Math.floor(cd/3600)+"h ":""}${Math.floor((cd%3600)/60)}m ${cd%60}s</button>`;
+    if(c>=t.max && cd>0){
+      btn=`<button class="btn dis">${Math.floor(cd/3600)>0?Math.floor(cd/3600)+'h ':''}${Math.floor((cd%3600)/60)}m ${cd%60}s</button>`;
     }else if(c>=t.max){
       btn=`<button class="btn dis">Done</button>`;
     }else{
@@ -651,10 +662,11 @@ ad(e){
   if(!t)return;
   if((S.ad[t.id]||0)>=t.max)return;
 
-  // Global 1-hour cooldown after a successfully rewarded ad
-  const cdLeft=Math.max(0,Math.ceil((Math.max((S.adCd&&S.adCd[t.id]||0),(S.adGlobalCd||0))-Date.now())/1000));
-  if(cdLeft>0){
-    toast('⏳ Ads locked. Please wait '+Math.floor(cdLeft/60)+'m '+(cdLeft%60)+'s');
+  // Cooldown applies only to this ad after it reaches its own Max ads count.
+  S.adCd=S.adCd||{};
+  const cdLeft=Math.max(0,Math.ceil((Number(S.adCd[t.id]||0)-Date.now())/1000));
+  if(cdLeft>0 || (S.ad[t.id]||0)>=t.max){
+    toast('⏳ This ad is on cooldown. Other ads remain available.');
     return;
   }
 
@@ -662,22 +674,23 @@ ad(e){
   const an=CONF.adNetworks||{};
   const blockId=String(t.blockId||(net==='adsgram_int'?(an.adsgramInt||'int-56219'):net==='adsgram_reward'?(an.adsgramReward||'56220'):(an.monetagZone||'12131483'))).trim();
 
-  // Random anti-cheat watch threshold for this ad: 7–10 seconds
+  // Random minimum watch duration for each ad: 7, 8, 9, or 10 seconds.
   const adStartTs=Date.now();
   const minWatchSeconds=7+Math.floor(Math.random()*4);
 
   const handleReward=(label)=>{
     const elapsed=(Date.now()-adStartTs)/1000;
-    // Random 7–10 second minimum watch check
     if(elapsed<minWatchSeconds){
-      toast('⚠️ Watch the ad for at least '+minWatchSeconds+' seconds to earn reward.');
+      toast('⚠️ Watch at least '+minWatchSeconds+' seconds to earn the reward.');
       return;
     }
-    // Start one-hour global ad cooldown after a successful reward
+    // Count this rewarded view. Start cooldown only when THIS ad reaches its max.
     S.adCd=S.adCd||{};
-    S.adCd[t.id]=Date.now()+3600000;
-    S.adGlobalCd=Date.now()+3600000;
     S.ad[t.id]=(S.ad[t.id]||0)+1;
+    if(S.ad[t.id]>=t.max){
+      const hours=Math.max(0.05,Number(CFG.adCooldownHours)||1);
+      S.adCd[t.id]=Date.now()+hours*3600000;
+    }
     S.dn++;
     award(t.r,label||t.t||'Sponsor ad',e);
     toast('🎉 Ad reward +'+f(t.r)+' TON added!');
@@ -736,7 +749,7 @@ ad(e){
 
   // Timer / Fallback Demo Countdown
   let n=7+Math.floor(Math.random()*4),ok=false;
-  modal(`<h3><span>Sponsored · Ad</span>${xb}</h3><div class="cr"></div><div class="ring"><svg width="120" height="120"><circle cx="60" cy="60" r="52" stroke="var(--line)" stroke-width="10" fill="none"/><circle id="rc" cx="60" cy="60" r="52" stroke="#2a7bff" stroke-width="10" fill="none" stroke-linecap="round" stroke-dasharray="327" stroke-dashoffset="0" style="transition:stroke-dashoffset 1s linear"/></svg><b id="rn">${n}</b></div><p style="text-align:center;color:var(--mut)">Watch for ${n} seconds to earn ${amt(t.r,14)}</p><button class="btn dis" id="rb" style="width:100%">Please wait…</button>`);
+  modal(`<h3><span>Sponsored · Ad</span>${xb}</h3><div class="cr"></div><div class="ring"><svg width="120" height="120"><circle cx="60" cy="60" r="52" stroke="var(--line)" stroke-width="10" fill="none"/><circle id="rc" cx="60" cy="60" r="52" stroke="#2a7bff" stroke-width="10" fill="none" stroke-linecap="round" stroke-dasharray="327" stroke-dashoffset="0" style="transition:stroke-dashoffset 1s linear"/></svg><b id="rn">${n}</b></div><p style="text-align:center;color:var(--mut)">Watch at least 5 seconds to earn ${amt(t.r,14)}</p><button class="btn dis" id="rb" style="width:100%">Please wait…</button>`);
   const iv=setInterval(()=>{
     if(!$('#rn')){clearInterval(iv);return}
     n--;
@@ -780,7 +793,7 @@ shx(){openL('https://twitter.com/intent/tweet?text='+encodeURIComponent('Earn TO
 cpl(){const l=link();(navigator.clipboard?navigator.clipboard.writeText(l):Promise.reject()).then(()=>toast('Link copied!')).catch(()=>{const t=document.createElement('textarea');t.value=l;document.body.appendChild(t);t.select();try{document.execCommand('copy');toast('Link copied!')}catch(e){toast(l)}t.remove()})},
 cm(e){const m=missions().find(x=>x.id==e.dataset.id);if(!m||S.ms[m.id]||m.cur<m.n)return;S.ms[m.id]=1;if(m.u=='Spins'){S.fs+=m.r;hist('+'+m.r+' Free Spins','Mission','t');save();render(true)}else award(m.r,'Mission',e);M.mission()},
 ck(e){const c=S.ck;if(c.d==day())return;const y=new Date(Date.now()-864e5).toISOString().slice(0,10),n=c.d==y?c.n%7+1:1,r=CHK()[n-1];S.ck={d:day(),n};award(r,'Daily check-in',e);M.checkin()}};
-const link=()=>`https://t.me/MegaTonPlay_bot/ton?startapp=ref_${encodeURIComponent(U.id)}`;
+const link=()=>`https://t.me/${CFG.bot}/${CFG.app}?startapp=ref_${U.id}`;
 const M={checkin(){const c=S.ck,ok=c.d==day(),y=new Date(Date.now()-864e5).toISOString().slice(0,10),nx=ok?c.n:(c.d==y?c.n%7+1:1);const R7=CHK();
 modal(`<h3><span>${ic('cal',22)}Daily check-in</span>${xb}</h3><p style="color:var(--mut);margin-top:0">Check in every day: up to +${f(R7.reduce((a,b)=>a+b,0))} TON over 7 days.</p><div class="days">${R7.map((r,i)=>`<div class="${i<(ok?c.n:nx-1)?'ok':i==nx-1&&!ok?'cur':''}">Day ${i+1}<b>+${f(r)}</b></div>`).join('')}<div style="display:flex;align-items:center;justify-content:center;color:var(--gold)">${ic('gift',24)}</div></div><button class="btn ${ok?'dis':''}" data-a="ck" style="width:100%;margin-top:14px;height:48px">${ok?'Claimed today':'Claim +'+f(R7[nx-1])+' TON'}</button>`)},
 mission(){const ms=missions(),sc=a=>ms.filter(m=>m.g==a).map(m=>`<div class="task" style="margin-bottom:8px"><div class="ic" style="background:var(--card2);color:var(--acc);width:44px;height:44px">${ic(m.g=='inv'?'users':m.g=='ads'?'play':'check',20)}</div><div class="t"><b style="font-size:15px">${m.t}</b><small>${m.u?`+${m.r} Free Spins`:amt(m.r,14)} · <s>${Math.min(m.cur,m.n)}/${m.n}</s></small></div>${S.ms[m.id]?`<button class="btn dis" style="min-width:76px">${ic('check',16)}</button>`:m.cur>=m.n?`<button class="btn grn" data-a="cm" data-id="${m.id}" style="min-width:76px">Claim</button>`:`<button class="btn dis" style="min-width:76px">${Math.min(m.cur,m.n)}/${m.n}</button>`}</div>`).join('');
@@ -900,7 +913,7 @@ $('#mn').onclick=e=>{const d=e.target.closest('[data-m]');if(!d)return;const k=d
 document.addEventListener('click',e=>{if(!e.target.closest('#mn')&&!e.target.closest('#gr'))$('#mn').classList.remove('on')});
 
 /* Live countdown ticker: 45s timer & task cooldowns refresh smoothly */
-setInterval(()=>{if(busy)return;if(newDay()){save();render(true);return}if(tab=='home'&&!$('#md').classList.contains('on')&&(Object.keys(S.pend).length||Object.keys(S.adCd||{}).some(k=>S.adCd[k]>Date.now())||(S.adGlobalCd||0)>Date.now()))render(true)},1000);
+setInterval(()=>{if(busy)return;if(newDay()){save();render(true);return}if(tab=='home'&&!$('#md').classList.contains('on')&&(Object.keys(S.pend).length||Object.keys(S.adCd||{}).some(k=>S.adCd[k]>Date.now())))render(true)},1000);
 
 boot();
 </script></body></html>
