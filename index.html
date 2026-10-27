@@ -227,7 +227,7 @@ if (!U.id) {
   if (!U.first_name) U.first_name = 'Player';
 }
 
-const $=(s,r=document)=>r.querySelector(s),day=()=>new Date().toISOString().slice(0,10),esc=s=>String(s).replace(/[&<>"']/g,c=>'&#'+c.charCodeAt(0)+';');
+const $=(s,r=document)=>r.querySelector(s),dayAt=d=>{const p=Object.fromEntries(new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Kolkata',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(d).map(x=>[x.type,x.value]));return p.year+'-'+p.month+'-'+p.day},day=()=>dayAt(new Date()),esc=s=>String(s).replace(/[&<>"']/g,c=>'&#'+c.charCodeAt(0)+';');
 const f=n=>(n/1000).toFixed(4);
 let S={b:0,life:0,fs:0,spins:0,ck:{d:'',n:0},day:day(),ad:{},adCd:{},done:{},dn:0,lt:{},pend:{},taskStarted:{},taskRewardPending:{},ms:{},hist:[],inv:0,earn:0,invs:[],refBy:'',wallet:'',wds:[],theme:'auto',lang:'en',world:false,snd:true,boost:false,rot:0,gp:0,gb:0};
 let db=null, userRef=null, userStateRef=null, firebaseReady=false, saveQueue=Promise.resolve();
@@ -325,11 +325,11 @@ function hap(k){try{if(tg&&tg.HapticFeedback)tg.HapticFeedback.impactOccurred(k|
 function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(toast.h);toast.h=setTimeout(()=>t.classList.remove('on'),2200)}
 function openL(u){try{if(tg&&u.includes('t.me'))tg.openTelegramLink(u);else if(tg)tg.openLink(u);else window.open(u,'_blank')}catch(e){window.open(u,'_blank')}}
 const cv=$('#fx'),cx=cv.getContext('2d');let P=[];function fxs(){cv.width=innerWidth;cv.height=innerHeight}addEventListener('resize',fxs);fxs();
-function burst(x,y,c,n=16){for(let i=0;i<n;i++){const a=Math.random()*6.28,s=2+Math.random()*5;P.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s-3,l:1,c:c||'#0098ea',r:3+Math.random()*4})}}
-function confetti(){for(let i=0;i<90;i++)P.push({x:innerWidth/2+(Math.random()-.5)*100,y:innerHeight*.45,vx:(Math.random()-.5)*14,vy:-Math.random()*14,l:1.4,c:['#ffb21a','#2a7bff','#22c55e','#0098ea','#a855f7'][i%5],r:4+Math.random()*4})}
-(function lp(){requestAnimationFrame(lp);if(!P.length)return;cx.clearRect(0,0,cv.width,cv.height);P.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=.3;p.l-=.02;cx.globalAlpha=Math.max(0,Math.min(1,p.l));cx.fillStyle=p.c;cx.beginPath();cx.arc(p.x,p.y,p.r,0,6.3);cx.fill()});cx.globalAlpha=1;P=P.filter(p=>p.l>0);if(!P.length)cx.clearRect(0,0,cv.width,cv.height)})();
+function burst(x,y,c,n=16){for(let i=0;i<n;i++){const a=Math.random()*6.28,s=2+Math.random()*5;P.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s-3,l:1,c:c||'#0098ea',r:3+Math.random()*4})}startParticleLoop()}
+function confetti(){for(let i=0;i<90;i++)P.push({x:innerWidth/2+(Math.random()-.5)*100,y:innerHeight*.45,vx:(Math.random()-.5)*14,vy:-Math.random()*14,l:1.4,c:['#ffb21a','#2a7bff','#22c55e','#0098ea','#a855f7'][i%5],r:4+Math.random()*4});startParticleLoop()}
+let particleLoop=false;function lp(){particleLoop=false;if(!P.length)return;cx.clearRect(0,0,cv.width,cv.height);P.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=.3;p.l-=.02;cx.globalAlpha=Math.max(0,Math.min(1,p.l));cx.fillStyle=p.c;cx.beginPath();cx.arc(p.x,p.y,p.r,0,6.3);cx.fill()});cx.globalAlpha=1;P=P.filter(p=>p.l>0);if(!P.length)cx.clearRect(0,0,cv.width,cv.height);else{particleLoop=true;requestAnimationFrame(lp)}}function startParticleLoop(){if(!particleLoop&&P.length){particleLoop=true;requestAnimationFrame(lp)}}
 function hist(a,s,k){S.hist.unshift({a,s,k,ts:Date.now()});S.hist=S.hist.slice(0,60)}
-function award(n,why,el){if(S.boost){n*=2;S.boost=false;toast('2× Boost applied!')}S.b+=n;S.life+=n;hist('+'+f(n)+' TON',why,'t');save();if(el&&el.isConnected){const r=el.getBoundingClientRect();burst(r.left+r.width/2,r.top+r.height/2,'#0098ea',20)}snd(880);setTimeout(()=>snd(1180),90);hap('medium');render(true)}
+function award(n,why,el){if(S.boost){n*=2;S.boost=false;toast('2× Boost applied!')}S.b+=n;S.life+=n;hist('+'+f(n)+' TON',why,'t');save().then(ok=>{if(!ok)toast('Reward shown locally, but Firebase save failed. Do not withdraw until connection is restored.');});if(el&&el.isConnected){const r=el.getBoundingClientRect();burst(r.left+r.width/2,r.top+r.height/2,'#0098ea',20)}snd(880);setTimeout(()=>snd(1180),90);hap('medium');render(true)}
 function modal(h){const m=$('#md');m.innerHTML=`<div class="sheet">${h}</div>`;m.classList.add('on')}
 function closeM(){$('#md').classList.remove('on')}$('#md').onclick=e=>{if(e.target.id=='md')closeM()};
 const xb=`<button class="x" data-a="x">${ic('x',18)}</button>`;
@@ -368,7 +368,7 @@ function applyConf(c){
     initMonetagInApp();
   }
   const rawAds=toArr(c.ads);
-  if(rawAds.length>0){
+  if(Array.isArray(c.ads)){
     ADS.length=0;
     rawAds.filter(a=>a&&a.on!==false).forEach(a=>{
       ADS.push({
@@ -381,7 +381,7 @@ function applyConf(c){
     });
   }
   const rawTasks=toArr(c.tasks);
-  if(rawTasks.length>0){
+  if(Array.isArray(c.tasks)){
     LT.length=0;
     WT.length=0;
     rawTasks.filter(t=>t&&t.on!==false).forEach(t=>{
@@ -515,22 +515,12 @@ async function creditReferrer(refId,rewardAmount){
 }
 
 async function checkAndApplyReferral(){
+  // A start parameter alone does not prove a qualifying referral. Keep the referrer
+  // for display/tracking only; reward credit must be performed by trusted server logic.
   const refId=getReferrerId();
-  if(!refId)return;
-  if(S.refBy)return;
+  if(!refId || S.refBy)return;
   S.refBy=refId;
-  const reward=CFG.inv||10;
-  S.b+=reward;
-  S.life+=reward;
-  hist('+'+f(reward)+' TON','Referral Welcome Bonus','t');
   await save();
-  await creditReferrer(refId,reward);
-  setTimeout(()=>{
-    confetti();
-    toast('🎉 Welcome bonus +'+f(reward)+' TON added!');
-    snd(880,.2);
-    setTimeout(()=>snd(1320,.3),150);
-  },1500);
 }
 
 function initMonetagInApp(){
@@ -557,6 +547,7 @@ function initMonetagInApp(){
 async function boot(){
   initSplash();
   await loadUserState();
+  if(!$('#app')) return; // Account was blocked; do not initialize the removed app UI.
   let c=null;
   try{
     if(db){
@@ -843,7 +834,7 @@ ad(e){
     const fn=window.show_12131483;
     if(typeof fn==='function'){
       toast('Opening Monetag ad…');
-      fn().then(()=>{
+      Promise.resolve().then(()=>fn()).then(()=>{
         handleReward('Monetag Rewarded');
       }).catch(err=>{
         console.warn('[Monetag Rewarded]',err);
@@ -858,7 +849,7 @@ ad(e){
     const fn=window.show_12131483;
     if(typeof fn==='function'){
       toast('Opening Monetag popup…');
-      fn('pop').then(()=>{
+      Promise.resolve().then(()=>fn('pop')).then(()=>{
         handleReward('Monetag Popup');
       }).catch(err=>{
         console.warn('[Monetag Popup]',err);
@@ -868,31 +859,12 @@ ad(e){
     }
   }
 
-  // Timer / Fallback Demo Countdown
-  let n=7+Math.floor(Math.random()*4),ok=false;
-  modal(`<h3><span>Sponsored · Ad</span>${xb}</h3><div class="cr"></div><div class="ring"><svg width="120" height="120"><circle cx="60" cy="60" r="52" stroke="var(--line)" stroke-width="10" fill="none"/><circle id="rc" cx="60" cy="60" r="52" stroke="#2a7bff" stroke-width="10" fill="none" stroke-linecap="round" stroke-dasharray="327" stroke-dashoffset="0" style="transition:stroke-dashoffset 1s linear"/></svg><b id="rn">${n}</b></div><p style="text-align:center;color:var(--mut)">Watch at least 5 seconds to earn ${amt(t.r,14)}</p><button class="btn dis" id="rb" style="width:100%">Please wait…</button>`);
-  const iv=setInterval(()=>{
-    if(!$('#rn')){clearInterval(iv);return}
-    n--;
-    $('#rn').textContent=Math.max(0,n);
-    $('#rc').style.strokeDashoffset=327*(1-n/CFG.adWait);
-    if(n<=0){
-      clearInterval(iv);
-      ok=true;
-      const b=$('#rb');
-      b.className='btn grn';
-      b.innerHTML=ic('check',16)+'Claim +'+f(t.r)+' TON';
-      b.onclick=()=>{
-        if(!ok)return;
-        ok=false;
-        closeM();
-        handleReward('Sponsored Ad');
-      };
-    }
-  },1000);
+  // Fail closed: a countdown is not a real ad and must never pay a reward.
+  toast('No verified ad is available right now. Please try again later.');
+
 },
 go(e){const t=findT(e.dataset.id);if(!t)return;const wait=Math.max(1,Math.min(3600,Number(t.wait)||10));S.pend[t.id]=Date.now()+wait*1000;save();render(true);openL(t.url||CFG.channel);toast('Task started. Wait '+wait+' seconds before claiming.')},
-claim(e){const t=findT(e.dataset.id);if(!t)return;const until=Number(S.pend[t.id]||0);if(until&&Date.now()>=until){delete S.pend[t.id];if(t.daily)S.done[t.id]=1;else S.lt[t.id]=1;S.dn++;save();award(t.r,t.t,e)}else if(until){toast('Please wait '+Math.max(1,Math.ceil((until-Date.now())/1000))+' seconds');render(true)}},
+claim(e){const t=findT(e.dataset.id);if(!t)return;if(t.net!=='adsgram_task'){toast('Task completion cannot be verified for this link. No reward was added.');return;}const until=Number(S.pend[t.id]||0);if(until&&Date.now()>=until){toast('Please complete this task through the verified AdsGram task button.');}else if(until){toast('Please wait '+Math.max(1,Math.ceil((until-Date.now())/1000))+' seconds');render(true)}},
 qi(e){const k=e.dataset.v;closeM();M[k]()},x:closeM,
 gospin(){if(busy)return;tab='spin';render();setTimeout(()=>A.dospin(),450)},
 dospin(){if(busy)return;if(!S.fs&&S.b<CFG.spinCost){toast('Need '+f(CFG.spinCost)+' TON to spin');snd(150);return}busy=true;if(S.fs)S.fs--;else S.b-=CFG.spinCost;S.spins++;save();
@@ -989,9 +961,9 @@ inv(){const l=link(),txt=T('shareText');if(tg&&tg.openTelegramLink)tg.openTelegr
 shx(){openL('https://twitter.com/intent/tweet?text='+encodeURIComponent('Earn TON & spins! '+link()))},shw(){openL('https://wa.me/?text='+encodeURIComponent('Earn TON & spins! '+link()))},
 cpl(){const l=link();(navigator.clipboard?navigator.clipboard.writeText(l):Promise.reject()).then(()=>toast('Link copied!')).catch(()=>{const t=document.createElement('textarea');t.value=l;document.body.appendChild(t);t.select();try{document.execCommand('copy');toast('Link copied!')}catch(e){toast(l)}t.remove()})},
 cm(e){const m=missions().find(x=>x.id==e.dataset.id);if(!m||S.ms[m.id]||m.cur<m.n)return;S.ms[m.id]=1;if(m.u=='Spins'){S.fs+=m.r;hist('+'+m.r+' Free Spins','Mission','t');save();render(true)}else award(m.r,'Mission',e);M.mission()},
-ck(e){const c=S.ck;if(c.d==day())return;const y=new Date(Date.now()-864e5).toISOString().slice(0,10),n=c.d==y?c.n%7+1:1,r=CHK()[n-1];S.ck={d:day(),n};award(r,'Daily check-in',e);M.checkin()}};
+ck(e){const c=S.ck;if(c.d==day())return;const y=dayAt(new Date(Date.now()-864e5)),n=c.d==y?c.n%7+1:1,r=CHK()[n-1];S.ck={d:day(),n};award(r,'Daily check-in',e);M.checkin()}};
 const link=()=>`https://t.me/${CFG.bot}/${CFG.app}?startapp=ref_${U.id}`;
-const M={checkin(){const c=S.ck,ok=c.d==day(),y=new Date(Date.now()-864e5).toISOString().slice(0,10),nx=ok?c.n:(c.d==y?c.n%7+1:1);const R7=CHK();
+const M={checkin(){const c=S.ck,ok=c.d==day(),y=dayAt(new Date(Date.now()-864e5)),nx=ok?c.n:(c.d==y?c.n%7+1:1);const R7=CHK();
 modal(`<h3><span>${ic('cal',22)}Daily check-in</span>${xb}</h3><p style="color:var(--mut);margin-top:0">Check in every day: up to +${f(R7.reduce((a,b)=>a+b,0))} TON over 7 days.</p><div class="days">${R7.map((r,i)=>`<div class="${i<(ok?c.n:nx-1)?'ok':i==nx-1&&!ok?'cur':''}">Day ${i+1}<b>+${f(r)}</b></div>`).join('')}<div style="display:flex;align-items:center;justify-content:center;color:var(--gold)">${ic('gift',24)}</div></div><button class="btn ${ok?'dis':''}" data-a="ck" style="width:100%;margin-top:14px;height:48px">${ok?'Claimed today':'Claim +'+f(R7[nx-1])+' TON'}</button>`)},
 mission(){const ms=missions(),sc=a=>ms.filter(m=>m.g==a).map(m=>`<div class="task" style="margin-bottom:8px"><div class="ic" style="background:var(--card2);color:var(--acc);width:44px;height:44px">${ic(m.g=='inv'?'users':m.g=='ads'?'play':'check',20)}</div><div class="t"><b style="font-size:15px">${m.t}</b><small>${m.u?`+${m.r} Free Spins`:amt(m.r,14)} · <s>${Math.min(m.cur,m.n)}/${m.n}</s></small></div>${S.ms[m.id]?`<button class="btn dis" style="min-width:76px">${ic('check',16)}</button>`:m.cur>=m.n?`<button class="btn grn" data-a="cm" data-id="${m.id}" style="min-width:76px">Claim</button>`:`<button class="btn dis" style="min-width:76px">${Math.min(m.cur,m.n)}/${m.n}</button>`}</div>`).join('');
 modal(`<h3><span>${ic('star',22)}Missions</span>${xb}</h3><div class="sec">${ic('play',14)}WATCH ADS</div>${sc('ads')}<div class="sec">${ic('target',14)}TODAY’S TASKS</div>${sc('day')}<div class="sec">${ic('award',14)}INVITE MILESTONES</div>${sc('inv')}`)},
@@ -1102,7 +1074,7 @@ function open(){ov.style.display='block';rs();done=false;earned=0;T=0;shake=0;ct
 function close(){if(g&&!done)finish();on=false;bgm(0);cancelAnimationFrame(raf);ov.style.display='none';try{tg&&tg.enableVerticalSwipes&&tg.enableVerticalSwipes()}catch(e){}render(true)}
 $('#gx').onclick=close;
 return{open,reinit(){initAud();if(!CH.ok)loadChar()}}})();
-A.gogame=()=>{if(!FT('game'))return;if(S.gp>=CFG.games){toast('No plays left today. Come back tomorrow!');snd(150);return}S.gp++;S.spins++;save();GM.open()};
+A.gogame=()=>{if(!FT('game'))return;if(S.gp>=CFG.games){toast('No plays left today. Come back tomorrow!');snd(150);return}S.gp++;save();GM.open()};
 
 function menu(){const m=$('#mn');m.innerHTML=`<div data-m="lang">${ic('globe',20)}Language<span>${S.lang=='en'?'EN':'HI'}</span></div><div data-m="theme">${ic('moon',20)}Theme<span>${S.theme[0].toUpperCase()+S.theme.slice(1)}</span></div><div data-m="snd">${ic('vol',20)}Sound<i class="tg ${S.snd?'on':''}"></i></div><div data-m="world" style="border-top:1px solid var(--line)">${ic('globe',20)}World Tasks<i class="tg ${S.world?'on':''}"></i></div><div data-m="ch" style="border-top:1px solid var(--line)">${ic('send',20)}Channel</div><div data-m="gp">${ic('msg',20)}Group</div><div data-m="sp">${ic('info',20)}Contact Support</div>`;['lang','theme','snd','world','ch','gp','sp'].forEach(k=>{if(!FT('m_'+k)){const d=m.querySelector('[data-m="'+k+'"]');if(d)d.remove()}})}
 $('#gr').onclick=e=>{e.stopPropagation();menu();$('#mn').classList.toggle('on')};
