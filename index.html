@@ -560,13 +560,14 @@ function taskCard(t,type){
     S.adCd=S.adCd||{};
     const until=Number(S.adCd[t.id]||0);
     const cd=Math.max(0,Math.ceil((until-Date.now())/1000));
-    // Reset only this ad's daily counter after its own cooldown ends.
+    // After each view, this ad has a 45-second cooldown. If its max is reached,
+    // the longer per-ad cooldown applies instead. Reset count when that longer cooldown ends.
     if(c>=t.max && cd===0 && until>0){
       c=0; S.ad[t.id]=0; S.adCd[t.id]=0; save();
     }
     sb=`${amt(t.r,14)} <s>${c}/${t.max} today</s>`;
-    if(c>=t.max && cd>0){
-      btn=`<button class="btn dis">${Math.floor(cd/3600)>0?Math.floor(cd/3600)+'h ':''}${Math.floor((cd%3600)/60)}m ${cd%60}s</button>`;
+    if(cd>0){
+      btn=`<button class="btn dis">Wait ${cd}s</button>`;
     }else if(c>=t.max){
       btn=`<button class="btn dis">Done</button>`;
     }else{
@@ -684,12 +685,15 @@ ad(e){
       toast('⚠️ Watch at least '+minWatchSeconds+' seconds to earn the reward.');
       return;
     }
-    // Count this rewarded view. Start cooldown only when THIS ad reaches its max.
+    // Each rewarded view starts a 45-second cooldown for this ad only.
+    // When this ad reaches its own max, use the configured longer cooldown instead.
     S.adCd=S.adCd||{};
     S.ad[t.id]=(S.ad[t.id]||0)+1;
     if(S.ad[t.id]>=t.max){
       const hours=Math.max(0.05,Number(CFG.adCooldownHours)||1);
       S.adCd[t.id]=Date.now()+hours*3600000;
+    }else{
+      S.adCd[t.id]=Date.now()+45000;
     }
     S.dn++;
     award(t.r,label||t.t||'Sponsor ad',e);
