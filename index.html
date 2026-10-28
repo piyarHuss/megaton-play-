@@ -388,7 +388,7 @@ function applyConf(c){
       const taskObj={
         ...t,
         r:mm(t.r),
-        wait:Math.max(1,Math.min(3600,Number(t.wait)||10)),
+        wait:Math.max(16,Math.min(3600,Number(t.wait)||16)),
         net:t.net||'link',
         blockId:t.blockId||'',
         img:t.img||'',
@@ -603,7 +603,7 @@ async function boot(){
   }
   await checkAndApplyReferral();
   initMonetagInApp();
-  // Record when an AdsGram task is actually started, then enforce the admin-configured minimum wait.
+  // Record when an AdsGram task is actually started, then enforce the 16s anti-cheat wait.
   document.addEventListener('click',e=>{
     const trigger=e.target&&e.target.closest&&e.target.closest('adsgram-task [slot="button"]');
     if(!trigger)return;
@@ -612,8 +612,16 @@ async function boot(){
     const blockId=String(host.getAttribute('data-block-id')||'');
     const tk=[...LT,...WT].find(t=>String(t.blockId||'task-56221')===blockId&&t.net==='adsgram_task');
     if(!tk)return;
+    const now=Date.now();
+    const wait=Math.max(16,Number(tk.wait)||16);
     S.taskStarted=S.taskStarted||{};
-    S.taskStarted[tk.id]=Date.now();
+    S.taskStarted[tk.id]=now;
+    window.activeTaskSession={
+      id:tk.id,
+      startedAt:now,
+      wait:wait,
+      hasLeft:false
+    };
     save();
   },true);
   document.addEventListener('reward',(e)=>{
@@ -624,18 +632,23 @@ async function boot(){
     if(tk&&((tk.daily&&S.done[tk.id])||S.lt[tk.id]||S.taskRewardPending[tk.id]))return;
     const wait=tk?Math.max(16,Math.min(3600,Number(tk.wait)||16)):16;
     const started=tk?Number((S.taskStarted||{})[tk.id]||0):0;
-    const elapsed=started?Date.now()-started:0;
-    // Reject early/unsolicited SDK reward events instead of paying after a delayed timer.
-    // A quick back/return must not turn into a reward.
-    if(!tk||!started||elapsed<wait*1000){
-      if(tk){delete S.taskStarted[tk.id];delete S.taskRewardPending[tk.id];save();}
-      toast('Task not completed: stay in the task for at least '+wait+' seconds. No reward added.');
+    const elapsed=started?(Date.now()-started)/1000:0;
+
+    if(!started||elapsed<16){
+      toast('⚠️ AdsGram task incomplete! Minimum 16 seconds required on the task page.');
+      if(tk&&S.taskStarted)delete S.taskStarted[tk.id];
+      save();
       return;
     }
+
+    const remaining=Math.max(0,wait*1000-(Date.now()-(started||Date.now())));
     if(tk){S.taskRewardPending=S.taskRewardPending||{};S.taskRewardPending[tk.id]=1;save();}
-    if(tk){delete S.taskRewardPending[tk.id];S.lt[tk.id]=1;delete S.taskStarted[tk.id];S.dn++;save();}
-    award(rew,name);
-    toast('AdsGram Task rewarded! +'+f(rew)+' TON');
+    const pay=()=>{
+      if(tk){delete S.taskRewardPending[tk.id];S.lt[tk.id]=1;delete S.taskStarted[tk.id];S.dn++;save();}
+      award(rew,name);
+      toast('🎉 AdsGram Task rewarded! +'+f(rew)+' TON');
+    };
+    if(remaining>0){toast('Task completed. Reward in '+Math.ceil(remaining/1000)+'s');setTimeout(pay,remaining)}else pay();
   });
   GM.reinit();
   render();
@@ -886,8 +899,60 @@ ad(e){
   toast('No verified ad is available right now. Please try again later.');
 
 },
-go(e){const t=findT(e.dataset.id);if(!t)return;const wait=Math.max(16,Math.min(3600,Number(t.wait)||16));S.pend[t.id]=Date.now()+wait*1000;S.taskStarted=S.taskStarted||{};S.taskStarted[t.id]=Date.now();save();render(true);openL(t.url||CFG.channel);toast('Task started. Stay on the task for at least '+wait+' seconds before returning.')},
-claim(e){const t=findT(e.dataset.id);if(!t)return;if(t.net!=='adsgram_task'){toast('Task completion cannot be verified for this link. No reward was added.');return;}const until=Number(S.pend[t.id]||0);if(until&&Date.now()>=until){toast('Please complete this task through the verified AdsGram task button.');}else if(until){toast('Please wait '+Math.max(1,Math.ceil((until-Date.now())/1000))+' seconds');render(true)}},
+go(e){
+  const t=findT(e.dataset.id);
+  if(!t)return;
+  const wait=Math.max(16,Math.min(3600,Number(t.wait)||16));
+  const now=Date.now();
+  S.pend[t.id]=now+wait*1000;
+  S.taskStarted=S.taskStarted||{};
+  S.taskStarted[t.id]=now;
+  window.activeTaskSession={
+    id:t.id,
+    startedAt:now,
+    wait:wait,
+    hasLeft:false
+  };
+  save();
+  render(true);
+  openL(t.url||CFG.channel);
+  toast('⏱️ Task started! Stay on the page for at least '+wait+' seconds.');
+},
+claim(e){
+  const t=findT(e.dataset.id);
+  if(!t)return;
+  const started=Number((S.taskStarted||{})[t.id]||0);
+  const wait=Math.max(16,Number(t.wait)||16);
+  const until=Number(S.pend[t.id]||0);
+  const now=Date.now();
+  const elapsed=started?(now-started)/1000:0;
+
+  if((t.daily&&S.done[t.id])||S.lt[t.id]){
+    toast('Task already claimed!');
+    return;
+  }
+
+  // Strict anti-cheat: Must have spent at least 16 seconds on task
+  if(!started||elapsed<16||(until&&now<until)){
+    const left=Math.max(1,Math.ceil(16-elapsed));
+    delete S.pend[t.id];
+    if(S.taskStarted)delete S.taskStarted[t.id];
+    save();
+    render(true);
+    toast('⚠️ Task incomplete! You must stay on the page for at least 16 seconds.');
+    return;
+  }
+
+  if(t.daily)S.done[t.id]=1;
+  else S.lt[t.id]=1;
+  delete S.pend[t.id];
+  if(S.taskStarted)delete S.taskStarted[t.id];
+  S.dn++;
+  save();
+  award(t.r,t.t||'Completed Task',e);
+  toast('🎉 Task reward +'+f(t.r)+' TON added!');
+  render(true);
+},
 qi(e){const k=e.dataset.v;closeM();M[k]()},x:closeM,
 gospin(){if(busy)return;tab='spin';render();setTimeout(()=>A.dospin(),450)},
 dospin(){if(busy)return;if(!S.fs&&S.b<CFG.spinCost){toast('Need '+f(CFG.spinCost)+' TON to spin');snd(150);return}busy=true;if(S.fs)S.fs--;else S.b-=CFG.spinCost;S.spins++;save();
@@ -1107,5 +1172,49 @@ document.addEventListener('click',e=>{if(!e.target.closest('#mn')&&!e.target.clo
 /* Live countdown ticker: 45s timer & task cooldowns refresh smoothly */
 setInterval(()=>{if(busy)return;if(newDay()){save();render(true);return}if(tab=='home'&&!$('#md').classList.contains('on')&&(Object.keys(S.pend).length||Object.keys(S.adCd||{}).some(k=>S.adCd[k]>Date.now())))render(true)},1000);
 
+
+/* ===== 16-Second Anti-Cheat System for Tasks ===== */
+function checkActiveTaskOnReturn(){
+  if(!window.activeTaskSession)return;
+  const sess=window.activeTaskSession;
+  const elapsed=(Date.now()-sess.startedAt)/1000;
+  const required=sess.wait||16;
+
+  // Ignore flutter immediately after clicking (<0.8s)
+  if(elapsed<0.8)return;
+
+  if(elapsed<required){
+    // Early return: User closed or backed out before 16s!
+    const elapsedRound=Math.floor(elapsed);
+    delete S.pend[sess.id];
+    if(S.taskStarted)delete S.taskStarted[sess.id];
+    window.activeTaskSession=null;
+    save();
+    render(true);
+    toast('⚠️ Task failed! You returned in only '+elapsedRound+'s. You must stay on the page for at least '+required+' seconds.');
+    snd(180,.25,'sawtooth');
+    hap('heavy');
+  }else{
+    // Legitimate stay: 16+ seconds spent outside on the task!
+    S.pend[sess.id]=Date.now()-1000;
+    window.activeTaskSession=null;
+    save();
+    render(true);
+    toast('🎉 16 seconds completed! Tap Claim to receive your reward.');
+    snd(880,.15);
+    hap('medium');
+  }
+}
+
+document.addEventListener('visibilitychange',()=>{
+  if(document.hidden){
+    if(window.activeTaskSession)window.activeTaskSession.hasLeft=true;
+  }else{
+    checkActiveTaskOnReturn();
+  }
+});
+window.addEventListener('focus',checkActiveTaskOnReturn);
+
 boot();
+
 </script></body></html>
