@@ -132,7 +132,7 @@ input.in2{width:100%;padding:14px;border-radius:14px;border:1px solid var(--line
 .gl::before{content:"";position:absolute;top:0;left:-70%;width:45%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.18),transparent);transform:skewX(-20deg);animation:sh 4.5s infinite}
 .gz{width:76px;height:76px;margin:0 auto 10px;border-radius:24px;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;animation:bob 3.2s ease-in-out infinite;position:relative}.gl h2{margin:0;font-size:30px;position:relative}.gl p{margin:4px 0 14px;opacity:.85;position:relative}
 .gp{display:flex;gap:6px;justify-content:center;margin:0 0 12px;position:relative}.gp i{width:20px;height:8px;border-radius:5px;background:#fff;transition:.4s}.gp i.u{background:rgba(255,255,255,.25)}.gl .am{justify-content:center;position:relative}.gl .btn{background:#fff;color:#065a8c;position:relative}.gl .btn.dis{background:rgba(255,255,255,.18);color:rgba(255,255,255,.7);border-color:transparent}
-.ann{background:linear-gradient(120deg,rgba(255,178,26,.18),rgba(255,178,26,.08));border:1px solid rgba(255,178,26,.4);color:var(--gold);border-radius:16px;padding:12px 14px;margin-bottom:12px;font-size:14.5px}#mt{position:fixed;inset:0;z-index:100;background:var(--bg);display:flex;align-items:center;justify-content:center;text-align:center;padding:30px;color:var(--acc)}#mt h2{color:var(--tx);margin:14px 0 6px}
+.ann{background:linear-gradient(120deg,rgba(255,178,26,.18),rgba(255,178,26,.08));border:1px solid rgba(255,178,26,.4);color:var(--gold);border-radius:16px;padding:12px 14px;margin-bottom:12px;font-size:14.5px}#mt{position:fixed;inset:0;z-100;background:var(--bg);display:flex;align-items:center;justify-content:center;text-align:center;padding:30px;color:var(--acc)}#mt h2{color:var(--tx);margin:14px 0 6px}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 #splash{position:fixed;inset:0;z-index:999;background:#000 center/cover no-repeat;opacity:1;visibility:visible;transition:opacity .3s ease,visibility .3s ease;display:flex;align-items:flex-end;justify-content:center;padding:0 22px calc(env(safe-area-inset-bottom,0px) + 8vh);overflow:hidden}
 #splash::before{content:"";position:absolute;inset:45% 0 0;background:linear-gradient(180deg,transparent,rgba(0,0,0,.72));pointer-events:none}
@@ -186,6 +186,7 @@ nav{background:linear-gradient(180deg,rgba(20,28,43,.98),rgba(12,17,29,.99));bor
 <script>
 "use strict";
 const CFG={bot:'MegaTonPlay_bot',app:'ton',channel:'https://t.me/MegaTonPlay',group:'https://t.me/MegaTonPlay',support:'https://t.me/MegaTonPlay',minW:10,spinCost:7,adWait:8,adCooldownHours:1,games:10,tix:.1,cap:40,model:'character.jump.glb',jump:'jump.mp3',bgm:'backgroundsound.mp3',cs:64,turn:.9,inv:10,bgmVol:.35,sfxVol:1};
+const TASK_WAIT=10;
 const FIREBASE_CONFIG = {
   apiKey: "AIzaSyBJrCE4w_QfBqfF3g4O_RuCK4DbjmL9TRg",
   authDomain: "telegram-69052.firebaseapp.com",
@@ -229,8 +230,8 @@ if (!U.id) {
 
 const $=(s,r=document)=>r.querySelector(s),dayAt=d=>{const p=Object.fromEntries(new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Kolkata',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(d).map(x=>[x.type,x.value]));return p.year+'-'+p.month+'-'+p.day},day=()=>dayAt(new Date()),esc=s=>String(s).replace(/[&<>"']/g,c=>'&#'+c.charCodeAt(0)+';');
 const f=n=>(n/1000).toFixed(4);
-let S={b:0,life:0,fs:0,spins:0,ck:{d:'',n:0},day:day(),ad:{},adCd:{},done:{},dn:0,lt:{},pend:{},taskStarted:{},taskVerified:{},taskRewardPending:{},ms:{},hist:[],inv:0,earn:0,invs:[],refBy:'',wallet:'',wds:[],theme:'auto',lang:'en',world:false,snd:true,boost:false,rot:0,gp:0,gb:0};
-let db=null, userRef=null, userStateRef=null, firebaseReady=false, saveQueue=Promise.resolve();
+let S={b:0,life:0,fs:0,spins:0,ck:{d:'',n:0},day:day(),ad:{},adCd:{},done:{},dn:0,lt:{},pend:{},taskStarted:{},taskVerified:{},ms:{},hist:[],inv:0,earn:0,invs:[],refBy:'',wallet:'',wds:[],theme:'auto',lang:'en',world:false,snd:true,boost:false,rot:0,gp:0,gb:0};
+let db=null, userRef=null, userStateRef=null, firebaseReady=false, saveQueue=Promise.resolve(), pendingSaves=0;
 try {
   if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
   db=firebase.database();
@@ -245,6 +246,7 @@ function newDay(){if(S.day===day())return false;S.day=day();S.ad={};S.adCd={};S.
 const save=()=>{
   if(!userRef||!userStateRef)return Promise.resolve(false);
   const snapshot=JSON.parse(JSON.stringify(S));
+  pendingSaves++;
   saveQueue=saveQueue.then(async()=>{
     await userStateRef.set(snapshot);
     const dName = (U.first_name + (U.last_name ? ' ' + U.last_name : '')).trim() || 'Player';
@@ -259,6 +261,8 @@ const save=()=>{
   }).catch(e=>{
     console.error('Firebase save failed:',e);
     return false;
+  }).finally(()=>{
+    pendingSaves--;
   });
   return saveQueue;
 };
@@ -280,7 +284,7 @@ async function loadUserState(){
     }
     S.pend = S.pend || {};
     S.taskVerified = S.taskVerified || {};
-    S.taskRewardPending = S.taskRewardPending || {};
+    if(S.taskRewardPending)delete S.taskRewardPending;
     S.done = S.done || {};
     S.lt = S.lt || {};
     S.ad = S.ad || {};
@@ -298,6 +302,7 @@ async function loadUserState(){
     // Realtime Listener: Updates withdrawals, balance and wallet live without reload
     if(userStateRef){
       userStateRef.on('value',sSnap=>{
+        if(pendingSaves>0)return;
         const stateVal=sSnap.val();
         if(stateVal && typeof stateVal==='object'){
           if(Array.isArray(stateVal.wds)){
@@ -351,8 +356,9 @@ const fmtT=ts=>{const d=new Date(ts);return d.toLocaleDateString(undefined,{mont
 document.addEventListener('pointerdown',e=>{const b=e.target.closest('.btn');if(!b||b.classList.contains('dis'))return;const r=b.getBoundingClientRect(),d=Math.max(r.width,r.height)*2,s=document.createElement('span');s.className='rp';s.style.cssText=`width:${d}px;height:${d}px;left:${e.clientX-r.left-d/2}px;top:${e.clientY-r.top-d/2}px`;b.appendChild(s);setTimeout(()=>s.remove(),600)});
 
 const ADS=[{id:'ad1',t:'Watch AdsGram video sponsor',net:'adsgram_reward',blockId:'56220',r:3,max:15,ic:'play',bg:'linear-gradient(135deg,#6d4aff,#c026d3)'},{id:'ad2',t:'Watch AdsGram interstitial',net:'adsgram_int',blockId:'int-56219',r:2,max:10,ic:'clock',bg:'linear-gradient(135deg,#3b3b8a,#6366f1)'},{id:'ad3',t:'Watch Monetag popup sponsor',net:'monetag_pop',blockId:'12131483',r:3,max:10,ic:'film',bg:'linear-gradient(135deg,#16a34a,#22c55e)'}];
-const LT=[{id:'t_adsg',t:'AdsGram Partner Mission',net:'adsgram_task',blockId:'task-56221',r:5,url:'',img:'',ic:'zap',bg:'linear-gradient(135deg,#6366f1,#a855f7)',tag:'new',wait:10},{id:'t1',t:'Play to explore the bonus game',net:'link',blockId:'',r:3,url:CFG.channel,ic:'target',bg:'linear-gradient(135deg,#f59e0b,#16a34a)',tag:'new',wait:10},{id:'t2',t:'Join our Telegram channel',net:'link',blockId:'',r:4,url:CFG.channel,ic:'send',bg:'linear-gradient(135deg,#2a7bff,#1a5cff)',tag:'new',wait:10},{id:'t3',t:'Join the community group',net:'link',blockId:'',r:4,url:CFG.group,ic:'msg',bg:'linear-gradient(135deg,#8b5cf6,#7c3aed)',wait:10},{id:'t4',t:'Open the partner mini app',net:'link',blockId:'',r:8,url:CFG.channel,ic:'grid',bg:'linear-gradient(135deg,#38bdf8,#0ea5e9)',tag:'limited',wait:10},{id:'t5',t:'Daily FREE reward just for visiting',net:'link',blockId:'',r:4,url:CFG.channel,ic:'link',bg:'linear-gradient(135deg,#3b82f6,#2a7bff)',daily:true,wait:10}];
-const WT=[{id:'w1',t:'World task: follow a partner channel',net:'link',blockId:'',r:5,url:CFG.channel,ic:'globe',bg:'linear-gradient(135deg,#06b6d4,#0891b2)',tag:'new',wait:10},{id:'w2',t:'World task: try a partner app',net:'link',blockId:'',r:6,url:CFG.channel,ic:'globe',bg:'linear-gradient(135deg,#8b5cf6,#7c3aed)',tag:'limited',wait:10}];
+const LT=[{id:'t_adsg',t:'AdsGram Partner Mission',net:'adsgram_task',blockId:'task-56221',r:5,url:'',img:'',ic:'zap',bg:'linear-gradient(135deg,#6366f1,#a855f7)',tag:'new',wait:TASK_WAIT},{id:'t1',t:'Play to explore the bonus game',net:'link',blockId:'',r:3,url:CFG.channel,ic:'target',bg:'linear-gradient(135deg,#f59e0b,#16a34a)',tag:'new',wait:TASK_WAIT},{id:'t2',t:'Join our Telegram channel',net:'link',blockId:'',r:4,url:CFG.channel,ic:'send',bg:'linear-gradient(135deg,#2a7bff,#1a5cff)',tag:'new',wait:TASK_WAIT},{id:'t3',t:'Join the community group',net:'link',blockId:'',r:4,url:CFG.group,ic:'msg',bg:'linear-gradient(135deg,#8b5cf6,#7c3aed)',wait:TASK_WAIT},{id:'t4',t:'Open the partner mini app',net:'link',blockId:'',r:8,url:CFG.channel,ic:'grid',bg:'linear-gradient(135deg,#38bdf8,#0ea5e9)',tag:'limited',wait:TASK_WAIT},{id:'t5',t:'Daily FREE reward just for visiting',net:'link',blockId:'',r:4,url:CFG.channel,ic:'link',bg:'linear-gradient(135deg,#3b82f6,#2a7bff)',daily:true,wait:TASK_WAIT}];
+const WT=[{id:'w1',t:'World task: follow a partner channel',net:'link',blockId:'',r:5,url:CFG.channel,ic:'globe',bg:'linear-gradient(135deg,#06b6d4,#0891b2)',tag:'new',wait:TASK_WAIT},{id:'w2',t:'World task: try a partner app',net:'link',blockId:'',r:6,url:CFG.channel,ic:'globe',bg:'linear-gradient(135deg,#8b5cf6,#7c3aed)',tag:'limited',wait:TASK_WAIT}];
+const allLT=()=>S.world&&FT('m_world')?[...LT,...WT]:LT;
 const ST=[{n:'Alex',h:'@alex_92',tk:6637,iv:140,sp:420},{n:'Sarah',h:'@sarah_k',tk:6015,iv:96,sp:388},{n:'William',h:'@will_x',tk:6001,iv:88,sp:402},{n:'Emily',h:'@emily_t',tk:6000,iv:75,sp:350},{n:'Robert',h:'@rob_m',tk:5987,iv:70,sp:341},{n:'Priya',h:'@priya_s',tk:5800,iv:64,sp:330},{n:'Chen',h:'@chen_w',tk:5710,iv:60,sp:315}];
 const AVC=['#6d4aff','#f59e0b','#ef4444','#0ea5e9','#22c55e','#ec4899','#14b8a6'];
 const SEG=[{l:'+'+f(5),k:'m',v:5,w:20,c:'#2a5cd8'},{l:'+'+f(1),k:'m',v:1,w:8,c:'#0ea5e9'},{l:'+'+f(10),k:'m',v:10,w:10,c:'#f59e0b'},{l:'Free Spin',k:'fs',w:8,c:'#22c55e'},{l:'+'+f(2),k:'m',v:2,w:4,c:'#ec4899'},{l:'2× Boost',k:'bo',w:10,c:'#a855f7'},{l:'+'+f(3),k:'m',v:3,w:25,c:'#14b8a6'},{l:'Try again',k:'no',w:15,c:'#475569'}];
@@ -401,7 +407,7 @@ function applyConf(c){
       const taskObj={
         ...t,
         r:mm(t.r),
-        wait:Math.max(10,Math.min(3600,Number(t.wait)||10)),
+        wait:TASK_WAIT,
         net:t.net||'link',
         blockId:t.blockId||'',
         img:t.img||'',
@@ -617,50 +623,66 @@ async function boot(){
   // Restore active task session on boot if user refreshed page
   checkTaskSessionOnReturn();
 
-  // AdsGram Task Click Listener
+  // TESTING NOTES:
+  // - AdsGram task sirf Telegram Mini App ke andar test hota hai, normal browser me reward event nahi aata.
+  // - AdsGram dashboard me block ID task-56221 approved/active hona chahiye.
+
+  // AdsGram Task Click Listener - info toast only (no activeTaskSession/localStorage session)
   document.addEventListener('click',e=>{
     const trigger=e.target&&e.target.closest&&e.target.closest('adsgram-task [slot="button"]');
     if(!trigger)return;
-    const host=trigger.closest('adsgram-task');
-    if(!host)return;
-    const blockId=String(host.getAttribute('data-block-id')||'');
-    const tk=[...LT,...WT].find(t=>String(t.blockId||'task-56221')===blockId&&t.net==='adsgram_task');
-    if(!tk)return;
-
-    const wait=Math.max(10,Number(tk.wait)||10);
-    const sessionObj={
-      id:tk.id,
-      startedAt:Date.now(),
-      leaveTime:null,
-      wait:wait,
-      isAdsgram:true
-    };
-    
-    // Trigger our own task timer logic
-    S.pend = S.pend || {};
-    S.pend[tk.id] = Date.now();
-    if(S.taskVerified) delete S.taskVerified[tk.id];
-    
-    window.activeTaskSession=sessionObj;
-    localStorage.setItem('megaton_active_task',JSON.stringify(sessionObj));
-    toast('⏱️ AdsGram task started! Stay on page for at least '+wait+' seconds.');
+    toast('⏱️ AdsGram task started! Complete it and tap Claim to receive your reward.');
   },true);
 
-  // AdsGram Task Reward Listener (With True Capture Phase)
+  // AdsGram Task Reward Listener
+  let rewardLock=false;
   document.addEventListener('reward',(e)=>{
-    const rawDetail=e&&e.detail;
-    const bId=String(typeof rawDetail==='object'&&rawDetail!==null?rawDetail.blockId:(rawDetail||''));
-    const tk=[...LT,...WT].find(t=>(!bId||String(t.blockId||'task-56221')===bId)&&t.net==='adsgram_task');
-    if(!tk)return;
-    S.taskRewardPending=S.taskRewardPending||{};
-    if((tk.daily&&S.done[tk.id])||S.lt[tk.id]||S.taskRewardPending[tk.id])return;
+    if(rewardLock)return;
 
-    S.taskRewardPending[tk.id]=1;
+    // a) Find by e.target host element data-task-id
+    const host=e.target&&e.target.closest&&e.target.closest('adsgram-task');
+    const targetTaskId=host?(host.getAttribute('data-task-id')||host.dataset.taskId):null;
+
+    // b) Find by e.detail blockId (stripped of "task-" prefix)
+    const rawDetail=e&&e.detail;
+    const detailBlockId=String(
+      (typeof rawDetail==='object'&&rawDetail!==null)?(rawDetail.blockId||''):(rawDetail||'')
+    ).trim();
+    const norm=id=>String(id||'').replace(/^task-/,'').trim();
+    const cleanDetailBlock=norm(detailBlockId);
+
+    const allTasks=[...LT,...WT];
+    let tk=null;
+
+    if(targetTaskId){
+      tk=allTasks.find(t=>t.id===targetTaskId&&t.net==='adsgram_task');
+    }
+
+    if(!tk&&cleanDetailBlock){
+      tk=allTasks.find(t=>t.net==='adsgram_task'&&norm(t.blockId)===cleanDetailBlock);
+    }
+
+    // c) Fallback: first uncompleted adsgram_task
+    if(!tk){
+      tk=allTasks.find(t=>t.net==='adsgram_task'&&!(t.daily?S.done[t.id]:S.lt[t.id]));
+    }
+
+    if(!tk)return;
+
+    // Check if already claimed
+    const isDone=tk.daily?S.done[tk.id]:S.lt[tk.id];
+    if(isDone)return;
+
+    // 3-second reward lock to prevent duplicates
+    rewardLock=true;
+    setTimeout(()=>{rewardLock=false;},3000);
+
     if(tk.daily)S.done[tk.id]=1;else S.lt[tk.id]=1;
     if(S.taskVerified)delete S.taskVerified[tk.id];
     if(S.pend)delete S.pend[tk.id];
     window.activeTaskSession=null;
     localStorage.removeItem('megaton_active_task');
+
     S.dn++;
     award(tk.r,tk.t||'AdsGram Task');
     save();
@@ -678,14 +700,19 @@ async function boot(){
 }
 
 /* ===== Tasks Rendering with Anti-Cheat Verification ===== */
-function taskCard(t,type){
+function taskCard(t,type,noAnim){
   const done=t.daily?S.done[t.id]:S.lt[t.id];
-  const isVerified=(S.taskVerified||{})[t.id];
-  const isPending=S.pend&&S.pend[t.id];
 
-  if(t.net==='adsgram_task' && !done && !isVerified && !isPending){
+  if(t.net==='adsgram_task'){
+    if(done){
+      return `<div class="task ${noAnim?'':'in'}" data-tid="${esc(t.id)}" data-type="${esc(type)}">
+        <div class="ic" style="background:${t.bg||'linear-gradient(135deg,#6366f1,#a855f7)'};width:48px;height:48px;border-radius:14px;flex:none;display:flex;align-items:center;justify-content:center">${ic(t.ic||'zap',22)}</div>
+        <div class="t"><b>${esc(t.t)}</b><small>${amt(t.r,14)} <s>Completed</s></small></div>
+        <button class="btn dis">${ic('check',14)}Claimed</button>
+      </div>`;
+    }
     const bId=t.blockId||'task-56221';
-    return `<adsgram-task data-task-id="${esc(t.id)}" data-block-id="${esc(bId)}" data-debug="false" class="task in">
+    return `<adsgram-task data-task-id="${esc(t.id)}" data-block-id="${esc(bId)}" data-debug="false" class="task ${noAnim?'':'in'}">
       <span slot="reward" class="am">${TON(14)}${f(t.r)}</span>
       <button slot="button" class="btn">Go${ic('up',14)}</button>
       <button slot="claim" class="btn grn">${ic('check',14)}Claim</button>
@@ -711,7 +738,9 @@ function taskCard(t,type){
       btn=`<button class="btn" data-a="ad" data-id="${t.id}">${ic('play',14)}Watch</button>`;
     }
   }else{
-    const wait=Math.max(10,Math.min(3600,Number(t.wait)||10));
+    const isVerified=(S.taskVerified||{})[t.id];
+    const isPending=S.pend&&S.pend[t.id];
+    const wait=TASK_WAIT;
     sb=`${amt(t.r,14)} <s>Stay ${wait}s</s>${t.tag?`<span class="pill">${t.tag=='new'?'New':'Limited'}</span>`:''}`;
 
     if(done){
@@ -746,7 +775,7 @@ function taskCard(t,type){
     icHtml=`<div class="ic" style="background:${t.bg};width:48px;height:48px;border-radius:14px;flex:none;display:flex;align-items:center;justify-content:center">${ic(t.ic||'link',22)}</div>`;
   }
 
-  return `<div class="task in ${type=='ad'?'hot':''}">${icHtml}<div class="t"><b>${esc(t.t)}</b><small>${sb}</small></div>${btn}</div>`;
+  return `<div class="task ${noAnim?'':'in'} ${type=='ad'?'hot':''}" data-tid="${esc(t.id)}" data-type="${esc(type)}">${icHtml}<div class="t"><b>${esc(t.t)}</b><small>${sb}</small></div>${btn}</div>`;
 }
 const findT=id=>[...ADS,...LT,...WT].find(t=>t.id==id);
 const doneToday=()=>S.dn;
@@ -826,7 +855,25 @@ R.game=()=>{const left=CFG.games-S.gp,ok=left>0;return `<div class="gl in"><div 
 function missions(){const m=[];ADS.forEach(a=>m.push({id:'m'+a.id,t:'Watch '+a.max+' ads: '+a.t,n:a.max,cur:S.ad[a.id]||0,r:a.r*2,g:'ads'}));
 MD().forEach(([n,r])=>m.push({id:'d'+n,t:'Complete '+n+' tasks today',n,cur:doneToday(),r,g:'day'}));
 MI().forEach(([n,r,u])=>m.push({id:'i'+n,t:'Invite '+n+' friends who watch an ad',n,cur:S.inv,r,u,g:'inv'}));return m}
-function render(keep){if(!FT(tab))tab='home';const v=$('#view'),y=v.scrollTop;v.classList.toggle('noan',!!keep);v.innerHTML=R[tab]();v.scrollTop=keep?y:0;if(tab=='spin')drawWheel();if(tab=='wallet')countUp();
+function render(keep){if(!FT(tab))tab='home';const v=$('#view'),y=v.scrollTop;v.classList.toggle('noan',!!keep);
+const adsgramMap=new Map();
+v.querySelectorAll('adsgram-task').forEach(el=>{
+  const tid=el.getAttribute('data-task-id')||el.dataset.taskId;
+  if(tid)adsgramMap.set(tid,el);
+});
+v.innerHTML=R[tab]();
+if(adsgramMap.size>0){
+  v.querySelectorAll('adsgram-task').forEach(newEl=>{
+    const tid=newEl.getAttribute('data-task-id')||newEl.dataset.taskId;
+    const oldEl=adsgramMap.get(tid);
+    const tk=findT(tid);
+    const isDone=tk?(tk.daily?S.done[tk.id]:S.lt[tk.id]):false;
+    if(oldEl&&!isDone){
+      newEl.replaceWith(oldEl);
+    }
+  });
+}
+v.scrollTop=keep?y:0;if(tab=='spin')drawWheel();if(tab=='wallet')countUp();
 $('#nv').innerHTML=[['home','home'],['game','pad'],['wallet','wallet'],['invite','users'],['rank','award']].filter(([k])=>FT(k)).map(([k,i])=>`<button class="${tab==k?'on':''}" data-a="tab" data-v="${k}">${ic(i,24)}${tr(k)}</button>`).join('');
 $('#bc').innerHTML=TON(20)+f(S.b);$('#gr').innerHTML=ic('sliders',20)+'<span class="dot"></span>';
 const dName=(U.first_name+(U.last_name?' '+U.last_name:'')).trim()||'Player';
@@ -942,11 +989,11 @@ ad(e){
   toast('No verified ad is available right now. Please try again later.');
 },
 
-/* ===== Strict Anti-Cheat Task Go Action ===== */
+/* ===== Strict 10-Second Anti-Cheat Task Go Action ===== */
 go(e){
   const t=findT(e.dataset.id);
   if(!t)return;
-  const wait=Math.max(10,Math.min(3600,Number(t.wait)||10));
+  const wait=TASK_WAIT;
   const now=Date.now();
 
   S.taskVerified=S.taskVerified||{};
@@ -979,7 +1026,7 @@ claim(e){
     return;
   }
 
-  const wait=Math.max(10,Math.min(3600,Number(t.wait)||10));
+  const wait=TASK_WAIT;
   const startedTs=Number((S.pend&&S.pend[t.id])||0);
   const elapsed=startedTs>0?Math.floor((Date.now()-startedTs)/1000):0;
   const isVerified=(S.taskVerified&&S.taskVerified[t.id])||(startedTs>0&&elapsed>=wait);
@@ -1206,7 +1253,7 @@ async function loadChar(){try{if(!window.THREE)await lsc('https://cdn.jsdelivr.n
 const gltf=await new Promise((res,rej)=>new THREE.GLTFLoader().load(CFG.model,res,undefined,rej));
 const r=new THREE.WebGLRenderer({alpha:true,antialias:true});r.setPixelRatio(1);r.setSize(256,256,false);r.setClearColor(0,0);r.outputEncoding=THREE.sRGBEncoding;
 const sc=new THREE.Scene(),cam=new THREE.OrthographicCamera(-1,1,1,-1,.1,100);cam.position.set(0,0,10);
-sc.add(new THREE.AmbientLight(0xffffff,.9));constdl=new THREE.DirectionalLight(0xffffff,1.1);dl.position.set(2,4,6);sc.add(dl);
+sc.add(new THREE.AmbientLight(0xffffff,.9));const dl=new THREE.DirectionalLight(0xffffff,1.1);dl.position.set(2,4,6);sc.add(dl);
 const obj=gltf.scene,box=new THREE.Box3().setFromObject(obj),size=box.getSize(new THREE.Vector3()),ctr=box.getCenter(new THREE.Vector3()),k=1.9/Math.max(size.x,size.y,size.z),pv=new THREE.Group();
 obj.scale.setScalar(k);obj.position.set(-ctr.x*k,-box.min.y*k-1,-ctr.z*k);pv.add(obj);sc.add(pv);
 let mix=null;if(gltf.animations&&gltf.animations.length){mix=new THREE.AnimationMixer(obj);mix.clipAction(gltf.animations[0]).play()}
@@ -1227,6 +1274,23 @@ $('#gr').onclick=e=>{e.stopPropagation();menu();$('#mn').classList.toggle('on')}
 $('#mn').onclick=e=>{const d=e.target.closest('[data-m]');if(!d)return;const k=d.dataset.m;if(k=='lang')S.lang=S.lang=='en'?'hi':'en';else if(k=='theme')S.theme={auto:'dark',dark:'light',light:'auto'}[S.theme];else if(k=='snd')S.snd=!S.snd;else if(k=='world'){S.world=!S.world}else{$('#mn').classList.remove('on');openL(k=='ch'?CFG.channel:k=='gp'?CFG.group:CFG.support);return}save();menu();render(true)};
 document.addEventListener('click',e=>{if(!e.target.closest('#mn')&&!e.target.closest('#gr'))$('#mn').classList.remove('on')});
 
+function tickTasks(){
+  const els=document.querySelectorAll('#view .task[data-tid]');
+  els.forEach(el=>{
+    const tid=el.getAttribute('data-tid');
+    const type=el.getAttribute('data-type')||'l';
+    const t=findT(tid);
+    if(!t||t.net==='adsgram_task')return;
+    const newHtml=taskCard(t,type,true);
+    const temp=document.createElement('div');
+    temp.innerHTML=newHtml.trim();
+    const newEl=temp.firstElementChild;
+    if(newEl&&newEl.outerHTML!==el.outerHTML){
+      el.replaceWith(newEl);
+    }
+  });
+}
+
 /* Live countdown ticker: only refreshes while tasks are counting down */
 setInterval(()=>{
   if(busy)return;
@@ -1235,7 +1299,7 @@ setInterval(()=>{
     const hasPendingTasks=Object.keys(S.pend||{}).length>0;
     const hasAdCooldown=Object.keys(S.adCd||{}).some(k=>S.adCd[k]>Date.now());
     if(hasPendingTasks || hasAdCooldown){
-      render(true);
+      tickTasks();
     }
   }
 },1000);
@@ -1253,9 +1317,15 @@ function checkTaskSessionOnReturn(){
   }
   if(!sess) return;
 
+  if(sess.isAdsgram){
+    window.activeTaskSession=null;
+    localStorage.removeItem('megaton_active_task');
+    return;
+  }
+
   const now=Date.now();
   const startedAt=Number(sess.startedAt)||now;
-  const wait=Math.max(10,Math.min(3600,Number(sess.wait)||10));
+  const wait=TASK_WAIT;
   const elapsedOutside=sess.leaveTime?((now-Number(sess.leaveTime))/1000):0;
   const totalElapsed=(now-startedAt)/1000;
 
@@ -1266,12 +1336,10 @@ function checkTaskSessionOnReturn(){
     window.activeTaskSession=null;
     localStorage.removeItem('megaton_active_task');
     save();
-    if(!sess.isAdsgram){
-      render(true);
-      toast('🎉 Task verified! Tap Claim to receive your reward.');
-      snd(880,0.2);
-      hap('medium');
-    }
+    render(true);
+    toast('🎉 Task verified! Tap Claim to receive your reward.');
+    snd(880,0.2);
+    hap('medium');
   }else{
     const remaining=Math.max(1,Math.ceil(wait-Math.max(elapsedOutside,totalElapsed)));
     toast('⏳ Please stay on the page for '+remaining+'s more to verify.');
