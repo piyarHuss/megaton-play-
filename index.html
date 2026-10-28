@@ -278,6 +278,13 @@ async function loadUserState(){
     }else{
       await save();
     }
+    S.pend = S.pend || {};
+    S.taskVerified = S.taskVerified || {};
+    S.taskRewardPending = S.taskRewardPending || {};
+    S.done = S.done || {};
+    S.lt = S.lt || {};
+    S.ad = S.ad || {};
+    S.adCd = S.adCd || {};
     newDay();
     firebaseReady=true;
 
@@ -329,7 +336,7 @@ const tr=k=>(S.lang=='en'&&T('nav_'+k))||I[S.lang][k]||k;
 let tab='home',sec='earn',sub='rewards',flt='all',lb='tk',busy=false,withdrawBusy=false,shown=0;
 let AC;function snd(fr,t=.1,ty='sine',v=.05){if(!S.snd)return;try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();if(AC.state==="suspended")AC.resume().catch(()=>{});const o=AC.createOscillator(),g=AC.createGain();o.type=ty;o.frequency.value=fr;g.gain.setValueAtTime(v,AC.currentTime);g.gain.exponentialRampToValueAtTime(.001,AC.currentTime+t);o.connect(g);g.connect(AC.destination);o.start();o.stop(AC.currentTime+t)}catch(e){}}
 function hap(k){try{if(tg&&tg.HapticFeedback)tg.HapticFeedback.impactOccurred(k||'light');else if(navigator.vibrate)navigator.vibrate(10)}catch(e){}}
-function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(toast.h);toast.h=setTimeout(()=>t.classList.remove('on'),2200)}
+function toast(m){const t=$('#toast');t.innerHTML=m;t.classList.add('on');clearTimeout(toast.h);toast.h=setTimeout(()=>t.classList.remove('on'),2400)}
 function openL(u){try{if(tg&&u.includes('t.me'))tg.openTelegramLink(u);else if(tg)tg.openLink(u);else window.open(u,'_blank')}catch(e){window.open(u,'_blank')}}
 const cv=$('#fx'),cx=cv.getContext('2d');let P=[];function fxs(){cv.width=innerWidth;cv.height=innerHeight}addEventListener('resize',fxs);fxs();
 function burst(x,y,c,n=16){for(let i=0;i<n;i++){const a=Math.random()*6.28,s=2+Math.random()*5;P.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s-3,l:1,c:c||'#0098ea',r:3+Math.random()*4})}startParticleLoop()}
@@ -344,8 +351,8 @@ const fmtT=ts=>{const d=new Date(ts);return d.toLocaleDateString(undefined,{mont
 document.addEventListener('pointerdown',e=>{const b=e.target.closest('.btn');if(!b||b.classList.contains('dis'))return;const r=b.getBoundingClientRect(),d=Math.max(r.width,r.height)*2,s=document.createElement('span');s.className='rp';s.style.cssText=`width:${d}px;height:${d}px;left:${e.clientX-r.left-d/2}px;top:${e.clientY-r.top-d/2}px`;b.appendChild(s);setTimeout(()=>s.remove(),600)});
 
 const ADS=[{id:'ad1',t:'Watch AdsGram video sponsor',net:'adsgram_reward',blockId:'56220',r:3,max:15,ic:'play',bg:'linear-gradient(135deg,#6d4aff,#c026d3)'},{id:'ad2',t:'Watch AdsGram interstitial',net:'adsgram_int',blockId:'int-56219',r:2,max:10,ic:'clock',bg:'linear-gradient(135deg,#3b3b8a,#6366f1)'},{id:'ad3',t:'Watch Monetag popup sponsor',net:'monetag_pop',blockId:'12131483',r:3,max:10,ic:'film',bg:'linear-gradient(135deg,#16a34a,#22c55e)'}];
-const LT=[{id:'t_adsg',t:'AdsGram Partner Mission',net:'adsgram_task',blockId:'task-56221',r:5,url:'',img:'',ic:'zap',bg:'linear-gradient(135deg,#6366f1,#a855f7)',tag:'new'},{id:'t1',t:'Play to explore the bonus game',net:'link',blockId:'',r:3,url:CFG.channel,ic:'target',bg:'linear-gradient(135deg,#f59e0b,#16a34a)',tag:'new'},{id:'t2',t:'Join our Telegram channel',net:'link',blockId:'',r:4,url:CFG.channel,ic:'send',bg:'linear-gradient(135deg,#2a7bff,#1a5cff)',tag:'new'},{id:'t3',t:'Join the community group',net:'link',blockId:'',r:4,url:CFG.group,ic:'msg',bg:'linear-gradient(135deg,#8b5cf6,#7c3aed)'},{id:'t4',t:'Open the partner mini app',net:'link',blockId:'',r:8,url:CFG.channel,ic:'grid',bg:'linear-gradient(135deg,#38bdf8,#0ea5e9)',tag:'limited'},{id:'t5',t:'Daily FREE reward just for visiting',net:'link',blockId:'',r:4,url:CFG.channel,ic:'link',bg:'linear-gradient(135deg,#3b82f6,#2a7bff)',daily:true}];
-const WT=[{id:'w1',t:'World task: follow a partner channel',net:'link',blockId:'',r:5,url:CFG.channel,ic:'globe',bg:'linear-gradient(135deg,#06b6d4,#0891b2)',tag:'new'},{id:'w2',t:'World task: try a partner app',net:'link',blockId:'',r:6,url:CFG.channel,ic:'globe',bg:'linear-gradient(135deg,#8b5cf6,#7c3aed)',tag:'limited'}];
+const LT=[{id:'t_adsg',t:'AdsGram Partner Mission',net:'adsgram_task',blockId:'task-56221',r:5,url:'',img:'',ic:'zap',bg:'linear-gradient(135deg,#6366f1,#a855f7)',tag:'new',wait:16},{id:'t1',t:'Play to explore the bonus game',net:'link',blockId:'',r:3,url:CFG.channel,ic:'target',bg:'linear-gradient(135deg,#f59e0b,#16a34a)',tag:'new',wait:16},{id:'t2',t:'Join our Telegram channel',net:'link',blockId:'',r:4,url:CFG.channel,ic:'send',bg:'linear-gradient(135deg,#2a7bff,#1a5cff)',tag:'new',wait:16},{id:'t3',t:'Join the community group',net:'link',blockId:'',r:4,url:CFG.group,ic:'msg',bg:'linear-gradient(135deg,#8b5cf6,#7c3aed)',wait:16},{id:'t4',t:'Open the partner mini app',net:'link',blockId:'',r:8,url:CFG.channel,ic:'grid',bg:'linear-gradient(135deg,#38bdf8,#0ea5e9)',tag:'limited',wait:16},{id:'t5',t:'Daily FREE reward just for visiting',net:'link',blockId:'',r:4,url:CFG.channel,ic:'link',bg:'linear-gradient(135deg,#3b82f6,#2a7bff)',daily:true,wait:16}];
+const WT=[{id:'w1',t:'World task: follow a partner channel',net:'link',blockId:'',r:5,url:CFG.channel,ic:'globe',bg:'linear-gradient(135deg,#06b6d4,#0891b2)',tag:'new',wait:16},{id:'w2',t:'World task: try a partner app',net:'link',blockId:'',r:6,url:CFG.channel,ic:'globe',bg:'linear-gradient(135deg,#8b5cf6,#7c3aed)',tag:'limited',wait:16}];
 const allLT=()=>S.world&&FT('m_world')?[...LT,...WT]:LT;
 const ST=[{n:'Alex',h:'@alex_92',tk:6637,iv:140,sp:420},{n:'Sarah',h:'@sarah_k',tk:6015,iv:96,sp:388},{n:'William',h:'@will_x',tk:6001,iv:88,sp:402},{n:'Emily',h:'@emily_t',tk:6000,iv:75,sp:350},{n:'Robert',h:'@rob_m',tk:5987,iv:70,sp:341},{n:'Priya',h:'@priya_s',tk:5800,iv:64,sp:330},{n:'Chen',h:'@chen_w',tk:5710,iv:60,sp:315}];
 const AVC=['#6d4aff','#f59e0b','#ef4444','#0ea5e9','#22c55e','#ec4899','#14b8a6'];
@@ -375,7 +382,7 @@ function applyConf(c){
     initMonetagInApp();
   }
   const rawAds=toArr(c.ads);
-  if(Array.isArray(c.ads)){
+  if(rawAds&&rawAds.length){
     ADS.length=0;
     rawAds.filter(a=>a&&a.on!==false).forEach(a=>{
       ADS.push({
@@ -388,7 +395,7 @@ function applyConf(c){
     });
   }
   const rawTasks=toArr(c.tasks);
-  if(Array.isArray(c.tasks)){
+  if(rawTasks&&rawTasks.length){
     LT.length=0;
     WT.length=0;
     rawTasks.filter(t=>t&&t.on!==false).forEach(t=>{
@@ -524,13 +531,11 @@ async function creditReferrer(refId,rewardAmount){
       return st;
     },undefined,false);
     if(!result.committed||!didCredit){
-      console.info('[Referral] Already credited or transaction aborted for inviter:',refId);
       return false;
     }
-    console.info('[Referral] Successfully credited inviter:',refId,'amount:',amount);
     return true;
   }catch(err){
-    console.warn('[Referral] Failed to credit inviter state. Ensure Firebase rules permit users/{uid}/state:',err);
+    console.warn('[Referral] Failed to credit inviter state:',err);
     return false;
   }
 }
@@ -563,7 +568,6 @@ function initMonetagInApp(){
           everyPage:false
         }
       });
-      console.log('[Monetag] In-App Interstitial initialized');
     }catch(e){
       console.warn('[Monetag In-App Error]',e);
     }
@@ -611,6 +615,9 @@ async function boot(){
   await checkAndApplyReferral();
   initMonetagInApp();
 
+  // Restore active task session on boot if user refreshed page
+  checkTaskSessionOnReturn();
+
   // AdsGram Task Click Listener
   document.addEventListener('click',e=>{
     const trigger=e.target&&e.target.closest&&e.target.closest('adsgram-task [slot="button"]');
@@ -634,42 +641,27 @@ async function boot(){
     toast('⏱️ AdsGram task started! Stay on page for at least '+wait+' seconds.');
   },true);
 
-  // AdsGram Task Reward Listener
+  // AdsGram Task Reward Listener (With True Capture Phase)
   document.addEventListener('reward',(e)=>{
-    const bId=String(e.detail||'');
-    const tk=[...LT,...WT].find(t=>String(t.blockId||'task-56221')===bId&&t.net==='adsgram_task');
+    const rawDetail=e&&e.detail;
+    const bId=String(typeof rawDetail==='object'&&rawDetail!==null?rawDetail.blockId:(rawDetail||''));
+    const tk=[...LT,...WT].find(t=>(!bId||String(t.blockId||'task-56221')===bId)&&t.net==='adsgram_task');
     if(!tk)return;
     S.taskRewardPending=S.taskRewardPending||{};
     if((tk.daily&&S.done[tk.id])||S.lt[tk.id]||S.taskRewardPending[tk.id])return;
 
-    const sess=window.activeTaskSession;
-    let started=sess&&sess.id===tk.id?Number(sess.startedAt)||Date.now():0;
-    if(!started){
-      try{
-        const saved=JSON.parse(localStorage.getItem('megaton_active_task')||'null');
-        if(saved&&saved.id===tk.id) started=Number(saved.startedAt)||Date.now();
-      }catch(err){}
-    }
-    if(!started) started=Date.now()-(Math.max(16,Number(tk.wait)||16)*1000);
-
-    const wait=Math.max(16,Math.min(3600,Number(tk.wait)||16));
-    const elapsed=(Date.now()-started)/1000;
-    if(elapsed<wait){
-      toast('⚠️ Stay in the AdsGram task for at least '+Math.ceil(wait-elapsed)+'s more before claiming.');
-      return;
-    }
-
     S.taskRewardPending[tk.id]=1;
     if(tk.daily)S.done[tk.id]=1;else S.lt[tk.id]=1;
     if(S.taskVerified)delete S.taskVerified[tk.id];
-    delete S.pend[tk.id];
+    if(S.pend)delete S.pend[tk.id];
     window.activeTaskSession=null;
     localStorage.removeItem('megaton_active_task');
     S.dn++;
     award(tk.r,tk.t||'AdsGram Task');
     save();
     toast('🎉 AdsGram Task rewarded! +'+f(tk.r)+' TON');
-  });
+    render(true);
+  },true);
 
   GM.reinit();
   render();
@@ -682,7 +674,16 @@ async function boot(){
 
 /* ===== Tasks Rendering with Anti-Cheat Verification ===== */
 function taskCard(t,type){
+  const done=t.daily?S.done[t.id]:S.lt[t.id];
+
   if(t.net==='adsgram_task'){
+    if(done){
+      return `<div class="task in">
+        <div class="ic" style="background:${t.bg||'linear-gradient(135deg,#6366f1,#a855f7)'};width:48px;height:48px;border-radius:14px;flex:none;display:flex;align-items:center;justify-content:center">${ic(t.ic||'zap',22)}</div>
+        <div class="t"><b>${esc(t.t)}</b><small>${amt(t.r,14)} <s>Completed</s></small></div>
+        <button class="btn dis">${ic('check',14)}Claimed</button>
+      </div>`;
+    }
     const bId=t.blockId||'task-56221';
     return `<adsgram-task data-task-id="${esc(t.id)}" data-block-id="${esc(bId)}" data-debug="false" class="task in">
       <span slot="reward" class="am">${TON(14)}${f(t.r)}</span>
@@ -710,9 +711,8 @@ function taskCard(t,type){
       btn=`<button class="btn" data-a="ad" data-id="${t.id}">${ic('play',14)}Watch</button>`;
     }
   }else{
-    const done=t.daily?S.done[t.id]:S.lt[t.id];
     const isVerified=(S.taskVerified||{})[t.id];
-    const isPending=S.pend[t.id];
+    const isPending=S.pend&&S.pend[t.id];
     const wait=Math.max(16,Math.min(3600,Number(t.wait)||16));
     sb=`${amt(t.r,14)} <s>Stay ${wait}s</s>${t.tag?`<span class="pill">${t.tag=='new'?'New':'Limited'}</span>`:''}`;
 
@@ -726,6 +726,8 @@ function taskCard(t,type){
       if(remaining<=0){
         S.taskVerified=S.taskVerified||{};
         S.taskVerified[t.id]=true;
+        delete S.pend[t.id];
+        save();
         btn=`<button class="btn grn" data-a="claim" data-id="${t.id}">${ic('check',14)}Claim</button>`;
       }else{
         btn=`<button class="btn dis" style="opacity:0.85">Wait ${remaining}s…</button>`;
@@ -743,7 +745,7 @@ function taskCard(t,type){
       <div class="fb-ic" style="display:none;width:100%;height:100%;align-items:center;justify-content:center;background:${t.bg||'var(--card2)'}">${ic(t.ic||'link',22)}</div>
     </div>`;
   }else{
-    icHtml=`<div class="ic" style="background:${t.bg};width:48px;height:48px;border-radius:14px;flex:none">${ic(t.ic||'link',22)}</div>`;
+    icHtml=`<div class="ic" style="background:${t.bg};width:48px;height:48px;border-radius:14px;flex:none;display:flex;align-items:center;justify-content:center">${ic(t.ic||'link',22)}</div>`;
   }
 
   return `<div class="task in ${type=='ad'?'hot':''}">${icHtml}<div class="t"><b>${esc(t.t)}</b><small>${sb}</small></div>${btn}</div>`;
@@ -752,9 +754,19 @@ const findT=id=>[...ADS,...LT,...WT].find(t=>t.id==id);
 const doneToday=()=>S.dn;
 
 const R={
-home(){const cd=S.ck.d!=day(),pct=(CFG.games-S.gp)/CFG.games*100,mdot=missions().some(m=>m.cur>=m.n&&!S.ms[m.id]);
-let list='';if(sec=='earn'){list=`<div class="tabs"><button class="${sub=='rewards'?'on':''}" data-a="sub" data-v="rewards">${ic('gift',19)}Rewards</button><button class="${sub=='tasks'?'on':''}" data-a="sub" data-v="tasks">${ic('list',19)}Tasks</button></div>`+(sub=='rewards'?ADS.map(t=>taskCard(t,'ad')).join('')+(allLT()[0]?taskCard(allLT()[0],'l'):''):allLT().slice(1).map(t=>taskCard(t,'l')).join(''))}
-else{list=`<div class="tabs">${['all','new','limited'].map(x=>`<button class="${flt==x?'on':''}" data-a="flt" data-v="${x}">${x[0].toUpperCase()+x.slice(1)}</button>`).join('')}</div>`+allLT().filter(t=>flt=='all'||t.tag==flt).map(t=>taskCard(t,'l')).join('')}
+home(){
+  const cd=S.ck.d!=day(),pct=(CFG.games-S.gp)/CFG.games*100,mdot=missions().some(m=>m.cur>=m.n&&!S.ms[m.id]);
+  let list='';
+  if(sec=='earn'){
+    list=`<div class="tabs">
+      <button class="${sub=='rewards'?'on':''}" data-a="sub" data-v="rewards">${ic('gift',19)}Rewards</button>
+      <button class="${sub=='tasks'?'on':''}" data-a="sub" data-v="tasks">${ic('list',19)}Tasks</button>
+    </div>`+(sub=='rewards'
+      ? ADS.map(t=>taskCard(t,'ad')).join('')
+      : allLT().map(t=>taskCard(t,'l')).join(''));
+  }else{
+    list=`<div class="tabs">${['all','new','limited'].map(x=>`<button class="${flt==x?'on':''}" data-a="flt" data-v="${x}">${x[0].toUpperCase()+x.slice(1)}</button>`).join('')}</div>`+allLT().filter(t=>flt=='all'||t.tag==flt).map(t=>taskCard(t,'l')).join('');
+  }
 return `${CONF.annOn&&CONF.ann?`<div class="ann in">${esc(CONF.ann)}</div>`:''}
 <div class="card in" style="padding:13px 8px 12px"><div class="qi">${[['checkin','Check-in','cal','linear-gradient(135deg,#8b5cf6,#d946ef)',cd],['mission','Mission','star','linear-gradient(135deg,#fbbf24,#d97706)',mdot],['guide','Guide','info','linear-gradient(135deg,#6366f1,#3b82f6)',0],['history','History','list','linear-gradient(135deg,#10b981,#0d9488)',0],['card','Card','card','linear-gradient(135deg,#3b82f6,#06b6d4)',0]].filter(q=>FT(q[0])).map(q=>`<button data-a="qi" data-v="${q[0]}"><i>${ic(q[2],25)}</i>${q[1]}${q[4]?'<span class="dot"></span>':''}</button>`).join('')}</div></div>
 <div class="row in" style="margin-bottom:14px"><div class="tbar"><div class="f" style="width:${pct}%"></div><span>${TON(25)} <b>${f(S.b)}</b> <small>· ${CFG.games-S.gp}/${CFG.games} plays</small></span></div><button class="btn ton ${S.gp<CFG.games?'':'dis'}" data-a="gogame">${ic('pad',20)}Play</button></div>
@@ -939,9 +951,9 @@ go(e){
   const wait=Math.max(16,Math.min(3600,Number(t.wait)||16));
   const now=Date.now();
 
-  // Reset any old state
   S.taskVerified=S.taskVerified||{};
   delete S.taskVerified[t.id];
+  S.pend=S.pend||{};
   S.pend[t.id]=now;
 
   const sessionObj={
@@ -970,9 +982,9 @@ claim(e){
   }
 
   const wait=Math.max(16,Math.min(3600,Number(t.wait)||16));
-  const startedTs=Number(S.pend[t.id]||0);
+  const startedTs=Number((S.pend&&S.pend[t.id])||0);
   const elapsed=startedTs>0?Math.floor((Date.now()-startedTs)/1000):0;
-  const isVerified=(S.taskVerified&&S.taskVerified[t.id])||(elapsed>=wait);
+  const isVerified=(S.taskVerified&&S.taskVerified[t.id])||(startedTs>0&&elapsed>=wait);
 
   if(!isVerified){
     const remaining=Math.max(1,wait-elapsed);
@@ -984,7 +996,7 @@ claim(e){
   else S.lt[t.id]=1;
 
   if(S.taskVerified) delete S.taskVerified[t.id];
-  delete S.pend[t.id];
+  if(S.pend) delete S.pend[t.id];
   window.activeTaskSession=null;
   localStorage.removeItem('megaton_active_task');
   S.dn++;
@@ -1217,8 +1229,18 @@ $('#gr').onclick=e=>{e.stopPropagation();menu();$('#mn').classList.toggle('on')}
 $('#mn').onclick=e=>{const d=e.target.closest('[data-m]');if(!d)return;const k=d.dataset.m;if(k=='lang')S.lang=S.lang=='en'?'hi':'en';else if(k=='theme')S.theme={auto:'dark',dark:'light',light:'auto'}[S.theme];else if(k=='snd')S.snd=!S.snd;else if(k=='world'){S.world=!S.world}else{$('#mn').classList.remove('on');openL(k=='ch'?CFG.channel:k=='gp'?CFG.group:CFG.support);return}save();menu();render(true)};
 document.addEventListener('click',e=>{if(!e.target.closest('#mn')&&!e.target.closest('#gr'))$('#mn').classList.remove('on')});
 
-/* Live countdown ticker: 45s timer & task cooldowns refresh smoothly */
-setInterval(()=>{if(busy)return;if(newDay()){save();render(true);return}if(tab=='home'&&!$('#md').classList.contains('on')&&(Object.keys(S.pend).length||Object.keys(S.adCd||{}).some(k=>S.adCd[k]>Date.now())))render(true)},1000);
+/* Live countdown ticker: only refreshes while tasks are counting down */
+setInterval(()=>{
+  if(busy)return;
+  if(newDay()){save();render(true);return}
+  if(tab=='home'&&!$('#md').classList.contains('on')){
+    const hasPendingTasks=Object.keys(S.pend||{}).length>0;
+    const hasAdCooldown=Object.keys(S.adCd||{}).some(k=>S.adCd[k]>Date.now());
+    if(hasPendingTasks || hasAdCooldown){
+      render(true);
+    }
+  }
+},1000);
 
 /* =========================================================================
    STRICT OUTSIDE 16-SECOND ANTI-CHEAT DETECTION ENGINE
@@ -1242,13 +1264,16 @@ function checkTaskSessionOnReturn(){
   if(elapsedOutside>=wait || totalElapsed>=wait){
     S.taskVerified=S.taskVerified||{};
     S.taskVerified[sess.id]=true;
+    if(S.pend) delete S.pend[sess.id];
     window.activeTaskSession=null;
     localStorage.removeItem('megaton_active_task');
     save();
-    render(true);
-    toast('🎉 Task verified! Tap Claim to receive your reward.');
-    snd(880,0.2);
-    hap('medium');
+    if(!sess.isAdsgram){
+      render(true);
+      toast('🎉 Task verified! Tap Claim to receive your reward.');
+      snd(880,0.2);
+      hap('medium');
+    }
   }else{
     const remaining=Math.max(1,Math.ceil(wait-Math.max(elapsedOutside,totalElapsed)));
     toast('⏳ Please stay on the page for '+remaining+'s more to verify.');
