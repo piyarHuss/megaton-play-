@@ -186,7 +186,7 @@ nav{background:linear-gradient(180deg,rgba(20,28,43,.98),rgba(12,17,29,.99));bor
 <script>
 "use strict";
 const CFG={bot:'MegaTonPlay_bot',app:'ton',channel:'https://t.me/MegaTonPlay',group:'https://t.me/MegaTonPlay',support:'https://t.me/MegaTonPlay',minW:10,spinCost:7,adWait:8,adCooldownHours:1,games:10,tix:.1,cap:40,model:'character.jump.glb',jump:'jump.mp3',bgm:'backgroundsound.mp3',cs:64,turn:.9,inv:10,bgmVol:.35,sfxVol:1};
-const TASK_WAIT=10;
+const TASK_WAIT=8;
 const FIREBASE_CONFIG = {
   apiKey: "AIzaSyBJrCE4w_QfBqfF3g4O_RuCK4DbjmL9TRg",
   authDomain: "telegram-69052.firebaseapp.com",
@@ -627,66 +627,116 @@ async function boot(){
   // - AdsGram task sirf Telegram Mini App ke andar test hota hai, normal browser me reward event nahi aata.
   // - AdsGram dashboard me block ID task-56221 approved/active hona chahiye.
 
-  // AdsGram Task Click Listener - info toast only (no activeTaskSession/localStorage session)
+  // AdsGram task timer: a reward is eligible only after 8 seconds from tapping Go.
+  // Keep the start timestamp across a page refresh, but never trust the reward event alone.
+  const ADSGRAM_WAIT_MS=8000;
+  const ADSGRAM_START_KEY='megaton_adsgram_task_starts';
+  const readAdsgramStarts=()=>{
+    try{return JSON.parse(localStorage.getItem(ADSGRAM_START_KEY)||'{}')||{};}
+    catch(_){return {};}
+  };
+  const writeAdsgramStarts=v=>{
+    try{localStorage.setItem(ADSGRAM_START_KEY,JSON.stringify(v));}catch(_){}
+  };
+  const adsgramStartFor=host=>{
+    const id=host&&(host.getAttribute('data-task-id')||host.dataset.taskId);
+    if(!id)return 0;
+    return Number(readAdsgramStarts()[id]||0);
+  };
+  const updateAdsgramClaimButtons=()=>{
+    document.querySelectorAll('adsgram-task').forEach(host=>{
+      const id=host.getAttribute('data-task-id')||host.dataset.taskId;
+      const claim=host.querySelector('[slot="claim"]');
+      if(!id||!claim)return;
+      const start=adsgramStartFor(host);
+      if(!start){
+        claim.style.setProperty('display','none','important');
+        return;
+      }
+      const remaining=Math.max(0,Math.ceil((ADSGRAM_WAIT_MS-(Date.now()-start))/1000));
+      if(remaining>0){
+        claim.style.setProperty('display','none','important');
+        claim.setAttribute('aria-disabled','true');
+        claim.dataset.waitRemaining=String(remaining);
+      }else{
+        claim.style.setProperty('display','inline-flex','important');
+        claim.removeAttribute('aria-disabled');
+        delete claim.dataset.waitRemaining;
+      }
+    });
+  };
+  setInterval(updateAdsgramClaimButtons,250);
+
   document.addEventListener('click',e=>{
-    const trigger=e.target&&e.target.closest&&e.target.closest('adsgram-task [slot="button"]');
-    if(!trigger)return;
-    toast('⏱️ AdsGram task started! Complete it and tap Claim to receive your reward.');
+    const go=e.target&&e.target.closest&&e.target.closest('adsgram-task [slot="button"]');
+    const claim=e.target&&e.target.closest&&e.target.closest('adsgram-task [slot="claim"]');
+    if(go){
+      const host=go.closest('adsgram-task');
+      const id=host&&(host.getAttribute('data-task-id')||host.dataset.taskId);
+      if(id){
+        const starts=readAdsgramStarts();
+        starts[id]=Date.now();
+        writeAdsgramStarts(starts);
+        updateAdsgramClaimButtons();
+      }
+      toast('⏱️ Task started. Stay for at least 8 seconds before claiming.');
+      return;
+    }
+    if(claim){
+      const host=claim.closest('adsgram-task');
+      const start=adsgramStartFor(host);
+      if(!start||Date.now()-start<ADSGRAM_WAIT_MS){
+        e.preventDefault();
+        e.stopPropagation();
+        if(e.stopImmediatePropagation)e.stopImmediatePropagation();
+        const remaining=Math.max(1,Math.ceil((ADSGRAM_WAIT_MS-(Date.now()-start))/1000));
+        toast('Please stay on this task for '+remaining+' more second(s).');
+      }
+    }
   },true);
 
-  // AdsGram Task Reward Listener
+  // AdsGram reward listener. SDK availability remains authoritative: re-render the
+  // AdsGram widget after a successful claim instead of permanently replacing it with
+  // a locally-generated "Claimed" card.
   let rewardLock=false;
   document.addEventListener('reward',(e)=>{
     if(rewardLock)return;
 
-    // a) Find by e.target host element data-task-id
     const host=e.target&&e.target.closest&&e.target.closest('adsgram-task');
     const targetTaskId=host?(host.getAttribute('data-task-id')||host.dataset.taskId):null;
-
-    // b) Find by e.detail blockId (stripped of "task-" prefix)
     const rawDetail=e&&e.detail;
     const detailBlockId=String(
       (typeof rawDetail==='object'&&rawDetail!==null)?(rawDetail.blockId||''):(rawDetail||'')
     ).trim();
     const norm=id=>String(id||'').replace(/^task-/,'').trim();
     const cleanDetailBlock=norm(detailBlockId);
-
     const allTasks=[...LT,...WT];
-    let tk=null;
-
-    if(targetTaskId){
-      tk=allTasks.find(t=>t.id===targetTaskId&&t.net==='adsgram_task');
-    }
-
-    if(!tk&&cleanDetailBlock){
-      tk=allTasks.find(t=>t.net==='adsgram_task'&&norm(t.blockId)===cleanDetailBlock);
-    }
-
-    // c) Fallback: first uncompleted adsgram_task
-    if(!tk){
-      tk=allTasks.find(t=>t.net==='adsgram_task'&&!(t.daily?S.done[t.id]:S.lt[t.id]));
-    }
-
+    let tk=targetTaskId?allTasks.find(t=>t.id===targetTaskId&&t.net==='adsgram_task'):null;
+    if(!tk&&cleanDetailBlock)tk=allTasks.find(t=>t.net==='adsgram_task'&&norm(t.blockId)===cleanDetailBlock);
+    if(!tk)tk=allTasks.find(t=>t.net==='adsgram_task');
     if(!tk)return;
 
-    // Check if already claimed
-    const isDone=tk.daily?S.done[tk.id]:S.lt[tk.id];
-    if(isDone)return;
+    const starts=readAdsgramStarts();
+    const start=Number(starts[tk.id]||0);
+    if(!start||Date.now()-start<ADSGRAM_WAIT_MS){
+      if(e.preventDefault)e.preventDefault();
+      if(e.stopPropagation)e.stopPropagation();
+      if(e.stopImmediatePropagation)e.stopImmediatePropagation();
+      toast('Reward locked: stay on the task for at least 8 seconds.');
+      return;
+    }
 
-    // 3-second reward lock to prevent duplicates
     rewardLock=true;
     setTimeout(()=>{rewardLock=false;},3000);
+    delete starts[tk.id];
+    writeAdsgramStarts(starts);
 
-    if(tk.daily)S.done[tk.id]=1;else S.lt[tk.id]=1;
-    if(S.taskVerified)delete S.taskVerified[tk.id];
-    if(S.pend)delete S.pend[tk.id];
-    window.activeTaskSession=null;
-    localStorage.removeItem('megaton_active_task');
-
+    // AdsGram tasks can be supplied dynamically; do not permanently hide the task
+    // based on local S.lt/S.done flags. The SDK decides whether another task exists.
     S.dn++;
     award(tk.r,tk.t||'AdsGram Task');
     save();
-    toast('🎉 AdsGram Task rewarded! +'+f(tk.r)+' TON');
+    toast('🎉 AdsGram task rewarded! +'+f(tk.r)+' TON');
     render(true);
   },true);
 
@@ -704,13 +754,8 @@ function taskCard(t,type,noAnim){
   const done=t.daily?S.done[t.id]:S.lt[t.id];
 
   if(t.net==='adsgram_task'){
-    if(done){
-      return `<div class="task ${noAnim?'':'in'}" data-tid="${esc(t.id)}" data-type="${esc(type)}">
-        <div class="ic" style="background:${t.bg||'linear-gradient(135deg,#6366f1,#a855f7)'};width:48px;height:48px;border-radius:14px;flex:none;display:flex;align-items:center;justify-content:center">${ic(t.ic||'zap',22)}</div>
-        <div class="t"><b>${esc(t.t)}</b><small>${amt(t.r,14)} <s>Completed</s></small></div>
-        <button class="btn dis">${ic('check',14)}Claimed</button>
-      </div>`;
-    }
+    // Always mount the AdsGram custom element. AdsGram itself decides whether a
+    // campaign/task is available; local completion must not permanently hide it.
     const bId=t.blockId||'task-56221';
     return `<adsgram-task data-task-id="${esc(t.id)}" data-block-id="${esc(bId)}" data-debug="false" class="task ${noAnim?'':'in'}">
       <span slot="reward" class="am">${TON(14)}${f(t.r)}</span>
