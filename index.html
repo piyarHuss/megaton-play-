@@ -474,46 +474,85 @@ function applyConf(c){
 }
 
 function initSplash(sp){
-  sp=sp||CONF.splash||{};
   const el=$('#splash');
   if(!el)return;
-  if(sp.enabled===false){el.remove();return;}
-  const url=String(sp.img||'').trim();
-  el.style.backgroundImage='none';
+
+  // Keep the splash visible with a clean fallback even if no image is configured.
+  sp=sp||CONF.splash||{};
+  if(sp.enabled===false){
+    el.remove();
+    window.__megaSplashReady=true;
+    return;
+  }
+
+  const url=String(sp.img||sp.image||sp.imageUrl||'').trim();
   el.dataset.photoReady='0';
-  el.style.backgroundColor='#000';
+  el.style.backgroundImage='none';
+  el.style.backgroundColor='#071a2a';
+  el.style.background='radial-gradient(ellipse at 50% 35%, #168bc4 0%, #07517a 45%, #061723 100%)';
   el.classList.remove('full-photo');
-  if(!url)return;
+
+  if(!url){
+    // No configured image: use the fallback background and don't wait for a photo.
+    el.dataset.photoReady='1';
+    window.__megaSplashReady=true;
+    return;
+  }
+
+  let settled=false;
+  const finish=(loaded)=>{
+    if(settled)return;
+    settled=true;
+    el.dataset.photoReady='1';
+    window.__megaSplashReady=true;
+    if(loaded){
+      el.style.background='none';
+      el.style.backgroundImage=`url("${url.replace(/["\\]/g,'\\$&')}")`;
+      el.style.backgroundSize='cover';
+      el.style.backgroundPosition='center center';
+      el.style.backgroundRepeat='no-repeat';
+      el.classList.add('full-photo');
+    }else{
+      // A broken image URL should not show a broken/error image as the splash background.
+      console.warn('[Splash] Image failed to load. Check that the admin splash URL is a direct image URL:',url);
+    }
+    el.dispatchEvent(new Event('splashphoto'));
+  };
+
   const probe=new Image();
-  probe.onload=()=>{
-    el.style.backgroundImage=`url("${url.replace(/["\\]/g,'\\$&')}")`;
-    el.style.backgroundSize='cover';
-    el.style.backgroundPosition='center center';
-    el.style.backgroundRepeat='no-repeat';
-    el.classList.add('full-photo');
-    el.dataset.photoReady='1';
-    el.dispatchEvent(new Event('splashphoto'));
-  };
-  probe.onerror=()=>{
-    console.warn('[Splash] Could not load admin image:',url);
-    el.dataset.photoReady='1';
-    el.dispatchEvent(new Event('splashphoto'));
-  };
+  probe.onload=()=>finish(true);
+  probe.onerror=()=>finish(false);
   probe.src=url;
+
+  // Avoid waiting indefinitely for a slow or blocked image host.
+  setTimeout(()=>finish(false),5000);
 }
 
 function hideSplash(durationSec){
-  const el=$('#splash');if(!el)return;
+  const el=$('#splash');
+  if(!el)return;
+  if(el.dataset.hideScheduled==='1')return;
+  el.dataset.hideScheduled='1';
+
   const ms=Math.max(800,(Number(durationSec)||2.5)*1000);
-  const begin=()=>setTimeout(()=>{
-    el.classList.add('fade-out');
-    setTimeout(()=>{if(el.parentNode)el.remove()},300);
-  },ms);
-  if(el.dataset.photoReady==='0' && CONF.splash && CONF.splash.img){
+  const begin=()=>{
+    if(!el.isConnected)return;
+    setTimeout(()=>{
+      el.classList.add('fade-out');
+      setTimeout(()=>{if(el.parentNode)el.remove()},350);
+    },ms);
+  };
+
+  // Wait briefly for the configured image, but never let a broken URL trap the user.
+  if(el.dataset.photoReady==='0'){
     let started=false;
-    const startOnce=()=>{if(started)return;started=true;begin()};
+    const startOnce=()=>{
+      if(started)return;
+      started=true;
+      begin();
+    };
     el.addEventListener('splashphoto',startOnce,{once:true});
-    setTimeout(startOnce,5000);
+    setTimeout(startOnce,5200);
     return;
   }
   begin();
