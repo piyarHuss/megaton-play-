@@ -351,9 +351,8 @@ const fmtT=ts=>{const d=new Date(ts);return d.toLocaleDateString(undefined,{mont
 document.addEventListener('pointerdown',e=>{const b=e.target.closest('.btn');if(!b||b.classList.contains('dis'))return;const r=b.getBoundingClientRect(),d=Math.max(r.width,r.height)*2,s=document.createElement('span');s.className='rp';s.style.cssText=`width:${d}px;height:${d}px;left:${e.clientX-r.left-d/2}px;top:${e.clientY-r.top-d/2}px`;b.appendChild(s);setTimeout(()=>s.remove(),600)});
 
 const ADS=[{id:'ad1',t:'Watch AdsGram video sponsor',net:'adsgram_reward',blockId:'56220',r:3,max:15,ic:'play',bg:'linear-gradient(135deg,#6d4aff,#c026d3)'},{id:'ad2',t:'Watch AdsGram interstitial',net:'adsgram_int',blockId:'int-56219',r:2,max:10,ic:'clock',bg:'linear-gradient(135deg,#3b3b8a,#6366f1)'},{id:'ad3',t:'Watch Monetag popup sponsor',net:'monetag_pop',blockId:'12131483',r:3,max:10,ic:'film',bg:'linear-gradient(135deg,#16a34a,#22c55e)'}];
-const LT=[{id:'t_adsg',t:'AdsGram Partner Mission',net:'adsgram_task',blockId:'task-56221',r:5,url:'',img:'',ic:'zap',bg:'linear-gradient(135deg,#6366f1,#a855f7)',tag:'new',wait:16},{id:'t1',t:'Play to explore the bonus game',net:'link',blockId:'',r:3,url:CFG.channel,ic:'target',bg:'linear-gradient(135deg,#f59e0b,#16a34a)',tag:'new',wait:16},{id:'t2',t:'Join our Telegram channel',net:'link',blockId:'',r:4,url:CFG.channel,ic:'send',bg:'linear-gradient(135deg,#2a7bff,#1a5cff)',tag:'new',wait:16},{id:'t3',t:'Join the community group',net:'link',blockId:'',r:4,url:CFG.group,ic:'msg',bg:'linear-gradient(135deg,#8b5cf6,#7c3aed)',wait:16},{id:'t4',t:'Open the partner mini app',net:'link',blockId:'',r:8,url:CFG.channel,ic:'grid',bg:'linear-gradient(135deg,#38bdf8,#0ea5e9)',tag:'limited',wait:16},{id:'t5',t:'Daily FREE reward just for visiting',net:'link',blockId:'',r:4,url:CFG.channel,ic:'link',bg:'linear-gradient(135deg,#3b82f6,#2a7bff)',daily:true,wait:16}];
-const WT=[{id:'w1',t:'World task: follow a partner channel',net:'link',blockId:'',r:5,url:CFG.channel,ic:'globe',bg:'linear-gradient(135deg,#06b6d4,#0891b2)',tag:'new',wait:16},{id:'w2',t:'World task: try a partner app',net:'link',blockId:'',r:6,url:CFG.channel,ic:'globe',bg:'linear-gradient(135deg,#8b5cf6,#7c3aed)',tag:'limited',wait:16}];
-const allLT=()=>S.world&&FT('m_world')?[...LT,...WT]:LT;
+const LT=[{id:'t_adsg',t:'AdsGram Partner Mission',net:'adsgram_task',blockId:'task-56221',r:5,url:'',img:'',ic:'zap',bg:'linear-gradient(135deg,#6366f1,#a855f7)',tag:'new',wait:10},{id:'t1',t:'Play to explore the bonus game',net:'link',blockId:'',r:3,url:CFG.channel,ic:'target',bg:'linear-gradient(135deg,#f59e0b,#16a34a)',tag:'new',wait:10},{id:'t2',t:'Join our Telegram channel',net:'link',blockId:'',r:4,url:CFG.channel,ic:'send',bg:'linear-gradient(135deg,#2a7bff,#1a5cff)',tag:'new',wait:10},{id:'t3',t:'Join the community group',net:'link',blockId:'',r:4,url:CFG.group,ic:'msg',bg:'linear-gradient(135deg,#8b5cf6,#7c3aed)',wait:10},{id:'t4',t:'Open the partner mini app',net:'link',blockId:'',r:8,url:CFG.channel,ic:'grid',bg:'linear-gradient(135deg,#38bdf8,#0ea5e9)',tag:'limited',wait:10},{id:'t5',t:'Daily FREE reward just for visiting',net:'link',blockId:'',r:4,url:CFG.channel,ic:'link',bg:'linear-gradient(135deg,#3b82f6,#2a7bff)',daily:true,wait:10}];
+const WT=[{id:'w1',t:'World task: follow a partner channel',net:'link',blockId:'',r:5,url:CFG.channel,ic:'globe',bg:'linear-gradient(135deg,#06b6d4,#0891b2)',tag:'new',wait:10},{id:'w2',t:'World task: try a partner app',net:'link',blockId:'',r:6,url:CFG.channel,ic:'globe',bg:'linear-gradient(135deg,#8b5cf6,#7c3aed)',tag:'limited',wait:10}];
 const ST=[{n:'Alex',h:'@alex_92',tk:6637,iv:140,sp:420},{n:'Sarah',h:'@sarah_k',tk:6015,iv:96,sp:388},{n:'William',h:'@will_x',tk:6001,iv:88,sp:402},{n:'Emily',h:'@emily_t',tk:6000,iv:75,sp:350},{n:'Robert',h:'@rob_m',tk:5987,iv:70,sp:341},{n:'Priya',h:'@priya_s',tk:5800,iv:64,sp:330},{n:'Chen',h:'@chen_w',tk:5710,iv:60,sp:315}];
 const AVC=['#6d4aff','#f59e0b','#ef4444','#0ea5e9','#22c55e','#ec4899','#14b8a6'];
 const SEG=[{l:'+'+f(5),k:'m',v:5,w:20,c:'#2a5cd8'},{l:'+'+f(1),k:'m',v:1,w:8,c:'#0ea5e9'},{l:'+'+f(10),k:'m',v:10,w:10,c:'#f59e0b'},{l:'Free Spin',k:'fs',w:8,c:'#22c55e'},{l:'+'+f(2),k:'m',v:2,w:4,c:'#ec4899'},{l:'2× Boost',k:'bo',w:10,c:'#a855f7'},{l:'+'+f(3),k:'m',v:3,w:25,c:'#14b8a6'},{l:'Try again',k:'no',w:15,c:'#475569'}];
@@ -402,7 +401,7 @@ function applyConf(c){
       const taskObj={
         ...t,
         r:mm(t.r),
-        wait:Math.max(16,Math.min(3600,Number(t.wait)||16)),
+        wait:Math.max(10,Math.min(3600,Number(t.wait)||10)),
         net:t.net||'link',
         blockId:t.blockId||'',
         img:t.img||'',
@@ -628,7 +627,7 @@ async function boot(){
     const tk=[...LT,...WT].find(t=>String(t.blockId||'task-56221')===blockId&&t.net==='adsgram_task');
     if(!tk)return;
 
-    const wait=Math.max(16,Number(tk.wait)||16);
+    const wait=Math.max(10,Number(tk.wait)||10);
     const sessionObj={
       id:tk.id,
       startedAt:Date.now(),
@@ -636,6 +635,12 @@ async function boot(){
       wait:wait,
       isAdsgram:true
     };
+    
+    // Trigger our own task timer logic
+    S.pend = S.pend || {};
+    S.pend[tk.id] = Date.now();
+    if(S.taskVerified) delete S.taskVerified[tk.id];
+    
     window.activeTaskSession=sessionObj;
     localStorage.setItem('megaton_active_task',JSON.stringify(sessionObj));
     toast('⏱️ AdsGram task started! Stay on page for at least '+wait+' seconds.');
@@ -675,15 +680,10 @@ async function boot(){
 /* ===== Tasks Rendering with Anti-Cheat Verification ===== */
 function taskCard(t,type){
   const done=t.daily?S.done[t.id]:S.lt[t.id];
+  const isVerified=(S.taskVerified||{})[t.id];
+  const isPending=S.pend&&S.pend[t.id];
 
-  if(t.net==='adsgram_task'){
-    if(done){
-      return `<div class="task in">
-        <div class="ic" style="background:${t.bg||'linear-gradient(135deg,#6366f1,#a855f7)'};width:48px;height:48px;border-radius:14px;flex:none;display:flex;align-items:center;justify-content:center">${ic(t.ic||'zap',22)}</div>
-        <div class="t"><b>${esc(t.t)}</b><small>${amt(t.r,14)} <s>Completed</s></small></div>
-        <button class="btn dis">${ic('check',14)}Claimed</button>
-      </div>`;
-    }
+  if(t.net==='adsgram_task' && !done && !isVerified && !isPending){
     const bId=t.blockId||'task-56221';
     return `<adsgram-task data-task-id="${esc(t.id)}" data-block-id="${esc(bId)}" data-debug="false" class="task in">
       <span slot="reward" class="am">${TON(14)}${f(t.r)}</span>
@@ -711,9 +711,7 @@ function taskCard(t,type){
       btn=`<button class="btn" data-a="ad" data-id="${t.id}">${ic('play',14)}Watch</button>`;
     }
   }else{
-    const isVerified=(S.taskVerified||{})[t.id];
-    const isPending=S.pend&&S.pend[t.id];
-    const wait=Math.max(16,Math.min(3600,Number(t.wait)||16));
+    const wait=Math.max(10,Math.min(3600,Number(t.wait)||10));
     sb=`${amt(t.r,14)} <s>Stay ${wait}s</s>${t.tag?`<span class="pill">${t.tag=='new'?'New':'Limited'}</span>`:''}`;
 
     if(done){
@@ -944,11 +942,11 @@ ad(e){
   toast('No verified ad is available right now. Please try again later.');
 },
 
-/* ===== Strict 16-Second Anti-Cheat Task Go Action ===== */
+/* ===== Strict Anti-Cheat Task Go Action ===== */
 go(e){
   const t=findT(e.dataset.id);
   if(!t)return;
-  const wait=Math.max(16,Math.min(3600,Number(t.wait)||16));
+  const wait=Math.max(10,Math.min(3600,Number(t.wait)||10));
   const now=Date.now();
 
   S.taskVerified=S.taskVerified||{};
@@ -981,7 +979,7 @@ claim(e){
     return;
   }
 
-  const wait=Math.max(16,Math.min(3600,Number(t.wait)||16));
+  const wait=Math.max(10,Math.min(3600,Number(t.wait)||10));
   const startedTs=Number((S.pend&&S.pend[t.id])||0);
   const elapsed=startedTs>0?Math.floor((Date.now()-startedTs)/1000):0;
   const isVerified=(S.taskVerified&&S.taskVerified[t.id])||(startedTs>0&&elapsed>=wait);
@@ -1208,7 +1206,7 @@ async function loadChar(){try{if(!window.THREE)await lsc('https://cdn.jsdelivr.n
 const gltf=await new Promise((res,rej)=>new THREE.GLTFLoader().load(CFG.model,res,undefined,rej));
 const r=new THREE.WebGLRenderer({alpha:true,antialias:true});r.setPixelRatio(1);r.setSize(256,256,false);r.setClearColor(0,0);r.outputEncoding=THREE.sRGBEncoding;
 const sc=new THREE.Scene(),cam=new THREE.OrthographicCamera(-1,1,1,-1,.1,100);cam.position.set(0,0,10);
-sc.add(new THREE.AmbientLight(0xffffff,.9));const dl=new THREE.DirectionalLight(0xffffff,1.1);dl.position.set(2,4,6);sc.add(dl);
+sc.add(new THREE.AmbientLight(0xffffff,.9));constdl=new THREE.DirectionalLight(0xffffff,1.1);dl.position.set(2,4,6);sc.add(dl);
 const obj=gltf.scene,box=new THREE.Box3().setFromObject(obj),size=box.getSize(new THREE.Vector3()),ctr=box.getCenter(new THREE.Vector3()),k=1.9/Math.max(size.x,size.y,size.z),pv=new THREE.Group();
 obj.scale.setScalar(k);obj.position.set(-ctr.x*k,-box.min.y*k-1,-ctr.z*k);pv.add(obj);sc.add(pv);
 let mix=null;if(gltf.animations&&gltf.animations.length){mix=new THREE.AnimationMixer(obj);mix.clipAction(gltf.animations[0]).play()}
@@ -1243,7 +1241,7 @@ setInterval(()=>{
 },1000);
 
 /* =========================================================================
-   STRICT OUTSIDE 16-SECOND ANTI-CHEAT DETECTION ENGINE
+   STRICT OUTSIDE 10-SECOND ANTI-CHEAT DETECTION ENGINE
    ========================================================================= */
 function checkTaskSessionOnReturn(){
   let sess=window.activeTaskSession;
@@ -1257,7 +1255,7 @@ function checkTaskSessionOnReturn(){
 
   const now=Date.now();
   const startedAt=Number(sess.startedAt)||now;
-  const wait=Math.max(16,Math.min(3600,Number(sess.wait)||16));
+  const wait=Math.max(10,Math.min(3600,Number(sess.wait)||10));
   const elapsedOutside=sess.leaveTime?((now-Number(sess.leaveTime))/1000):0;
   const totalElapsed=(now-startedAt)/1000;
 
