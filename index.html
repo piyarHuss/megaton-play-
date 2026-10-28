@@ -229,7 +229,7 @@ if (!U.id) {
 
 const $=(s,r=document)=>r.querySelector(s),dayAt=d=>{const p=Object.fromEntries(new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Kolkata',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(d).map(x=>[x.type,x.value]));return p.year+'-'+p.month+'-'+p.day},day=()=>dayAt(new Date()),esc=s=>String(s).replace(/[&<>"']/g,c=>'&#'+c.charCodeAt(0)+';');
 const f=n=>(n/1000).toFixed(4);
-let S={b:0,life:0,fs:0,spins:0,ck:{d:'',n:0},day:day(),ad:{},adCd:{},done:{},dn:0,lt:{},pend:{},taskStarted:{},taskRewardPending:{},ms:{},hist:[],inv:0,earn:0,invs:[],refBy:'',wallet:'',wds:[],theme:'auto',lang:'en',world:false,snd:true,boost:false,rot:0,gp:0,gb:0};
+let S={b:0,life:0,fs:0,spins:0,ck:{d:'',n:0},day:day(),ad:{},adCd:{},done:{},dn:0,lt:{},pend:{},taskStarted:{},taskVerified:{},taskRewardPending:{},ms:{},hist:[],inv:0,earn:0,invs:[],refBy:'',wallet:'',wds:[],theme:'auto',lang:'en',world:false,snd:true,boost:false,rot:0,gp:0,gb:0};
 let db=null, userRef=null, userStateRef=null, firebaseReady=false, saveQueue=Promise.resolve();
 try {
   if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
@@ -566,7 +566,7 @@ function initMonetagInApp(){
 async function boot(){
   initSplash();
   await loadUserState();
-  if(!$('#app')) return; // Account was blocked; do not initialize the removed app UI.
+  if(!$('#app')) return;
   let c=null;
   try{
     if(db){
@@ -603,7 +603,8 @@ async function boot(){
   }
   await checkAndApplyReferral();
   initMonetagInApp();
-  // Record when an AdsGram task is actually started, then enforce the 16s anti-cheat wait.
+
+  // AdsGram Task Click Listener
   document.addEventListener('click',e=>{
     const trigger=e.target&&e.target.closest&&e.target.closest('adsgram-task [slot="button"]');
     if(!trigger)return;
@@ -612,44 +613,42 @@ async function boot(){
     const blockId=String(host.getAttribute('data-block-id')||'');
     const tk=[...LT,...WT].find(t=>String(t.blockId||'task-56221')===blockId&&t.net==='adsgram_task');
     if(!tk)return;
-    const now=Date.now();
+
     const wait=Math.max(16,Number(tk.wait)||16);
-    S.taskStarted=S.taskStarted||{};
-    S.taskStarted[tk.id]=now;
-    window.activeTaskSession={
+    const sessionObj={
       id:tk.id,
-      startedAt:now,
+      startedAt:Date.now(),
+      leaveTime:null,
       wait:wait,
-      hasLeft:false
+      isAdsgram:true
     };
-    save();
+    window.activeTaskSession=sessionObj;
+    localStorage.setItem('megaton_active_task',JSON.stringify(sessionObj));
+    toast('⏱️ AdsGram task started! Stay on page for at least '+wait+' seconds.');
   },true);
+
+  // AdsGram Task Reward Listener
   document.addEventListener('reward',(e)=>{
     const bId=String(e.detail||'');
     const tk=[...LT,...WT].find(t=>String(t.blockId||'task-56221')===bId&&t.net==='adsgram_task');
-    const rew=tk?tk.r:5;
-    const name=tk?tk.t:'AdsGram Task';
-    if(tk&&((tk.daily&&S.done[tk.id])||S.lt[tk.id]||S.taskRewardPending[tk.id]))return;
-    const wait=tk?Math.max(16,Math.min(3600,Number(tk.wait)||16)):16;
-    const started=tk?Number((S.taskStarted||{})[tk.id]||0):0;
-    const elapsed=started?(Date.now()-started)/1000:0;
+    if(!tk)return;
+    if((tk.daily&&S.done[tk.id])||S.lt[tk.id]||S.taskRewardPending[tk.id])return;
 
-    if(!started||elapsed<16){
-      toast('⚠️ AdsGram task incomplete! Minimum 16 seconds required on the task page.');
-      if(tk&&S.taskStarted)delete S.taskStarted[tk.id];
-      save();
+    S.taskVerified=S.taskVerified||{};
+    if(!S.taskVerified[tk.id]){
+      toast('⚠️ AdsGram task incomplete! Minimum 16 seconds outside required.');
       return;
     }
 
-    const remaining=Math.max(0,wait*1000-(Date.now()-(started||Date.now())));
-    if(tk){S.taskRewardPending=S.taskRewardPending||{};S.taskRewardPending[tk.id]=1;save();}
-    const pay=()=>{
-      if(tk){delete S.taskRewardPending[tk.id];S.lt[tk.id]=1;delete S.taskStarted[tk.id];S.dn++;save();}
-      award(rew,name);
-      toast('🎉 AdsGram Task rewarded! +'+f(rew)+' TON');
-    };
-    if(remaining>0){toast('Task completed. Reward in '+Math.ceil(remaining/1000)+'s');setTimeout(pay,remaining)}else pay();
+    delete S.taskVerified[tk.id];
+    delete S.pend[tk.id];
+    S.lt[tk.id]=1;
+    S.dn++;
+    save();
+    award(tk.r,tk.t||'AdsGram Task');
+    toast('🎉 AdsGram Task rewarded! +'+f(tk.r)+' TON');
   });
+
   GM.reinit();
   render();
   const splashDur=(c&&c.splash&&c.splash.duration)||2.5;
@@ -659,13 +658,10 @@ async function boot(){
   }
 }
 
-/* ===== Tasks Rendering with Uniform Card Style ===== */
+/* ===== Tasks Rendering with Anti-Cheat Verification ===== */
 function taskCard(t,type){
   if(t.net==='adsgram_task'){
     const bId=t.blockId||'task-56221';
-    const wait=Math.max(16,Math.min(3600,Number(t.wait)||16));
-    const started=Number((S.taskStarted||{})[t.id]||0);
-    const left=started?Math.max(0,wait-Math.floor((Date.now()-started)/1000)):0;
     return `<adsgram-task data-task-id="${esc(t.id)}" data-block-id="${esc(bId)}" data-debug="false" class="task in">
       <span slot="reward" class="am">${TON(14)}${f(t.r)}</span>
       <button slot="button" class="btn">Go${ic('up',14)}</button>
@@ -692,13 +688,22 @@ function taskCard(t,type){
       btn=`<button class="btn" data-a="ad" data-id="${t.id}">${ic('play',14)}Watch</button>`;
     }
   }else{
-    const done=t.daily?S.done[t.id]:S.lt[t.id],rd=S.pend[t.id];
+    const done=t.daily?S.done[t.id]:S.lt[t.id];
+    const isVerified=(S.taskVerified||{})[t.id];
+    const isPending=S.pend[t.id];
     const wait=Math.max(16,Math.min(3600,Number(t.wait)||16));
     sb=`${amt(t.r,14)} <s>Stay ${wait}s</s>${t.tag?`<span class="pill">${t.tag=='new'?'New':'Limited'}</span>`:''}`;
-    if(done)btn=`<button class="btn dis">${ic('check',14)}Claimed</button>`;
-    else if(rd&&Date.now()>=rd)btn=`<button class="btn grn" data-a="claim" data-id="${t.id}">${ic('check',14)}Claim</button>`;
-    else if(rd)btn=`<button class="btn dis">${Math.max(1,Math.ceil((rd-Date.now())/1000))}s…</button>`;
-    else btn=`<button class="btn" data-a="go" data-id="${t.id}">Go${ic('up',14)}</button>`;
+
+    if(done){
+      btn=`<button class="btn dis">${ic('check',14)}Claimed</button>`;
+    }else if(isVerified){
+      // Only turns GREEN when user has actually spent 16+ seconds outside!
+      btn=`<button class="btn grn" data-a="claim" data-id="${t.id}">${ic('check',14)}Claim</button>`;
+    }else if(isPending){
+      btn=`<button class="btn dis" style="opacity:0.8">Stay ${wait}s…</button>`;
+    }else{
+      btn=`<button class="btn" data-a="go" data-id="${t.id}">Go${ic('up',14)}</button>`;
+    }
   }
 
   const customImg=(t.img||'').trim();
@@ -731,7 +736,6 @@ spin(){const ok=S.b>=CFG.spinCost||S.fs;return `<div class="card in" style="text
 <div style="margin:6px 0 12px" class="am">${TON(20)}<span style="font-size:20px">${f(S.b)} TON</span></div>
 <button class="btn ton ${ok?'':'dis'}" id="spb" data-a="dospin" style="width:100%;font-size:17px;height:52px">${S.fs?'Use free spin':'Spin · '+f(CFG.spinCost)+' TON'}</button><p style="color:var(--mut);font-size:13px">Wheel results are generated in the app; production rewards need server-side validation.</p></div>`},
 
-/* ===== Wallet Tab with SUCCESS status rendering ===== */
 wallet(){
   const p=Math.min(100,S.b/CFG.minW*100),wd=S.wds.reduce((a,w)=>a+w.a,0),can=S.b>=CFG.minW;
   return `<div class="wc in"><div class="wglow"></div><div class="coin">${TON(62)}</div><small class="lbl">${esc(T('walletLabel'))}</small><div class="big"><span id="cnt">${f(shown)}</span><em>TON</em></div><div class="pbar"><i style="width:${p}%"></i></div><div class="pl"><span>Minimum withdrawal ${f(CFG.minW)} TON</span><span>${Math.round(p)}%</span></div><button class="btn ${can?'':'dis'}" data-a="wd" style="width:100%;margin-top:16px;height:50px;font-size:16px">${ic('up',18)}Withdraw</button></div>
@@ -803,7 +807,7 @@ document.documentElement.dataset.t=S.theme}
 function countUp(){const e=$('#cnt'),to=S.b,from=shown,t0=performance.now();if(!e)return;shown=to;if(from===to){e.textContent=f(to);return}(function st(t){const k=Math.min(1,(t-t0)/900),v=from+(to-from)*(1-Math.pow(1-k,3));if(!e.isConnected)return;e.textContent=f(v);if(k<1)requestAnimationFrame(st)})(t0)}
 function drawWheel(){const c=$('#wh');if(!c)return;const g=c.getContext('2d'),r=320,n=SEG.length,a=6.2832/n;g.translate(r,r);SEG.forEach((s,i)=>{g.beginPath();g.moveTo(0,0);g.arc(0,0,r-8,-1.5708+i*a,-1.5708+(i+1)*a);g.fillStyle=s.c;g.fill();g.strokeStyle='rgba(255,255,255,.35)';g.lineWidth=4;g.stroke();g.save();g.rotate(-1.5708+(i+.5)*a);g.fillStyle='#fff';g.font='bold 32px Outfit,sans-serif';g.textAlign='right';g.fillText(s.l,r-40,11);g.restore()});g.lineWidth=14;g.strokeStyle='#f5b400';g.beginPath();g.arc(0,0,r-6,0,6.3);g.stroke()}
 
-/* ===== Actions with 45s Cooldown & 5s Anti-Cheat ===== */
+/* ===== Actions & Anti-Cheat Task Engine ===== */
 const A={
 tab(e){if(busy)return;tab=e.dataset.v;closeM();render();snd(500,.05);hap()},sub(e){sub=e.dataset.v;render(true)},sec(e){sec=e.dataset.v;render(true)},flt(e){flt=e.dataset.v;render(true)},lb(e){lb=e.dataset.v;render(true)},
 ad(e){
@@ -895,64 +899,65 @@ ad(e){
     }
   }
 
-  // Fail closed: a countdown is not a real ad and must never pay a reward.
   toast('No verified ad is available right now. Please try again later.');
-
 },
+
+/* ===== Strict 16-Second Anti-Cheat Task Go Action ===== */
 go(e){
   const t=findT(e.dataset.id);
   if(!t)return;
   const wait=Math.max(16,Math.min(3600,Number(t.wait)||16));
   const now=Date.now();
-  S.pend[t.id]=now+wait*1000;
-  S.taskStarted=S.taskStarted||{};
-  S.taskStarted[t.id]=now;
-  window.activeTaskSession={
+
+  // Reset any old state
+  S.taskVerified=S.taskVerified||{};
+  delete S.taskVerified[t.id];
+  S.pend[t.id]=now;
+
+  const sessionObj={
     id:t.id,
     startedAt:now,
-    wait:wait,
-    hasLeft:false
+    leaveTime:null,
+    wait:wait
   };
+  window.activeTaskSession=sessionObj;
+  localStorage.setItem('megaton_active_task',JSON.stringify(sessionObj));
+
   save();
   render(true);
   openL(t.url||CFG.channel);
   toast('⏱️ Task started! Stay on the page for at least '+wait+' seconds.');
 },
+
+/* ===== Strict Verified Claim Action ===== */
 claim(e){
   const t=findT(e.dataset.id);
   if(!t)return;
-  const started=Number((S.taskStarted||{})[t.id]||0);
-  const wait=Math.max(16,Number(t.wait)||16);
-  const until=Number(S.pend[t.id]||0);
-  const now=Date.now();
-  const elapsed=started?(now-started)/1000:0;
 
   if((t.daily&&S.done[t.id])||S.lt[t.id]){
     toast('Task already claimed!');
     return;
   }
 
-  // Strict anti-cheat: Must have spent at least 16 seconds on task
-  if(!started||elapsed<16||(until&&now<until)){
-    const left=Math.max(1,Math.ceil(16-elapsed));
-    delete S.pend[t.id];
-    if(S.taskStarted)delete S.taskStarted[t.id];
-    save();
-    render(true);
-    toast('⚠️ Task incomplete! You must stay on the page for at least 16 seconds.');
+  // Check if verified by our outside-time tracking
+  S.taskVerified=S.taskVerified||{};
+  if(!S.taskVerified[t.id]){
+    toast('⚠️ Task incomplete! Tap Go and stay on the page for at least 16 seconds.');
     return;
   }
 
   if(t.daily)S.done[t.id]=1;
   else S.lt[t.id]=1;
+
+  delete S.taskVerified[t.id];
   delete S.pend[t.id];
-  if(S.taskStarted)delete S.taskStarted[t.id];
   S.dn++;
   save();
   award(t.r,t.t||'Completed Task',e);
   toast('🎉 Task reward +'+f(t.r)+' TON added!');
   render(true);
 },
+
 qi(e){const k=e.dataset.v;closeM();M[k]()},x:closeM,
 gospin(){if(busy)return;tab='spin';render();setTimeout(()=>A.dospin(),450)},
 dospin(){if(busy)return;if(!S.fs&&S.b<CFG.spinCost){toast('Need '+f(CFG.spinCost)+' TON to spin');snd(150);return}busy=true;if(S.fs)S.fs--;else S.b-=CFG.spinCost;S.spins++;save();
@@ -981,7 +986,6 @@ async wdok(){
   if(!S.wallet){toast('Set wallet address first');return;}
   if(!db||!userRef||!userStateRef||U.id===null||U.id===undefined){
     toast('Firebase is not connected. Please try again.');
-    console.error('Withdrawal blocked: Firebase/user references unavailable.');
     return;
   }
 
@@ -1023,7 +1027,6 @@ async wdok(){
     updates['users/'+uid+'/photo_url']=U.photo_url||'';
     updates['users/'+uid+'/lastActive']=now;
 
-    // Save user state and admin withdrawal record atomically.
     await db.ref().update(updates);
 
     closeM();
@@ -1172,49 +1175,71 @@ document.addEventListener('click',e=>{if(!e.target.closest('#mn')&&!e.target.clo
 /* Live countdown ticker: 45s timer & task cooldowns refresh smoothly */
 setInterval(()=>{if(busy)return;if(newDay()){save();render(true);return}if(tab=='home'&&!$('#md').classList.contains('on')&&(Object.keys(S.pend).length||Object.keys(S.adCd||{}).some(k=>S.adCd[k]>Date.now())))render(true)},1000);
 
+/* =========================================================================
+   STRICT OUTSIDE 16-SECOND ANTI-CHEAT DETECTION ENGINE
+   ========================================================================= */
+function checkTaskSessionOnReturn(){
+  let sess=window.activeTaskSession;
+  if(!sess){
+    try{
+      const saved=localStorage.getItem('megaton_active_task');
+      if(saved) sess=JSON.parse(saved);
+    }catch(e){}
+  }
+  if(!sess) return;
 
-/* ===== 16-Second Anti-Cheat System for Tasks ===== */
-function checkActiveTaskOnReturn(){
-  if(!window.activeTaskSession)return;
-  const sess=window.activeTaskSession;
-  const elapsed=(Date.now()-sess.startedAt)/1000;
+  const now=Date.now();
+  // Time when user actually left the web app to visit the target link
+  const leaveTime=sess.leaveTime||sess.startedAt;
+  const elapsedOutside=(now-leaveTime)/1000;
   const required=sess.wait||16;
 
-  // Ignore flutter immediately after clicking (<0.8s)
-  if(elapsed<0.8)return;
+  // Ignore micro-focus events triggered immediately when clicking link (<1.2s)
+  if(elapsedOutside<1.2 && !sess.leaveTime) return;
 
-  if(elapsed<required){
-    // Early return: User closed or backed out before 16s!
-    const elapsedRound=Math.floor(elapsed);
+  if(elapsedOutside<required){
+    // USER RETURNED TOO EARLY! (CHEAT ATTEMPT DETECTED)
+    const spent=Math.max(0,Math.floor(elapsedOutside));
+    
+    // Completely wipe verification and reset task back to 'Go'
     delete S.pend[sess.id];
-    if(S.taskStarted)delete S.taskStarted[sess.id];
+    if(S.taskVerified) delete S.taskVerified[sess.id];
     window.activeTaskSession=null;
+    localStorage.removeItem('megaton_active_task');
     save();
     render(true);
-    toast('⚠️ Task failed! You returned in only '+elapsedRound+'s. You must stay on the page for at least '+required+' seconds.');
-    snd(180,.25,'sawtooth');
+
+    toast('⚠️ Task failed! You only stayed for '+spent+'s. You MUST stay on the page for at least '+required+' seconds!');
+    snd(180,0.3,'sawtooth');
     hap('heavy');
   }else{
-    // Legitimate stay: 16+ seconds spent outside on the task!
-    S.pend[sess.id]=Date.now()-1000;
+    // USER HONESTLY COMPLETED 16+ SECONDS OUTSIDE!
+    S.taskVerified=S.taskVerified||{};
+    S.taskVerified[sess.id]=true;
+    S.pend[sess.id]=now; // Mark ready
     window.activeTaskSession=null;
+    localStorage.removeItem('megaton_active_task');
     save();
     render(true);
+
     toast('🎉 16 seconds completed! Tap Claim to receive your reward.');
-    snd(880,.15);
+    snd(880,0.2);
     hap('medium');
   }
 }
 
+// Track when user leaves app and when user returns
 document.addEventListener('visibilitychange',()=>{
   if(document.hidden){
-    if(window.activeTaskSession)window.activeTaskSession.hasLeft=true;
+    if(window.activeTaskSession && !window.activeTaskSession.leaveTime){
+      window.activeTaskSession.leaveTime=Date.now();
+      localStorage.setItem('megaton_active_task',JSON.stringify(window.activeTaskSession));
+    }
   }else{
-    checkActiveTaskOnReturn();
+    checkTaskSessionOnReturn();
   }
 });
-window.addEventListener('focus',checkActiveTaskOnReturn);
+window.addEventListener('focus',checkTaskSessionOnReturn);
 
 boot();
-
 </script></body></html>
