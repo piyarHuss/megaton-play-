@@ -319,7 +319,7 @@ const TON=(s=18)=>`<svg width="${s}" height="${s}" viewBox="0 0 56 56" style="di
 const amt=(n,s=15)=>`<span class="am">${TON(s)}${f(n)}</span>`;
 const I={en:{home:'HOME',game:'GAME',wallet:'WALLET',invite:'INVITE',rank:'RANK'},hi:{home:'होम',game:'गेम',wallet:'वॉलेट',invite:'आमंत्रित',rank:'रैंक'}};
 const tr=k=>(S.lang=='en'&&T('nav_'+k))||I[S.lang][k]||k;
-let tab='home',sec='earn',sub='rewards',flt='all',lb='tk',busy=false,shown=0;
+let tab='home',sec='earn',sub='rewards',flt='all',lb='tk',busy=false,withdrawBusy=false,shown=0;
 let AC;function snd(fr,t=.1,ty='sine',v=.05){if(!S.snd)return;try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();const o=AC.createOscillator(),g=AC.createGain();o.type=ty;o.frequency.value=fr;g.gain.setValueAtTime(v,AC.currentTime);g.gain.exponentialRampToValueAtTime(.001,AC.currentTime+t);o.connect(g);g.connect(AC.destination);o.start();o.stop(AC.currentTime+t)}catch(e){}}
 function hap(k){try{if(tg&&tg.HapticFeedback)tg.HapticFeedback.impactOccurred(k||'light');else if(navigator.vibrate)navigator.vibrate(10)}catch(e){}}
 function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(toast.h);toast.h=setTimeout(()=>t.classList.remove('on'),2200)}
@@ -632,20 +632,28 @@ async function boot(){
     const bId=String(e.detail||'');
     const tk=[...LT,...WT].find(t=>String(t.blockId||'task-56221')===bId&&t.net==='adsgram_task');
     if(!tk)return;
+    S.taskRewardPending=S.taskRewardPending||{};
     if((tk.daily&&S.done[tk.id])||S.lt[tk.id]||S.taskRewardPending[tk.id])return;
 
-    S.taskVerified=S.taskVerified||{};
-    if(!S.taskVerified[tk.id]){
-      toast('⚠️ AdsGram task incomplete! Minimum 16 seconds outside required.');
+    // AdsGram's reward event is the provider's completion signal. Apply the
+    // configured minimum duration without requiring the app to be backgrounded.
+    const sess=window.activeTaskSession;
+    const started=sess&&sess.id===tk.id?Number(sess.startedAt)||Date.now():Date.now();
+    const wait=Math.max(16,Math.min(3600,Number(tk.wait)||16));
+    if((Date.now()-started)/1000<wait){
+      toast('⚠️ Stay in the AdsGram task for at least '+wait+' seconds before claiming.');
       return;
     }
 
-    delete S.taskVerified[tk.id];
+    S.taskRewardPending[tk.id]=1;
+    if(tk.daily)S.done[tk.id]=1;else S.lt[tk.id]=1;
+    if(S.taskVerified)delete S.taskVerified[tk.id];
     delete S.pend[tk.id];
-    S.lt[tk.id]=1;
+    if(window.activeTaskSession&&window.activeTaskSession.id===tk.id)window.activeTaskSession=null;
+    localStorage.removeItem('megaton_active_task');
     S.dn++;
-    save();
     award(tk.r,tk.t||'AdsGram Task');
+    save();
     toast('🎉 AdsGram Task rewarded! +'+f(tk.r)+' TON');
   });
 
@@ -974,17 +982,23 @@ wd(){
   const bal=S.b;
   if(bal<CFG.minW){toast('Minimum withdrawal is '+f(CFG.minW)+' TON');return}
   if(!S.wallet){toast('Add a withdrawal wallet first');return}
-  modal(`<h3><span>Withdraw TON</span>${xb}</h3><div style="text-align:center;margin:8px 0">${TON(48)}<div style="font-size:30px;font-weight:700;margin-top:6px">${f(bal)} TON</div></div><div class="addr">${S.wallet}</div><p style="color:var(--mut);font-size:13px">Your withdrawal request will be sent to the administrator for review.</p><button class="btn grn" data-a="wdok" style="width:100%;height:50px">${ic('check',18)}Confirm withdrawal</button>`);
+  modal(`<h3><span>Withdraw TON</span>${xb}</h3><div style="text-align:center;margin:8px 0">${TON(48)}<div style="font-size:30px;font-weight:700;margin-top:6px">${f(bal)} TON</div></div><div class="addr">${esc(S.wallet)}</div><p style="color:var(--mut);font-size:13px">Your withdrawal request will be sent to the administrator for review.</p><button class="btn grn" data-a="wdok" style="width:100%;height:50px">${ic('check',18)}Confirm withdrawal</button>`);
 },
 
 async wdok(){
+  if(withdrawBusy){toast('Withdrawal request is already processing.');return;}
+  withdrawBusy=true;
+  const confirmBtn=$('#md [data-a="wdok"]');
+  if(confirmBtn){confirmBtn.disabled=true;confirmBtn.textContent='Processing…';}
   const bal=Number(S.b)||0;
   if(bal<CFG.minW){
+    withdrawBusy=false;
     toast('Minimum withdrawal is '+f(CFG.minW)+' TON');
     return;
   }
-  if(!S.wallet){toast('Set wallet address first');return;}
+  if(!S.wallet){withdrawBusy=false;toast('Set wallet address first');return;}
   if(!db||!userRef||!userStateRef||U.id===null||U.id===undefined){
+    withdrawBusy=false;
     toast('Firebase is not connected. Please try again.');
     return;
   }
@@ -1034,7 +1048,9 @@ async wdok(){
     toast('🎉 Withdrawal request submitted!');
     render(true);
     countUp();
+    withdrawBusy=false;
   }catch(e){
+    withdrawBusy=false;
     S.b=previous.b;
     S.wds=previous.wds;
     S.hist=previous.hist;
@@ -1046,7 +1062,7 @@ async wdok(){
 },
 
 conn(){if(window.TonConnectUI){toast('Opening TON Connect…')}else toast('TON Connect SDK is not included. Use “Enter manually”.')},
-manual(){modal(`<h3><span>Wallet address</span>${xb}</h3><input class="in2" id="wi" placeholder="UQ… / EQ… (48 characters)" value="${S.wallet}"><button class="btn ton" data-a="wsave" style="width:100%;height:48px">Save address</button>`)},
+manual(){modal(`<h3><span>Wallet address</span>${xb}</h3><input class="in2" id="wi" placeholder="UQ… / EQ… (48 characters)" value="${esc(S.wallet)}"><button class="btn ton" data-a="wsave" style="width:100%;height:48px">Save address</button>`)},
 wsave(){const v=$('#wi').value.trim();if(!/^(EQ|UQ)[A-Za-z0-9_-]{46}$/.test(v)){toast('Invalid TON address');snd(150);return}S.wallet=v;save();closeM();toast('Wallet saved');render(true)},
 inv(){const l=link(),txt=T('shareText');if(tg&&tg.openTelegramLink)tg.openTelegramLink('https://t.me/share/url?url='+encodeURIComponent(l)+'&text='+encodeURIComponent(txt));else if(navigator.share)navigator.share({title:document.title,text:txt,url:l}).catch(()=>{});else A.cpl()},
 shx(){openL('https://twitter.com/intent/tweet?text='+encodeURIComponent('Earn TON & spins! '+link()))},shw(){openL('https://wa.me/?text='+encodeURIComponent('Earn TON & spins! '+link()))},
@@ -1189,13 +1205,12 @@ function checkTaskSessionOnReturn(){
   if(!sess) return;
 
   const now=Date.now();
-  // Time when user actually left the web app to visit the target link
-  const leaveTime=sess.leaveTime||sess.startedAt;
-  const elapsedOutside=(now-leaveTime)/1000;
-  const required=sess.wait||16;
-
-  // Ignore micro-focus events triggered immediately when clicking link (<1.2s)
-  if(elapsedOutside<1.2 && !sess.leaveTime) return;
+  // Only verify time measured while the app was actually backgrounded.
+  // A focus event alone must not turn a started task into a completed task.
+  if(!sess.leaveTime)return;
+  const elapsedOutside=(now-Number(sess.leaveTime))/1000;
+  const required=Math.max(16,Math.min(3600,Number(sess.wait)||16));
+  if(!Number.isFinite(elapsedOutside)||elapsedOutside<0)return;
 
   if(elapsedOutside<required){
     // USER RETURNED TOO EARLY! (CHEAT ATTEMPT DETECTED)
