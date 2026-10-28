@@ -644,8 +644,13 @@ async function boot(){
   // AdsGram Task Reward Listener
   document.addEventListener('reward',(e)=>{
     const rawDetail=e&&e.detail;
-    const bId=String(typeof rawDetail==='object'&&rawDetail!==null?rawDetail.blockId:(rawDetail||''));
-    const tk=[...LT,...WT].find(t=>(!bId||String(t.blockId||'task-56221')===bId)&&t.net==='adsgram_task');
+    const eventHost=e&&e.target&&e.target.closest?e.target.closest('adsgram-task'):null;
+    const bId=String(
+      (rawDetail&&typeof rawDetail==='object'&&(rawDetail.blockId||rawDetail.block_id||rawDetail.blockID)) ||
+      (eventHost&&(eventHost.getAttribute('data-block-id')||'')) ||
+      (typeof rawDetail==='string'?rawDetail:'')
+    );
+    const tk=[...LT,...WT].find(t=>t.net==='adsgram_task'&&(!bId||String(t.blockId||'task-56221')===bId));
     if(!tk)return;
     S.taskRewardPending=S.taskRewardPending||{};
     if((tk.daily&&S.done[tk.id])||S.lt[tk.id]||S.taskRewardPending[tk.id])return;
@@ -846,6 +851,35 @@ document.documentElement.dataset.t=S.theme}
 function countUp(){const e=$('#cnt'),to=S.b,from=shown,t0=performance.now();if(!e)return;shown=to;if(from===to){e.textContent=f(to);return}(function st(t){const k=Math.min(1,(t-t0)/900),v=from+(to-from)*(1-Math.pow(1-k,3));if(!e.isConnected)return;e.textContent=f(v);if(k<1)requestAnimationFrame(st)})(t0)}
 function drawWheel(){const c=$('#wh');if(!c)return;const g=c.getContext('2d'),r=320,n=SEG.length,a=6.2832/n;g.translate(r,r);SEG.forEach((s,i)=>{g.beginPath();g.moveTo(0,0);g.arc(0,0,r-8,-1.5708+i*a,-1.5708+(i+1)*a);g.fillStyle=s.c;g.fill();g.strokeStyle='rgba(255,255,255,.35)';g.lineWidth=4;g.stroke();g.save();g.rotate(-1.5708+(i+.5)*a);g.fillStyle='#fff';g.font='bold 32px Outfit,sans-serif';g.textAlign='right';g.fillText(s.l,r-40,11);g.restore()});g.lineWidth=14;g.strokeStyle='#f5b400';g.beginPath();g.arc(0,0,r-6,0,6.3);g.stroke()}
 
+
+/* Task completion reliability: verify on timer AND when the app regains focus. */
+const taskVerifyTimers = Object.create(null);
+function verifyTaskSession(taskId, startedAt, waitSeconds, notify=true){
+  const t = findT(taskId);
+  if(!t || ((t.daily && S.done[t.id]) || S.lt[t.id])) return false;
+  const elapsed = (Date.now() - Number(startedAt || 0)) / 1000;
+  const wait = Math.max(16, Math.min(3600, Number(waitSeconds) || Number(t.wait) || 16));
+  if(elapsed < wait) return false;
+  S.taskVerified = S.taskVerified || {};
+  S.taskVerified[t.id] = true;
+  S.pend = S.pend || {};
+  // Keep the start timestamp until Claim so claim validation survives app refreshes.
+  S.pend[t.id] = Number(startedAt) || (Date.now() - wait * 1000);
+  if(window.activeTaskSession && window.activeTaskSession.id === t.id) window.activeTaskSession = null;
+  try{
+    const saved = JSON.parse(localStorage.getItem('megaton_active_task') || 'null');
+    if(saved && saved.id === t.id) localStorage.removeItem('megaton_active_task');
+  }catch(_){}
+  save();
+  if(tab === 'home') render(true);
+  if(notify){
+    toast('Task verified! Tap Claim to receive your reward.');
+    snd(880,0.2);
+    hap('medium');
+  }
+  return true;
+}
+
 /* ===== Actions & Anti-Cheat Task Engine ===== */
 const A={
 tab(e){if(busy)return;tab=e.dataset.v;closeM();render();snd(500,.05);hap()},sub(e){sub=e.dataset.v;render(true)},sec(e){sec=e.dataset.v;render(true)},flt(e){flt=e.dataset.v;render(true)},lb(e){lb=e.dataset.v;render(true)},
@@ -961,12 +995,21 @@ go(e){
     wait:wait
   };
   window.activeTaskSession=sessionObj;
-  localStorage.setItem('megaton_active_task',JSON.stringify(sessionObj));
+  try{localStorage.setItem('megaton_active_task',JSON.stringify(sessionObj));}catch(_){}
 
   save();
   render(true);
+
+  // A timer makes the Claim button appear even if Telegram does not fire
+  // visibilitychange/focus reliably when the user returns from a task link.
+  if(taskVerifyTimers[t.id]) clearTimeout(taskVerifyTimers[t.id]);
+  taskVerifyTimers[t.id]=setTimeout(()=>{
+    verifyTaskSession(t.id,now,wait,true);
+    delete taskVerifyTimers[t.id];
+  },wait*1000);
+
   openL(t.url||CFG.channel);
-  toast('⏱️ Task started! Stay on the page for at least '+wait+' seconds.');
+  toast('⏱️ Task started! Stay on the task for at least '+wait+' seconds.');
 },
 
 /* ===== Guaranteed Verified Claim Action ===== */
@@ -989,6 +1032,9 @@ claim(e){
     toast('⚠️ Task incomplete! Please wait '+remaining+'s more to complete the task.');
     return;
   }
+  // Normalize verification state before crediting the reward.
+  S.taskVerified=S.taskVerified||{};
+  S.taskVerified[t.id]=true;
 
   if(t.daily)S.done[t.id]=1;
   else S.lt[t.id]=1;
@@ -1247,28 +1293,15 @@ function checkTaskSessionOnReturn(){
     try{
       const saved=localStorage.getItem('megaton_active_task');
       if(saved) sess=JSON.parse(saved);
-    }catch(e){}
+    }catch(_){}
   }
-  if(!sess) return;
+  if(!sess || !sess.id) return;
 
-  const now=Date.now();
-  const startedAt=Number(sess.startedAt)||now;
+  const startedAt=Number(sess.startedAt)||Date.now();
   const wait=Math.max(16,Math.min(3600,Number(sess.wait)||16));
-  const totalElapsed=(now-startedAt)/1000;
-
-  if(totalElapsed>=wait){
-    S.taskVerified=S.taskVerified||{};
-    S.taskVerified[sess.id]=true;
-    window.activeTaskSession=null;
-    localStorage.removeItem('megaton_active_task');
-    save();
-    if(!sess.isAdsgram){
-      render(true);
-      toast('🎉 Task verified! Tap Claim to receive your reward.');
-      snd(880,0.2);
-      hap('medium');
-    }
-  }else{
+  if((Date.now()-startedAt)/1000 >= wait){
+    verifyTaskSession(sess.id,startedAt,wait,!sess.isAdsgram);
+  }else if(tab==='home'){
     render(true);
   }
 }
