@@ -7,7 +7,7 @@
 <!-- AdsGram SDK -->
 <script src="https://sad.adsgram.ai/js/sad.min.js"></script>
 <!-- Monetag SDK -->
-<script src="//libtl.com/sdk.js" data-zone="12131483" data-sdk="show_12131483"></script>
+<script src="https://libtl.com/sdk.js" data-zone="12131483" data-sdk="show_12131483"></script>
 <style>
 :root{--bg:#0a0d14;--bg2:#121722;--card:#131720;--card2:#1b202c;--line:#252b38;--tx:#fff;--mut:#8a92a6;--acc:#1a5cff;--ton:#0098ea;--gold:#ffb21a;--grn:#22c55e;--red:#ef4444;color-scheme:dark}
 :root[data-t=light]{--bg:#f2f4f9;--bg2:#fff;--card:#fff;--card2:#eef1f7;--line:#dde2ec;--tx:#10131a;--mut:#667085;color-scheme:light}
@@ -76,7 +76,7 @@ adsgram-task [slot="button"] svg,adsgram-task [slot="claim"] svg,adsgram-task [s
 .rp{position:absolute;border-radius:50%;background:rgba(255,255,255,.4);transform:scale(0);animation:rp .6s ease-out forwards;pointer-events:none}@keyframes rp{to{transform:scale(1);opacity:0}}
 .seg{display:flex;gap:6px;margin:12px 0;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:5px}.seg button{flex:1;padding:11px;border-radius:12px;border:0;background:none;color:var(--mut);font:inherit;font-size:16px;font-weight:600;cursor:pointer;transition:.25s}.seg button.on{background:var(--acc);color:#fff;box-shadow:0 4px 14px rgba(26,92,255,.4)}
 .tabs{display:flex;gap:26px;border-bottom:1px solid var(--line);margin-bottom:14px;padding:0 6px}.tabs button{background:none;border:0;color:var(--mut);font:inherit;font-size:16px;font-weight:600;padding:10px 0;cursor:pointer;position:relative;display:flex;align-items:center;gap:7px}.tabs button.on{color:var(--tx)}.tabs button.on::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:3px;border-radius:3px;background:var(--acc)}
-.modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;padding:18px;z-index:30;backdrop-filter:blur(6px)}.modal.on{display:flex;animation:fd .2s}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;padding:18px;z-index:70;backdrop-filter:blur(6px)}.modal.on{display:flex;animation:fd .2s}
 @keyframes fd{from{opacity:0}}.sheet{width:100%;max-width:480px;max-height:86%;overflow:auto;background:var(--card);border:1px solid var(--line);border-radius:24px;padding:18px;animation:pop .35s cubic-bezier(.2,1.3,.4,1)}
 @keyframes pop{from{transform:scale(.88) translateY(20px);opacity:0}}
 .sheet h3{margin:0 0 12px;font-size:20px;display:flex;justify-content:space-between;align-items:center;gap:8px}.sheet h3 span{display:flex;align-items:center;gap:8px}.x{background:var(--card2);border:1px solid var(--line);color:var(--mut);width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer}
@@ -229,7 +229,7 @@ if (!U.id) {
 
 const $=(s,r=document)=>r.querySelector(s),dayAt=d=>{const p=Object.fromEntries(new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Kolkata',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(d).map(x=>[x.type,x.value]));return p.year+'-'+p.month+'-'+p.day},day=()=>dayAt(new Date()),esc=s=>String(s).replace(/[&<>"']/g,c=>'&#'+c.charCodeAt(0)+';');
 const f=n=>(n/1000).toFixed(4);
-let S={b:0,life:0,fs:0,spins:0,ck:{d:'',n:0},day:day(),ad:{},adCd:{},done:{},dn:0,lt:{},pend:{},taskStarted:{},taskRewardPending:{},ms:{},hist:[],inv:0,earn:0,invs:[],refBy:'',wallet:'',wds:[],theme:'auto',lang:'en',world:false,snd:true,boost:false,rot:0,gp:0,gb:0};
+let S={b:0,life:0,fs:0,spins:0,ck:{d:'',n:0},day:day(),ad:{},adCd:{},done:{},dn:0,lt:{},pend:{},taskStarted:{},taskVerified:{},taskRewardPending:{},ms:{},hist:[],inv:0,earn:0,invs:[],refBy:'',wallet:'',wds:[],theme:'auto',lang:'en',world:false,snd:true,boost:false,rot:0,gp:0,gb:0};
 let db=null, userRef=null, userStateRef=null, firebaseReady=false, saveQueue=Promise.resolve();
 try {
   if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
@@ -240,7 +240,7 @@ try {
   }
 } catch(e) { console.error('Firebase initialization failed:',e); }
 
-function newDay(){if(S.day===day())return false;S.day=day();S.ad={};S.done={};S.dn=0;S.gp=0;Object.keys(S.ms).forEach(k=>{if(k[0]!='i')delete S.ms[k]});return true}
+function newDay(){if(S.day===day())return false;S.day=day();S.ad={};S.adCd={};S.done={};S.dn=0;S.gp=0;Object.keys(S.ms||{}).forEach(k=>{if(k[0]!='i')delete S.ms[k]});return true}
 
 const save=()=>{
   if(!userRef||!userStateRef)return Promise.resolve(false);
@@ -278,8 +278,22 @@ async function loadUserState(){
     }else{
       await save();
     }
+    S.pend = S.pend || {};
+    S.taskVerified = S.taskVerified || {};
+    S.taskRewardPending = S.taskRewardPending || {};
+    S.done = S.done || {};
+    S.lt = S.lt || {};
+    S.ad = S.ad || {};
+    S.adCd = S.adCd || {};
     newDay();
     firebaseReady=true;
+
+    // Realtime Listener for Account Suspension
+    userRef.child('admin/blocked').on('value', bSnap=>{
+      if(bSnap.val()===true){
+        document.body.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100vh;background:#0a0d14;color:#ef4444;text-align:center;padding:24px;font-family:sans-serif"><div><h2>Account Suspended</h2><p style="color:#8a92a6">Your account has been suspended by the administrator.</p></div></div>';
+      }
+    });
 
     // Realtime Listener: Updates withdrawals, balance and wallet live without reload
     if(userStateRef){
@@ -319,17 +333,17 @@ const TON=(s=18)=>`<svg width="${s}" height="${s}" viewBox="0 0 56 56" style="di
 const amt=(n,s=15)=>`<span class="am">${TON(s)}${f(n)}</span>`;
 const I={en:{home:'HOME',game:'GAME',wallet:'WALLET',invite:'INVITE',rank:'RANK'},hi:{home:'होम',game:'गेम',wallet:'वॉलेट',invite:'आमंत्रित',rank:'रैंक'}};
 const tr=k=>(S.lang=='en'&&T('nav_'+k))||I[S.lang][k]||k;
-let tab='home',sec='earn',sub='rewards',flt='all',lb='tk',busy=false,shown=0;
-let AC;function snd(fr,t=.1,ty='sine',v=.05){if(!S.snd)return;try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();const o=AC.createOscillator(),g=AC.createGain();o.type=ty;o.frequency.value=fr;g.gain.setValueAtTime(v,AC.currentTime);g.gain.exponentialRampToValueAtTime(.001,AC.currentTime+t);o.connect(g);g.connect(AC.destination);o.start();o.stop(AC.currentTime+t)}catch(e){}}
+let tab='home',sec='earn',sub='rewards',flt='all',lb='tk',busy=false,withdrawBusy=false,shown=0;
+let AC;function snd(fr,t=.1,ty='sine',v=.05){if(!S.snd)return;try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();if(AC.state==="suspended")AC.resume().catch(()=>{});const o=AC.createOscillator(),g=AC.createGain();o.type=ty;o.frequency.value=fr;g.gain.setValueAtTime(v,AC.currentTime);g.gain.exponentialRampToValueAtTime(.001,AC.currentTime+t);o.connect(g);g.connect(AC.destination);o.start();o.stop(AC.currentTime+t)}catch(e){}}
 function hap(k){try{if(tg&&tg.HapticFeedback)tg.HapticFeedback.impactOccurred(k||'light');else if(navigator.vibrate)navigator.vibrate(10)}catch(e){}}
-function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(toast.h);toast.h=setTimeout(()=>t.classList.remove('on'),2200)}
+function toast(m){const t=$('#toast');t.innerHTML=m;t.classList.add('on');clearTimeout(toast.h);toast.h=setTimeout(()=>t.classList.remove('on'),2400)}
 function openL(u){try{if(tg&&u.includes('t.me'))tg.openTelegramLink(u);else if(tg)tg.openLink(u);else window.open(u,'_blank')}catch(e){window.open(u,'_blank')}}
 const cv=$('#fx'),cx=cv.getContext('2d');let P=[];function fxs(){cv.width=innerWidth;cv.height=innerHeight}addEventListener('resize',fxs);fxs();
 function burst(x,y,c,n=16){for(let i=0;i<n;i++){const a=Math.random()*6.28,s=2+Math.random()*5;P.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s-3,l:1,c:c||'#0098ea',r:3+Math.random()*4})}startParticleLoop()}
 function confetti(){for(let i=0;i<90;i++)P.push({x:innerWidth/2+(Math.random()-.5)*100,y:innerHeight*.45,vx:(Math.random()-.5)*14,vy:-Math.random()*14,l:1.4,c:['#ffb21a','#2a7bff','#22c55e','#0098ea','#a855f7'][i%5],r:4+Math.random()*4});startParticleLoop()}
 let particleLoop=false;function lp(){particleLoop=false;if(!P.length)return;cx.clearRect(0,0,cv.width,cv.height);P.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=.3;p.l-=.02;cx.globalAlpha=Math.max(0,Math.min(1,p.l));cx.fillStyle=p.c;cx.beginPath();cx.arc(p.x,p.y,p.r,0,6.3);cx.fill()});cx.globalAlpha=1;P=P.filter(p=>p.l>0);if(!P.length)cx.clearRect(0,0,cv.width,cv.height);else{particleLoop=true;requestAnimationFrame(lp)}}function startParticleLoop(){if(!particleLoop&&P.length){particleLoop=true;requestAnimationFrame(lp)}}
 function hist(a,s,k){S.hist.unshift({a,s,k,ts:Date.now()});S.hist=S.hist.slice(0,60)}
-function award(n,why,el){if(S.boost){n*=2;S.boost=false;toast('2× Boost applied!')}S.b+=n;S.life+=n;hist('+'+f(n)+' TON',why,'t');save().then(ok=>{if(!ok)toast('Reward shown locally, but Firebase save failed. Do not withdraw until connection is restored.');});if(el&&el.isConnected){const r=el.getBoundingClientRect();burst(r.left+r.width/2,r.top+r.height/2,'#0098ea',20)}snd(880);setTimeout(()=>snd(1180),90);hap('medium');render(true)}
+function award(n,why,el){let val=Number(n)||0;if(S.boost){val*=2;S.boost=false;toast('2× Boost applied!')}S.b=Math.round((Number(S.b||0)+val)*10000)/10000;S.life=Math.round((Number(S.life||0)+val)*10000)/10000;hist('+'+f(val)+' TON',why,'t');save().then(ok=>{if(!ok)toast('Saved locally (syncing with cloud)...<br>Do not withdraw until connection is restored.');});if(el&&el.isConnected){const r=el.getBoundingClientRect();burst(r.left+r.width/2,r.top+r.height/2,'#0098ea',20)}snd(880);setTimeout(()=>snd(1180),90);hap('medium');render(true)}
 function modal(h){const m=$('#md');m.innerHTML=`<div class="sheet">${h}</div>`;m.classList.add('on')}
 function closeM(){$('#md').classList.remove('on')}$('#md').onclick=e=>{if(e.target.id=='md')closeM()};
 const xb=`<button class="x" data-a="x">${ic('x',18)}</button>`;
@@ -337,8 +351,8 @@ const fmtT=ts=>{const d=new Date(ts);return d.toLocaleDateString(undefined,{mont
 document.addEventListener('pointerdown',e=>{const b=e.target.closest('.btn');if(!b||b.classList.contains('dis'))return;const r=b.getBoundingClientRect(),d=Math.max(r.width,r.height)*2,s=document.createElement('span');s.className='rp';s.style.cssText=`width:${d}px;height:${d}px;left:${e.clientX-r.left-d/2}px;top:${e.clientY-r.top-d/2}px`;b.appendChild(s);setTimeout(()=>s.remove(),600)});
 
 const ADS=[{id:'ad1',t:'Watch AdsGram video sponsor',net:'adsgram_reward',blockId:'56220',r:3,max:15,ic:'play',bg:'linear-gradient(135deg,#6d4aff,#c026d3)'},{id:'ad2',t:'Watch AdsGram interstitial',net:'adsgram_int',blockId:'int-56219',r:2,max:10,ic:'clock',bg:'linear-gradient(135deg,#3b3b8a,#6366f1)'},{id:'ad3',t:'Watch Monetag popup sponsor',net:'monetag_pop',blockId:'12131483',r:3,max:10,ic:'film',bg:'linear-gradient(135deg,#16a34a,#22c55e)'}];
-const LT=[{id:'t_adsg',t:'AdsGram Partner Mission',net:'adsgram_task',blockId:'task-56221',r:5,url:'',img:'',ic:'zap',bg:'linear-gradient(135deg,#6366f1,#a855f7)',tag:'new'},{id:'t1',t:'Play to explore the bonus game',net:'link',blockId:'',r:3,url:CFG.channel,ic:'target',bg:'linear-gradient(135deg,#f59e0b,#16a34a)',tag:'new'},{id:'t2',t:'Join our Telegram channel',net:'link',blockId:'',r:4,url:CFG.channel,ic:'send',bg:'linear-gradient(135deg,#2a7bff,#1a5cff)',tag:'new'},{id:'t3',t:'Join the community group',net:'link',blockId:'',r:4,url:CFG.group,ic:'msg',bg:'linear-gradient(135deg,#8b5cf6,#7c3aed)'},{id:'t4',t:'Open the partner mini app',net:'link',blockId:'',r:8,url:CFG.channel,ic:'grid',bg:'linear-gradient(135deg,#38bdf8,#0ea5e9)',tag:'limited'},{id:'t5',t:'Daily FREE reward just for visiting',net:'link',blockId:'',r:4,url:CFG.channel,ic:'link',bg:'linear-gradient(135deg,#3b82f6,#2a7bff)',daily:true}];
-const WT=[{id:'w1',t:'World task: follow a partner channel',net:'link',blockId:'',r:5,url:CFG.channel,ic:'globe',bg:'linear-gradient(135deg,#06b6d4,#0891b2)',tag:'new'},{id:'w2',t:'World task: try a partner app',net:'link',blockId:'',r:6,url:CFG.channel,ic:'globe',bg:'linear-gradient(135deg,#8b5cf6,#7c3aed)',tag:'limited'}];
+const LT=[{id:'t_adsg',t:'AdsGram Partner Mission',net:'adsgram_task',blockId:'task-56221',r:5,url:'',img:'',ic:'zap',bg:'linear-gradient(135deg,#6366f1,#a855f7)',tag:'new',wait:16},{id:'t1',t:'Play to explore the bonus game',net:'link',blockId:'',r:3,url:CFG.channel,ic:'target',bg:'linear-gradient(135deg,#f59e0b,#16a34a)',tag:'new',wait:16},{id:'t2',t:'Join our Telegram channel',net:'link',blockId:'',r:4,url:CFG.channel,ic:'send',bg:'linear-gradient(135deg,#2a7bff,#1a5cff)',tag:'new',wait:16},{id:'t3',t:'Join the community group',net:'link',blockId:'',r:4,url:CFG.group,ic:'msg',bg:'linear-gradient(135deg,#8b5cf6,#7c3aed)',wait:16},{id:'t4',t:'Open the partner mini app',net:'link',blockId:'',r:8,url:CFG.channel,ic:'grid',bg:'linear-gradient(135deg,#38bdf8,#0ea5e9)',tag:'limited',wait:16},{id:'t5',t:'Daily FREE reward just for visiting',net:'link',blockId:'',r:4,url:CFG.channel,ic:'link',bg:'linear-gradient(135deg,#3b82f6,#2a7bff)',daily:true,wait:16}];
+const WT=[{id:'w1',t:'World task: follow a partner channel',net:'link',blockId:'',r:5,url:CFG.channel,ic:'globe',bg:'linear-gradient(135deg,#06b6d4,#0891b2)',tag:'new',wait:16},{id:'w2',t:'World task: try a partner app',net:'link',blockId:'',r:6,url:CFG.channel,ic:'globe',bg:'linear-gradient(135deg,#8b5cf6,#7c3aed)',tag:'limited',wait:16}];
 const allLT=()=>S.world&&FT('m_world')?[...LT,...WT]:LT;
 const ST=[{n:'Alex',h:'@alex_92',tk:6637,iv:140,sp:420},{n:'Sarah',h:'@sarah_k',tk:6015,iv:96,sp:388},{n:'William',h:'@will_x',tk:6001,iv:88,sp:402},{n:'Emily',h:'@emily_t',tk:6000,iv:75,sp:350},{n:'Robert',h:'@rob_m',tk:5987,iv:70,sp:341},{n:'Priya',h:'@priya_s',tk:5800,iv:64,sp:330},{n:'Chen',h:'@chen_w',tk:5710,iv:60,sp:315}];
 const AVC=['#6d4aff','#f59e0b','#ef4444','#0ea5e9','#22c55e','#ec4899','#14b8a6'];
@@ -368,7 +382,7 @@ function applyConf(c){
     initMonetagInApp();
   }
   const rawAds=toArr(c.ads);
-  if(Array.isArray(c.ads)){
+  if(rawAds&&rawAds.length){
     ADS.length=0;
     rawAds.filter(a=>a&&a.on!==false).forEach(a=>{
       ADS.push({
@@ -381,14 +395,14 @@ function applyConf(c){
     });
   }
   const rawTasks=toArr(c.tasks);
-  if(Array.isArray(c.tasks)){
+  if(rawTasks&&rawTasks.length){
     LT.length=0;
     WT.length=0;
     rawTasks.filter(t=>t&&t.on!==false).forEach(t=>{
       const taskObj={
         ...t,
         r:mm(t.r),
-        wait:Math.max(1,Math.min(3600,Number(t.wait)||10)),
+        wait:Math.max(16,Math.min(3600,Number(t.wait)||16)),
         net:t.net||'link',
         blockId:t.blockId||'',
         img:t.img||'',
@@ -469,7 +483,7 @@ function getReferrerId(){
   if(!raw&&window.location.hash)raw=readParams(window.location.hash.replace(/^#/, ''));
   if(!raw)return null;
   try{raw=decodeURIComponent(raw);}catch(e){}
-  const match=String(raw).trim().match(/(?:ref_)?(\d+)/);
+  const match=String(raw).trim().match(/(?:ref_)?([a-zA-Z0-9_-]+)/);
   if(!match)return null;
   const refId=match[1];
   return (refId&&String(refId)!==String(U.id))?refId:null;
@@ -503,10 +517,10 @@ async function creditReferrer(refId,rewardAmount){
       if(list.some(x=>String(x&&(x.id||x.uid))===friendId))return;
       st.inv=Number(st.inv||st.invites||0)+1;
       st.invites=st.inv;
-      st.earn=(Number(st.earn)||0)+amount;
-      st.b=(Number(st.b||st.balance)||0)+amount;
+      st.earn=Math.round(((Number(st.earn)||0)+amount)*10000)/10000;
+      st.b=Math.round(((Number(st.b||st.balance)||0)+amount)*10000)/10000;
       st.balance=st.b;
-      st.life=(Number(st.life||st.totalEarned)||0)+amount;
+      st.life=Math.round(((Number(st.life||st.totalEarned)||0)+amount)*10000)/10000;
       st.totalEarned=st.life;
       list.unshift({id:friendId,n:friendName,username:(U.username||'').replace(/^@/,''),photo_url:U.photo_url||'',ts:Date.now()});
       st.invs=list.slice(0,200);
@@ -517,13 +531,11 @@ async function creditReferrer(refId,rewardAmount){
       return st;
     },undefined,false);
     if(!result.committed||!didCredit){
-      console.info('[Referral] Already credited or transaction aborted for inviter:',refId);
       return false;
     }
-    console.info('[Referral] Successfully credited inviter:',refId,'amount:',amount);
     return true;
   }catch(err){
-    console.warn('[Referral] Failed to credit inviter state. Ensure Firebase rules permit users/{uid}/state:',err);
+    console.warn('[Referral] Failed to credit inviter state:',err);
     return false;
   }
 }
@@ -532,13 +544,13 @@ async function checkAndApplyReferral(){
   const refId=getReferrerId();
   if(!refId || String(refId)===String(U.id) || S.refBy)return;
   const credited=await creditReferrer(refId,CFG.inv);
+  S.refBy=String(refId);
   if(credited){
-    S.refBy=String(refId);
     award(CFG.inv, 'Referral Welcome Bonus');
     await save();
     toast('🎉 Joined via referral invite!');
   }else{
-    console.info('[Referral] Skipped or already registered for:',refId);
+    await save();
   }
 }
 
@@ -556,7 +568,6 @@ function initMonetagInApp(){
           everyPage:false
         }
       });
-      console.log('[Monetag] In-App Interstitial initialized');
     }catch(e){
       console.warn('[Monetag In-App Error]',e);
     }
@@ -566,7 +577,7 @@ function initMonetagInApp(){
 async function boot(){
   initSplash();
   await loadUserState();
-  if(!$('#app')) return; // Account was blocked; do not initialize the removed app UI.
+  if(!$('#app')) return;
   let c=null;
   try{
     if(db){
@@ -603,7 +614,11 @@ async function boot(){
   }
   await checkAndApplyReferral();
   initMonetagInApp();
-  // Record when an AdsGram task is actually started, then enforce the admin-configured minimum wait.
+
+  // Restore active task session on boot if user refreshed page
+  checkTaskSessionOnReturn();
+
+  // AdsGram Task Click Listener
   document.addEventListener('click',e=>{
     const trigger=e.target&&e.target.closest&&e.target.closest('adsgram-task [slot="button"]');
     if(!trigger)return;
@@ -612,31 +627,42 @@ async function boot(){
     const blockId=String(host.getAttribute('data-block-id')||'');
     const tk=[...LT,...WT].find(t=>String(t.blockId||'task-56221')===blockId&&t.net==='adsgram_task');
     if(!tk)return;
-    S.taskStarted=S.taskStarted||{};
-    S.taskStarted[tk.id]=Date.now();
-    save();
+
+    const wait=Math.max(16,Number(tk.wait)||16);
+    const sessionObj={
+      id:tk.id,
+      startedAt:Date.now(),
+      leaveTime:null,
+      wait:wait,
+      isAdsgram:true
+    };
+    window.activeTaskSession=sessionObj;
+    localStorage.setItem('megaton_active_task',JSON.stringify(sessionObj));
+    toast('⏱️ AdsGram task started! Stay on page for at least '+wait+' seconds.');
   },true);
+
+  // AdsGram Task Reward Listener (With True Capture Phase)
   document.addEventListener('reward',(e)=>{
-    const bId=String(e.detail||'');
-    const tk=[...LT,...WT].find(t=>String(t.blockId||'task-56221')===bId&&t.net==='adsgram_task');
-    const rew=tk?tk.r:5;
-    const name=tk?tk.t:'AdsGram Task';
-    if(tk&&((tk.daily&&S.done[tk.id])||S.lt[tk.id]||S.taskRewardPending[tk.id]))return;
-    const wait=tk?Math.max(16,Math.min(3600,Number(tk.wait)||16)):16;
-    const started=tk?Number((S.taskStarted||{})[tk.id]||0):0;
-    const elapsed=started?Date.now()-started:0;
-    // Reject early/unsolicited SDK reward events instead of paying after a delayed timer.
-    // A quick back/return must not turn into a reward.
-    if(!tk||!started||elapsed<wait*1000){
-      if(tk){delete S.taskStarted[tk.id];delete S.taskRewardPending[tk.id];save();}
-      toast('Task not completed: stay in the task for at least '+wait+' seconds. No reward added.');
-      return;
-    }
-    if(tk){S.taskRewardPending=S.taskRewardPending||{};S.taskRewardPending[tk.id]=1;save();}
-    if(tk){delete S.taskRewardPending[tk.id];S.lt[tk.id]=1;delete S.taskStarted[tk.id];S.dn++;save();}
-    award(rew,name);
-    toast('AdsGram Task rewarded! +'+f(rew)+' TON');
-  });
+    const rawDetail=e&&e.detail;
+    const bId=String(typeof rawDetail==='object'&&rawDetail!==null?rawDetail.blockId:(rawDetail||''));
+    const tk=[...LT,...WT].find(t=>(!bId||String(t.blockId||'task-56221')===bId)&&t.net==='adsgram_task');
+    if(!tk)return;
+    S.taskRewardPending=S.taskRewardPending||{};
+    if((tk.daily&&S.done[tk.id])||S.lt[tk.id]||S.taskRewardPending[tk.id])return;
+
+    S.taskRewardPending[tk.id]=1;
+    if(tk.daily)S.done[tk.id]=1;else S.lt[tk.id]=1;
+    if(S.taskVerified)delete S.taskVerified[tk.id];
+    if(S.pend)delete S.pend[tk.id];
+    window.activeTaskSession=null;
+    localStorage.removeItem('megaton_active_task');
+    S.dn++;
+    award(tk.r,tk.t||'AdsGram Task');
+    save();
+    toast('🎉 AdsGram Task rewarded! +'+f(tk.r)+' TON');
+    render(true);
+  },true);
+
   GM.reinit();
   render();
   const splashDur=(c&&c.splash&&c.splash.duration)||2.5;
@@ -646,13 +672,19 @@ async function boot(){
   }
 }
 
-/* ===== Tasks Rendering with Uniform Card Style ===== */
+/* ===== Tasks Rendering with Anti-Cheat Verification ===== */
 function taskCard(t,type){
+  const done=t.daily?S.done[t.id]:S.lt[t.id];
+
   if(t.net==='adsgram_task'){
+    if(done){
+      return `<div class="task in">
+        <div class="ic" style="background:${t.bg||'linear-gradient(135deg,#6366f1,#a855f7)'};width:48px;height:48px;border-radius:14px;flex:none;display:flex;align-items:center;justify-content:center">${ic(t.ic||'zap',22)}</div>
+        <div class="t"><b>${esc(t.t)}</b><small>${amt(t.r,14)} <s>Completed</s></small></div>
+        <button class="btn dis">${ic('check',14)}Claimed</button>
+      </div>`;
+    }
     const bId=t.blockId||'task-56221';
-    const wait=Math.max(16,Math.min(3600,Number(t.wait)||16));
-    const started=Number((S.taskStarted||{})[t.id]||0);
-    const left=started?Math.max(0,wait-Math.floor((Date.now()-started)/1000)):0;
     return `<adsgram-task data-task-id="${esc(t.id)}" data-block-id="${esc(bId)}" data-debug="false" class="task in">
       <span slot="reward" class="am">${TON(14)}${f(t.r)}</span>
       <button slot="button" class="btn">Go${ic('up',14)}</button>
@@ -679,13 +711,30 @@ function taskCard(t,type){
       btn=`<button class="btn" data-a="ad" data-id="${t.id}">${ic('play',14)}Watch</button>`;
     }
   }else{
-    const done=t.daily?S.done[t.id]:S.lt[t.id],rd=S.pend[t.id];
+    const isVerified=(S.taskVerified||{})[t.id];
+    const isPending=S.pend&&S.pend[t.id];
     const wait=Math.max(16,Math.min(3600,Number(t.wait)||16));
     sb=`${amt(t.r,14)} <s>Stay ${wait}s</s>${t.tag?`<span class="pill">${t.tag=='new'?'New':'Limited'}</span>`:''}`;
-    if(done)btn=`<button class="btn dis">${ic('check',14)}Claimed</button>`;
-    else if(rd&&Date.now()>=rd)btn=`<button class="btn grn" data-a="claim" data-id="${t.id}">${ic('check',14)}Claim</button>`;
-    else if(rd)btn=`<button class="btn dis">${Math.max(1,Math.ceil((rd-Date.now())/1000))}s…</button>`;
-    else btn=`<button class="btn" data-a="go" data-id="${t.id}">Go${ic('up',14)}</button>`;
+
+    if(done){
+      btn=`<button class="btn dis">${ic('check',14)}Claimed</button>`;
+    }else if(isVerified){
+      btn=`<button class="btn grn" data-a="claim" data-id="${t.id}">${ic('check',14)}Claim</button>`;
+    }else if(isPending){
+      const elapsed=Math.floor((Date.now()-Number(isPending))/1000);
+      const remaining=Math.max(0,wait-elapsed);
+      if(remaining<=0){
+        S.taskVerified=S.taskVerified||{};
+        S.taskVerified[t.id]=true;
+        delete S.pend[t.id];
+        save();
+        btn=`<button class="btn grn" data-a="claim" data-id="${t.id}">${ic('check',14)}Claim</button>`;
+      }else{
+        btn=`<button class="btn dis" style="opacity:0.85">Wait ${remaining}s…</button>`;
+      }
+    }else{
+      btn=`<button class="btn" data-a="go" data-id="${t.id}">Go${ic('up',14)}</button>`;
+    }
   }
 
   const customImg=(t.img||'').trim();
@@ -696,7 +745,7 @@ function taskCard(t,type){
       <div class="fb-ic" style="display:none;width:100%;height:100%;align-items:center;justify-content:center;background:${t.bg||'var(--card2)'}">${ic(t.ic||'link',22)}</div>
     </div>`;
   }else{
-    icHtml=`<div class="ic" style="background:${t.bg};width:48px;height:48px;border-radius:14px;flex:none">${ic(t.ic||'link',22)}</div>`;
+    icHtml=`<div class="ic" style="background:${t.bg};width:48px;height:48px;border-radius:14px;flex:none;display:flex;align-items:center;justify-content:center">${ic(t.ic||'link',22)}</div>`;
   }
 
   return `<div class="task in ${type=='ad'?'hot':''}">${icHtml}<div class="t"><b>${esc(t.t)}</b><small>${sb}</small></div>${btn}</div>`;
@@ -705,9 +754,19 @@ const findT=id=>[...ADS,...LT,...WT].find(t=>t.id==id);
 const doneToday=()=>S.dn;
 
 const R={
-home(){const cd=S.ck.d!=day(),pct=(CFG.games-S.gp)/CFG.games*100,mdot=missions().some(m=>m.cur>=m.n&&!S.ms[m.id]);
-let list='';if(sec=='earn'){list=`<div class="tabs"><button class="${sub=='rewards'?'on':''}" data-a="sub" data-v="rewards">${ic('gift',19)}Rewards</button><button class="${sub=='tasks'?'on':''}" data-a="sub" data-v="tasks">${ic('list',19)}Tasks</button></div>`+(sub=='rewards'?ADS.map(t=>taskCard(t,'ad')).join('')+(allLT()[0]?taskCard(allLT()[0],'l'):''):allLT().slice(1).map(t=>taskCard(t,'l')).join(''))}
-else{list=`<div class="tabs">${['all','new','limited'].map(x=>`<button class="${flt==x?'on':''}" data-a="flt" data-v="${x}">${x[0].toUpperCase()+x.slice(1)}</button>`).join('')}</div>`+allLT().filter(t=>flt=='all'||t.tag==flt).map(t=>taskCard(t,'l')).join('')}
+home(){
+  const cd=S.ck.d!=day(),pct=(CFG.games-S.gp)/CFG.games*100,mdot=missions().some(m=>m.cur>=m.n&&!S.ms[m.id]);
+  let list='';
+  if(sec=='earn'){
+    list=`<div class="tabs">
+      <button class="${sub=='rewards'?'on':''}" data-a="sub" data-v="rewards">${ic('gift',19)}Rewards</button>
+      <button class="${sub=='tasks'?'on':''}" data-a="sub" data-v="tasks">${ic('list',19)}Tasks</button>
+    </div>`+(sub=='rewards'
+      ? ADS.map(t=>taskCard(t,'ad')).join('')
+      : allLT().map(t=>taskCard(t,'l')).join(''));
+  }else{
+    list=`<div class="tabs">${['all','new','limited'].map(x=>`<button class="${flt==x?'on':''}" data-a="flt" data-v="${x}">${x[0].toUpperCase()+x.slice(1)}</button>`).join('')}</div>`+allLT().filter(t=>flt=='all'||t.tag==flt).map(t=>taskCard(t,'l')).join('');
+  }
 return `${CONF.annOn&&CONF.ann?`<div class="ann in">${esc(CONF.ann)}</div>`:''}
 <div class="card in" style="padding:13px 8px 12px"><div class="qi">${[['checkin','Check-in','cal','linear-gradient(135deg,#8b5cf6,#d946ef)',cd],['mission','Mission','star','linear-gradient(135deg,#fbbf24,#d97706)',mdot],['guide','Guide','info','linear-gradient(135deg,#6366f1,#3b82f6)',0],['history','History','list','linear-gradient(135deg,#10b981,#0d9488)',0],['card','Card','card','linear-gradient(135deg,#3b82f6,#06b6d4)',0]].filter(q=>FT(q[0])).map(q=>`<button data-a="qi" data-v="${q[0]}"><i>${ic(q[2],25)}</i>${q[1]}${q[4]?'<span class="dot"></span>':''}</button>`).join('')}</div></div>
 <div class="row in" style="margin-bottom:14px"><div class="tbar"><div class="f" style="width:${pct}%"></div><span>${TON(25)} <b>${f(S.b)}</b> <small>· ${CFG.games-S.gp}/${CFG.games} plays</small></span></div><button class="btn ton ${S.gp<CFG.games?'':'dis'}" data-a="gogame">${ic('pad',20)}Play</button></div>
@@ -718,9 +777,8 @@ spin(){const ok=S.b>=CFG.spinCost||S.fs;return `<div class="card in" style="text
 <div style="margin:6px 0 12px" class="am">${TON(20)}<span style="font-size:20px">${f(S.b)} TON</span></div>
 <button class="btn ton ${ok?'':'dis'}" id="spb" data-a="dospin" style="width:100%;font-size:17px;height:52px">${S.fs?'Use free spin':'Spin · '+f(CFG.spinCost)+' TON'}</button><p style="color:var(--mut);font-size:13px">Wheel results are generated in the app; production rewards need server-side validation.</p></div>`},
 
-/* ===== Wallet Tab with SUCCESS status rendering ===== */
 wallet(){
-  const p=Math.min(100,S.b/CFG.minW*100),wd=S.wds.reduce((a,w)=>a+w.a,0),can=S.b>=CFG.minW;
+  const p=Math.min(100,S.b/CFG.minW*100),wd=(Array.isArray(S.wds)?S.wds:[]).reduce((a,w)=>a+(w.a!=null?Number(w.a):Number(w.amount)||0),0),can=S.b>=CFG.minW;
   return `<div class="wc in"><div class="wglow"></div><div class="coin">${TON(62)}</div><small class="lbl">${esc(T('walletLabel'))}</small><div class="big"><span id="cnt">${f(shown)}</span><em>TON</em></div><div class="pbar"><i style="width:${p}%"></i></div><div class="pl"><span>Minimum withdrawal ${f(CFG.minW)} TON</span><span>${Math.round(p)}%</span></div><button class="btn ${can?'':'dis'}" data-a="wd" style="width:100%;margin-top:16px;height:50px;font-size:16px">${ic('up',18)}Withdraw</button></div>
   <div class="stats"><div>${ic('zap',22)}<b>${f(S.life)}</b><small>Earned</small></div><div>${ic('down',22)}<b>${f(wd)}</b><small>Withdrawn</small></div><div>${ic('clock',22)}<b>${S.wds.length}</b><small>Requests</small></div></div>
   <div class="card in"><div class="sec" style="margin-top:0">${ic('wallet',15)}WITHDRAWAL WALLET</div>${S.wallet?`<div class="addr"><span style="color:var(--grn)">${ic('check',20)}</span><span>${S.wallet}</span></div>`:`<div class="empty" style="padding:8px 0 14px">${ic('wallet',34)}<div>No wallet added yet</div></div>`}<div class="row"><button class="btn ton" data-a="conn" style="flex:1">${ic('link',17)}Connect</button><button class="btn ghost" data-a="manual" style="flex:1">${ic('copy',17)}Enter manually</button></div></div>
@@ -745,7 +803,7 @@ wallet(){
         ${ic(isSuccess?'check':'up',18)}
       </div>
       <div style="flex:1">
-        <b style="font-weight:600">${amt(w.a,15)}</b>
+        <b style="font-weight:600">${amt(w.a!=null?Number(w.a):Number(w.amount)||0,15)}</b>
         <small style="color:var(--mut)">${new Date(w.ts).toLocaleString()}</small>
       </div>
       ${badge}
@@ -757,8 +815,8 @@ invite(){return `<div class="ban in"><span>${esc(T('banner1'))}<em>${esc(T('bann
 <div class="row in" style="margin-bottom:12px"><button class="btn" data-a="inv" style="flex:1;justify-content:flex-start;height:62px;padding:0 16px;gap:12px">${ic('gift',28)}<span style="text-align:left"><b style="font-size:17px;display:block">${esc(T('inviteBtn'))}</b><small style="font-size:13px;font-weight:400;opacity:.85">${esc(T('inviteSub'))}</small></span></button><button class="mini" data-a="shx"><span style="font-weight:700;font-size:20px;line-height:22px">𝕏</span>Share</button><button class="mini" data-a="shw">${ic('msg',22)}WhatsApp</button><button class="mini" data-a="cpl">${ic('copy',22)}Copy</button></div>
 <div class="card in row" style="justify-content:space-around"><div class="row"><span style="color:var(--acc)">${ic('users',34)}</span><div><b style="font-size:21px">${S.inv}</b><br><small style="color:var(--mut)">Friends invited</small></div></div><div class="row">${TON(34)}<div><b style="font-size:21px">${f(S.earn)}</b><br><small style="color:var(--mut)">TON earned</small></div></div></div>
 <div class="card in"><div class="row" style="justify-content:space-between;margin-bottom:6px"><b style="font-size:20px">Recent invites</b><button class="btn ghost" data-a="qi" data-v="mission" style="height:36px;font-size:14px;padding:0 14px;color:var(--acc)">${ic('star',15)}Missions</button></div>${S.invs.length?S.invs.slice(0,6).map(x=>`<div class="hi"><div>${esc(x.n)}<br><small>${new Date(x.ts).toLocaleDateString()}</small></div><span class="pos">+${f(CFG.inv)}</span></div>`).join(''):`<div class="empty" style="padding:26px 0">${ic('users',34)}<div>Invite your first friend to see activity here!</div></div>`}</div>`},
-rank(){const key=lb,you=lb=='tk'?S.life:lb=='iv'?S.inv:S.spins,list=[...ST].sort((a,b)=>b[key]-a[key]),u=lb=='tk'?'TON':lb=='iv'?'Invites':'Games',v=n=>lb=='tk'?f(n):n.toLocaleString(),fi=esc((U.first_name||'?')[0]);
-const pd=(x,i,cl,m)=>`<div class="${cl}" style="animation-delay:${i*.12}s"><span class="rk" style="background:${m}">${i+1}</span><div class="pa" style="background:${AVC[ST.indexOf(x)%7]}">${x.n[0]}</div><b>${x.n}</b><br>${i==0?`<small style="color:var(--mut)">${x.h}</small><br>`:''}<b style="font-size:14px">${v(x[key])} ${u}</b></div>`;
+rank(){const key=lb,you=lb=='tk'?S.life:lb=='iv'?S.inv:S.spins;const safeST=[...ST];while(safeST.length<3){safeST.push({n:'Player',h:'@player',tk:100,iv:1,sp:10})};const list=[...safeST].sort((a,b)=>(b[key]||0)-(a[key]||0)),u=lb=='tk'?'TON':lb=='iv'?'Invites':'Games',v=n=>lb=='tk'?f(n):(Number(n)||0).toLocaleString(),fi=esc(((U.first_name||'Player')[0]||'P').toUpperCase());
+const pd=(x,i,cl,m)=>`<div class="${cl}" style="animation-delay:${i*.12}s"><span class="rk" style="background:${m}">${i+1}</span><div class="pa" style="background:${AVC[(safeST.indexOf(x)>=0?safeST.indexOf(x):i)%7]}">${esc((x.n||'?')[0])}</div><b>${esc(x.n)}</b><br>${i==0?`<small style="color:var(--mut)">${esc(x.h)}</small><br>`:''}<b style="font-size:14px">${v(x[key])} ${u}</b></div>`;
 const myAvHtml=(U.photo_url&&U.photo_url.trim())?`<div class="pa" style="width:42px;height:42px;margin:0;border-radius:50%;overflow:hidden;border:2px solid #fff3"><img src="${esc(U.photo_url)}" style="width:100%;height:100%;object-fit:cover"></div>`:`<div class="pa" style="width:42px;height:42px;font-size:18px;margin:0;background:linear-gradient(135deg,#1a5cff,#22d3ee)">${fi}</div>`;
 return `<div style="text-align:center" class="in"><h2 style="margin:6px 0 8px;font-size:30px">${esc(T('rankTitle'))}</h2><span class="pill" style="border-color:var(--line);color:var(--mut);background:var(--card);font-size:14px;padding:6px 16px">Most ${u} earned this season</span></div>
 <div class="seg">${[['tk','TON'],['iv','Invite'],['sp','Games']].map(([k,l])=>`<button class="${lb==k?'on':''}" data-a="lb" data-v="${k}">${l}</button>`).join('')}</div>
@@ -790,7 +848,7 @@ document.documentElement.dataset.t=S.theme}
 function countUp(){const e=$('#cnt'),to=S.b,from=shown,t0=performance.now();if(!e)return;shown=to;if(from===to){e.textContent=f(to);return}(function st(t){const k=Math.min(1,(t-t0)/900),v=from+(to-from)*(1-Math.pow(1-k,3));if(!e.isConnected)return;e.textContent=f(v);if(k<1)requestAnimationFrame(st)})(t0)}
 function drawWheel(){const c=$('#wh');if(!c)return;const g=c.getContext('2d'),r=320,n=SEG.length,a=6.2832/n;g.translate(r,r);SEG.forEach((s,i)=>{g.beginPath();g.moveTo(0,0);g.arc(0,0,r-8,-1.5708+i*a,-1.5708+(i+1)*a);g.fillStyle=s.c;g.fill();g.strokeStyle='rgba(255,255,255,.35)';g.lineWidth=4;g.stroke();g.save();g.rotate(-1.5708+(i+.5)*a);g.fillStyle='#fff';g.font='bold 32px Outfit,sans-serif';g.textAlign='right';g.fillText(s.l,r-40,11);g.restore()});g.lineWidth=14;g.strokeStyle='#f5b400';g.beginPath();g.arc(0,0,r-6,0,6.3);g.stroke()}
 
-/* ===== Actions with 45s Cooldown & 5s Anti-Cheat ===== */
+/* ===== Actions & Anti-Cheat Task Engine ===== */
 const A={
 tab(e){if(busy)return;tab=e.dataset.v;closeM();render();snd(500,.05);hap()},sub(e){sub=e.dataset.v;render(true)},sec(e){sec=e.dataset.v;render(true)},flt(e){flt=e.dataset.v;render(true)},lb(e){lb=e.dataset.v;render(true)},
 ad(e){
@@ -810,11 +868,12 @@ ad(e){
   const blockId=String(t.blockId||(net==='adsgram_int'?(an.adsgramInt||'int-56219'):net==='adsgram_reward'?(an.adsgramReward||'56220'):(an.monetagZone||'12131483'))).trim();
 
   const adStartTs=Date.now();
-  const minWatchSeconds=7+Math.floor(Math.random()*4);
+  const isVideoReward=(net==='adsgram_reward'||net==='adsgram_int'||net==='monetag_reward');
+  const minWatchSeconds=isVideoReward?(7+Math.floor(Math.random()*3)):0;
 
   const handleReward=(label)=>{
     const elapsed=(Date.now()-adStartTs)/1000;
-    if(elapsed<minWatchSeconds){
+    if(isVideoReward && elapsed<minWatchSeconds){
       toast('⚠️ Watch at least '+minWatchSeconds+' seconds to earn the reward.');
       return;
     }
@@ -882,12 +941,71 @@ ad(e){
     }
   }
 
-  // Fail closed: a countdown is not a real ad and must never pay a reward.
   toast('No verified ad is available right now. Please try again later.');
-
 },
-go(e){const t=findT(e.dataset.id);if(!t)return;const wait=Math.max(16,Math.min(3600,Number(t.wait)||16));S.pend[t.id]=Date.now()+wait*1000;S.taskStarted=S.taskStarted||{};S.taskStarted[t.id]=Date.now();save();render(true);openL(t.url||CFG.channel);toast('Task started. Stay on the task for at least '+wait+' seconds before returning.')},
-claim(e){const t=findT(e.dataset.id);if(!t)return;if(t.net!=='adsgram_task'){toast('Task completion cannot be verified for this link. No reward was added.');return;}const until=Number(S.pend[t.id]||0);if(until&&Date.now()>=until){toast('Please complete this task through the verified AdsGram task button.');}else if(until){toast('Please wait '+Math.max(1,Math.ceil((until-Date.now())/1000))+' seconds');render(true)}},
+
+/* ===== Strict 16-Second Anti-Cheat Task Go Action ===== */
+go(e){
+  const t=findT(e.dataset.id);
+  if(!t)return;
+  const wait=Math.max(16,Math.min(3600,Number(t.wait)||16));
+  const now=Date.now();
+
+  S.taskVerified=S.taskVerified||{};
+  delete S.taskVerified[t.id];
+  S.pend=S.pend||{};
+  S.pend[t.id]=now;
+
+  const sessionObj={
+    id:t.id,
+    startedAt:now,
+    leaveTime:null,
+    wait:wait
+  };
+  window.activeTaskSession=sessionObj;
+  localStorage.setItem('megaton_active_task',JSON.stringify(sessionObj));
+
+  save();
+  render(true);
+  openL(t.url||CFG.channel);
+  toast('⏱️ Task started! Stay on the page for at least '+wait+' seconds.');
+},
+
+/* ===== Verified Claim Action ===== */
+claim(e){
+  const t=findT(e.dataset.id);
+  if(!t)return;
+
+  if((t.daily&&S.done[t.id])||S.lt[t.id]){
+    toast('Task already claimed!');
+    return;
+  }
+
+  const wait=Math.max(16,Math.min(3600,Number(t.wait)||16));
+  const startedTs=Number((S.pend&&S.pend[t.id])||0);
+  const elapsed=startedTs>0?Math.floor((Date.now()-startedTs)/1000):0;
+  const isVerified=(S.taskVerified&&S.taskVerified[t.id])||(startedTs>0&&elapsed>=wait);
+
+  if(!isVerified){
+    const remaining=Math.max(1,wait-elapsed);
+    toast('⚠️ Task incomplete! Please wait '+remaining+'s more to complete the task.');
+    return;
+  }
+
+  if(t.daily)S.done[t.id]=1;
+  else S.lt[t.id]=1;
+
+  if(S.taskVerified) delete S.taskVerified[t.id];
+  if(S.pend) delete S.pend[t.id];
+  window.activeTaskSession=null;
+  localStorage.removeItem('megaton_active_task');
+  S.dn++;
+  save();
+  award(t.r,t.t||'Completed Task',e);
+  toast('🎉 Task reward +'+f(t.r)+' TON added!');
+  render(true);
+},
+
 qi(e){const k=e.dataset.v;closeM();M[k]()},x:closeM,
 gospin(){if(busy)return;tab='spin';render();setTimeout(()=>A.dospin(),450)},
 dospin(){if(busy)return;if(!S.fs&&S.b<CFG.spinCost){toast('Need '+f(CFG.spinCost)+' TON to spin');snd(150);return}busy=true;if(S.fs)S.fs--;else S.b-=CFG.spinCost;S.spins++;save();
@@ -904,19 +1022,24 @@ wd(){
   const bal=S.b;
   if(bal<CFG.minW){toast('Minimum withdrawal is '+f(CFG.minW)+' TON');return}
   if(!S.wallet){toast('Add a withdrawal wallet first');return}
-  modal(`<h3><span>Withdraw TON</span>${xb}</h3><div style="text-align:center;margin:8px 0">${TON(48)}<div style="font-size:30px;font-weight:700;margin-top:6px">${f(bal)} TON</div></div><div class="addr">${S.wallet}</div><p style="color:var(--mut);font-size:13px">Your withdrawal request will be sent to the administrator for review.</p><button class="btn grn" data-a="wdok" style="width:100%;height:50px">${ic('check',18)}Confirm withdrawal</button>`);
+  modal(`<h3><span>Withdraw TON</span>${xb}</h3><div style="text-align:center;margin:8px 0">${TON(48)}<div style="font-size:30px;font-weight:700;margin-top:6px">${f(bal)} TON</div></div><div class="addr">${esc(S.wallet)}</div><p style="color:var(--mut);font-size:13px">Your withdrawal request will be sent to the administrator for review.</p><button class="btn grn" data-a="wdok" style="width:100%;height:50px">${ic('check',18)}Confirm withdrawal</button>`);
 },
 
 async wdok(){
+  if(withdrawBusy){toast('Withdrawal request is already processing.');return;}
+  withdrawBusy=true;
+  const confirmBtn=$('#md [data-a="wdok"]');
+  if(confirmBtn){confirmBtn.disabled=true;confirmBtn.textContent='Processing…';}
   const bal=Number(S.b)||0;
   if(bal<CFG.minW){
+    withdrawBusy=false;
     toast('Minimum withdrawal is '+f(CFG.minW)+' TON');
     return;
   }
-  if(!S.wallet){toast('Set wallet address first');return;}
+  if(!S.wallet){withdrawBusy=false;toast('Set wallet address first');return;}
   if(!db||!userRef||!userStateRef||U.id===null||U.id===undefined){
+    withdrawBusy=false;
     toast('Firebase is not connected. Please try again.');
-    console.error('Withdrawal blocked: Firebase/user references unavailable.');
     return;
   }
 
@@ -958,7 +1081,6 @@ async wdok(){
     updates['users/'+uid+'/photo_url']=U.photo_url||'';
     updates['users/'+uid+'/lastActive']=now;
 
-    // Save user state and admin withdrawal record atomically.
     await db.ref().update(updates);
 
     closeM();
@@ -966,7 +1088,9 @@ async wdok(){
     toast('🎉 Withdrawal request submitted!');
     render(true);
     countUp();
+    withdrawBusy=false;
   }catch(e){
+    withdrawBusy=false;
     S.b=previous.b;
     S.wds=previous.wds;
     S.hist=previous.hist;
@@ -978,8 +1102,8 @@ async wdok(){
 },
 
 conn(){if(window.TonConnectUI){toast('Opening TON Connect…')}else toast('TON Connect SDK is not included. Use “Enter manually”.')},
-manual(){modal(`<h3><span>Wallet address</span>${xb}</h3><input class="in2" id="wi" placeholder="UQ… / EQ… (48 characters)" value="${S.wallet}"><button class="btn ton" data-a="wsave" style="width:100%;height:48px">Save address</button>`)},
-wsave(){const v=$('#wi').value.trim();if(!/^(EQ|UQ)[A-Za-z0-9_-]{46}$/.test(v)){toast('Invalid TON address');snd(150);return}S.wallet=v;save();closeM();toast('Wallet saved');render(true)},
+manual(){modal(`<h3><span>Wallet address</span>${xb}</h3><input class="in2" id="wi" placeholder="UQ… / EQ… (48 characters)" value="${esc(S.wallet)}"><button class="btn ton" data-a="wsave" style="width:100%;height:48px">Save address</button>`)},
+wsave(){const wi=$('#wi');const v=wi?wi.value.trim():'';if(!/^((EQ|UQ|kQ|0Q)[A-Za-z0-9_-]{46}|0:[a-fA-F0-9]{64})$/.test(v)){toast('Invalid TON address. Please check and try again.');snd(150);return}S.wallet=v;save();closeM();toast('Wallet saved');render(true)},
 inv(){const l=link(),txt=T('shareText');if(tg&&tg.openTelegramLink)tg.openTelegramLink('https://t.me/share/url?url='+encodeURIComponent(l)+'&text='+encodeURIComponent(txt));else if(navigator.share)navigator.share({title:document.title,text:txt,url:l}).catch(()=>{});else A.cpl()},
 shx(){openL('https://twitter.com/intent/tweet?text='+encodeURIComponent('Earn TON & spins! '+link()))},shw(){openL('https://wa.me/?text='+encodeURIComponent('Earn TON & spins! '+link()))},
 cpl(){const l=link();(navigator.clipboard?navigator.clipboard.writeText(l):Promise.reject()).then(()=>toast('Link copied!')).catch(()=>{const t=document.createElement('textarea');t.value=l;document.body.appendChild(t);t.select();try{document.execCommand('copy');toast('Link copied!')}catch(e){toast(l)}t.remove()})},
@@ -1014,7 +1138,7 @@ cv.addEventListener('pointerdown',e=>{if(St==='over'&&T-over_t>45){close();retur
 cv.addEventListener('pointermove',e=>{if(!ctl.on)return;const d=pt(e).x-ctl.ox;ctl.dx=Math.max(-1,Math.min(1,d/38));ctl.ox+=d>38?d-38:d<-38?d+38:0});
 const up=()=>{ctl.on=false;ctl.dx=0};addEventListener('pointerup',up);addEventListener('pointercancel',up);
 addEventListener('keydown',e=>{keys[e.key]=1});addEventListener('keyup',e=>{keys[e.key]=0});
-function finish(){if(done||!g)return;done=true;earned=Math.round(Math.min(g.tix,CFG.cap)*CFG.tix*10)/10;S.b=Math.round((S.b+earned)*10)/10;S.life=Math.round((S.life+earned)*10)/10;if(g.score>S.gb)S.gb=g.score;if(earned>0)hist('+'+f(earned)+' TON','Sky Jump','t');save()}
+function finish(){if(done||!g)return;done=true;earned=Math.round((Math.min(g.tix,CFG.cap)*CFG.tix)*10000)/10000;if(g.score>S.gb)S.gb=g.score;if(earned>0)award(earned,'Sky Jump');else save();}
 function step(){T++;const p=g.p;let ax=ctl.dx+((keys.ArrowRight||keys.d)?1:0)-((keys.ArrowLeft||keys.a)?1:0);ax=Math.max(-1,Math.min(1,ax));
 p.vx+=(ax*5.4-p.vx)*.2;p.x+=p.vx;if(Math.abs(ax)>.05)p.face=ax>0?1:-1;if(p.x<-14)p.x=W+14;if(p.x>W+14)p.x=-14;p.rot+=(p.vx*.03-p.rot)*.2;p.sq*=.85;
 if(p.prop>0){p.prop--;p.vy=-12.5;if(T%3==0)fxs(p.x,p.y,1,'#fff',1)}else p.vy=Math.min(p.vy+.42,15);
@@ -1061,7 +1185,8 @@ const bg=cx.createLinearGradient(0,-34,0,-8);bg.addColorStop(0,'#fff');bg.addCol
 cx.save();cx.beginPath();cx.roundRect(-17,-34,34,28,14);cx.clip();cx.fillStyle='#2b2b36';for(let i=0;i<4;i++){cx.beginPath();cx.moveTo(-14+i*8,-34);cx.quadraticCurveTo(-9+i*8,-20,-14+i*8+3,-6);cx.lineTo(-14+i*8+6,-6);cx.quadraticCurveTo(-4+i*8,-20,-8+i*8+4,-34);cx.fill()}cx.restore();
 cx.fillStyle='#fff';cx.beginPath();cx.ellipse(8,-24,12,11,0,0,7);cx.fill();cx.stroke();cx.fillStyle='#2b2b36';cx.beginPath();cx.moveTo(3,-34);cx.lineTo(8,-46);cx.lineTo(13,-33);cx.fill();
 cx.fillStyle='#ff9a3c';cx.beginPath();cx.arc(12,-33,2.4,0,7);cx.fill();cx.fillStyle='#2b2b36';cx.beginPath();cx.ellipse(15,-18,5.5,4.2,0,0,7);cx.fill();
-cx.fillStyle='#fff';cx.beginPath();cx.arc(10,-27,4.2,0,7);cx.fill();cx.fillStyle='#14141c';cx.beginPath();cx.arc(11,-27,2.6,0,7);cx.fill();cx.fillStyle='#fff';cx.beginPath();cx.arc(11.8,-28,1,0,7);cx.fill();cx.restore()}
+cx.fillStyle='#fff';cx.beginPath();cx.arc(10,-27,4.2,0,7);cx.fill();cx.fillStyle='#14141c';cx.beginPath();cx.arc(11,-27,2.6,0,7);cx.fill();
+cx.fillStyle='#fff';cx.beginPath();cx.arc(11.8,-28,1,0,7);cx.fill();cx.restore()}
 function hud(){const top=44;txt(g.score.toLocaleString(),W/2,top+34,40);rr(W/2-62,top+46,124,26,13,'rgba(20,55,120,.85)','#7fb4ff',1.5);coin(W/2-46,top+59,18);cx.font=FONT.replace('{s}',15);cx.fillStyle='#fff';cx.textAlign='left';cx.fillText(f(Math.min(g.tix,CFG.cap)*CFG.tix),W/2-32,top+64);if(St==='over')overlay()}
 function overlay(){const k=Math.min(1,(T-over_t)/20),e=1-Math.pow(1-k,3);cx.fillStyle=`rgba(5,20,60,${.6*e})`;cx.fillRect(0,0,W,H);cx.save();cx.translate(W/2,H/2-20+(1-e)*60);cx.globalAlpha=e;
 rr(-140,-120,280,270,22,'#3bb5f5','#fff',4);rr(-140,-120,280,70,22,'#8ee0ff');cx.fillStyle='#3bb5f5';cx.fillRect(-138,-70,276,22);txt('Game Over!',0,-72,36,'#fff');
@@ -1104,8 +1229,70 @@ $('#gr').onclick=e=>{e.stopPropagation();menu();$('#mn').classList.toggle('on')}
 $('#mn').onclick=e=>{const d=e.target.closest('[data-m]');if(!d)return;const k=d.dataset.m;if(k=='lang')S.lang=S.lang=='en'?'hi':'en';else if(k=='theme')S.theme={auto:'dark',dark:'light',light:'auto'}[S.theme];else if(k=='snd')S.snd=!S.snd;else if(k=='world'){S.world=!S.world}else{$('#mn').classList.remove('on');openL(k=='ch'?CFG.channel:k=='gp'?CFG.group:CFG.support);return}save();menu();render(true)};
 document.addEventListener('click',e=>{if(!e.target.closest('#mn')&&!e.target.closest('#gr'))$('#mn').classList.remove('on')});
 
-/* Live countdown ticker: 45s timer & task cooldowns refresh smoothly */
-setInterval(()=>{if(busy)return;if(newDay()){save();render(true);return}if(tab=='home'&&!$('#md').classList.contains('on')&&(Object.keys(S.pend).length||Object.keys(S.adCd||{}).some(k=>S.adCd[k]>Date.now())))render(true)},1000);
+/* Live countdown ticker: only refreshes while tasks are counting down */
+setInterval(()=>{
+  if(busy)return;
+  if(newDay()){save();render(true);return}
+  if(tab=='home'&&!$('#md').classList.contains('on')){
+    const hasPendingTasks=Object.keys(S.pend||{}).length>0;
+    const hasAdCooldown=Object.keys(S.adCd||{}).some(k=>S.adCd[k]>Date.now());
+    if(hasPendingTasks || hasAdCooldown){
+      render(true);
+    }
+  }
+},1000);
+
+/* =========================================================================
+   STRICT OUTSIDE 16-SECOND ANTI-CHEAT DETECTION ENGINE
+   ========================================================================= */
+function checkTaskSessionOnReturn(){
+  let sess=window.activeTaskSession;
+  if(!sess){
+    try{
+      const saved=localStorage.getItem('megaton_active_task');
+      if(saved) sess=JSON.parse(saved);
+    }catch(e){}
+  }
+  if(!sess) return;
+
+  const now=Date.now();
+  const startedAt=Number(sess.startedAt)||now;
+  const wait=Math.max(16,Math.min(3600,Number(sess.wait)||16));
+  const elapsedOutside=sess.leaveTime?((now-Number(sess.leaveTime))/1000):0;
+  const totalElapsed=(now-startedAt)/1000;
+
+  if(elapsedOutside>=wait || totalElapsed>=wait){
+    S.taskVerified=S.taskVerified||{};
+    S.taskVerified[sess.id]=true;
+    if(S.pend) delete S.pend[sess.id];
+    window.activeTaskSession=null;
+    localStorage.removeItem('megaton_active_task');
+    save();
+    if(!sess.isAdsgram){
+      render(true);
+      toast('🎉 Task verified! Tap Claim to receive your reward.');
+      snd(880,0.2);
+      hap('medium');
+    }
+  }else{
+    const remaining=Math.max(1,Math.ceil(wait-Math.max(elapsedOutside,totalElapsed)));
+    toast('⏳ Please stay on the page for '+remaining+'s more to verify.');
+    render(true);
+  }
+}
+
+// Track when user leaves app and when user returns
+document.addEventListener('visibilitychange',()=>{
+  if(document.hidden){
+    if(window.activeTaskSession && !window.activeTaskSession.leaveTime){
+      window.activeTaskSession.leaveTime=Date.now();
+      localStorage.setItem('megaton_active_task',JSON.stringify(window.activeTaskSession));
+    }
+  }else{
+    checkTaskSessionOnReturn();
+  }
+});
+window.addEventListener('focus',checkTaskSessionOnReturn);
 
 boot();
 </script></body></html>
