@@ -458,6 +458,29 @@ const f=n=>{
   }
   return s4;
 };
+/*
+ * GAME REWARD UNIT RULE:
+ * Admin milestone reward values are TON, not internal points.
+ * Example: reward=50 means 50 TON; reward=0.005 means 0.005 TON.
+ * The user balance/history stores internal points (1000 points = 1 TON).
+ * Keep this one conversion shared by the card, modal, and payout path.
+ */
+function gameRewardTon(level){
+  const raw = level && (level.rewardTon !== undefined ? level.rewardTon :
+                        level.rewardTON !== undefined ? level.rewardTON : level.reward);
+  const n = Number(raw);
+  return Number.isFinite(n) && n > 0 ? n : 0;
+}
+function gameRewardPoints(level){
+  return Math.round(gameRewardTon(level) * 1000 * 10000) / 10000;
+}
+function gameRewardText(level){
+  return formatTon(gameRewardTon(level));
+}
+function formatTon(n){
+  const v = Number(n) || 0;
+  return String(parseFloat(v.toFixed(6)));
+}
 let S={b:0,life:0,fs:0,spins:0,ck:{d:'',n:0},day:day(),ad:{},adCd:{},done:{},dn:0,lt:{},pend:{},taskStarted:{},taskVerified:{},gameTasks:{},ms:{},hist:[],inv:0,earn:0,invs:[],refBy:'',wallet:'',wds:[],theme:'auto',lang:'en',world:false,snd:true,boost:false,rot:0,gp:0,gb:0};
 let db=null, userRef=null, userStateRef=null, firebaseReady=false, saveQueue=Promise.resolve(), pendingSaves=0;
 let tonConnectUI=null;
@@ -898,7 +921,7 @@ function renderGameTasksCards() {
 
     const token = task.rewardToken || 'TON';
     const mType = task.milestoneType || 'score';
-    const totalReward = Array.isArray(task.levels) ? task.levels.reduce((s,l) => s + (parseFloat(l.reward) || 0), 0) : 0;
+    const totalReward = Array.isArray(task.levels) ? task.levels.reduce((sum,l) => sum + gameRewardTon(l), 0) : 0;
     const cleanTotal = parseFloat(totalReward.toFixed(5));
     const completedList = (S.gameTasks && S.gameTasks[k]) || [];
     const totalLevels = Array.isArray(task.levels) ? task.levels.length : 0;
@@ -951,7 +974,7 @@ window.openTaskModal = function(taskId) {
   let totalRewardSum = 0;
 
   levels.forEach(item => {
-    const rew = parseFloat(item.reward) || 0;
+    const rew = gameRewardTon(item);
     totalRewardSum += rew;
     const targetVal = Number(item.lvl ?? item.target);
     const isDone = completed.includes(targetVal);
@@ -1037,8 +1060,8 @@ window.addEventListener('message', function(event) {
 
       // In MegaTon Play: 1 TON = 1000 internal points
       // Admin sets exact TON in reward (e.g., 50, 0.004, 0.55005, 1.0)
-      const rewTON = parseFloat(targetObj.reward) || 0;
-      const points = Math.round(rewTON * 1000 * 10000) / 10000;
+      const rewTON = gameRewardTon(targetObj);
+      const points = gameRewardPoints(targetObj);
 
       const mType = task.milestoneType || 'score';
       const typeText = mType === 'coins' ? 'Coins' : mType === 'level' ? 'Level' : 'Score';
@@ -1046,7 +1069,7 @@ window.addEventListener('message', function(event) {
       award(points, `${task.title} (${typeText} ${target})`);
       save();
       confetti();
-      toast(`🎉 Target Achieved! +${f(points)} TON credited to your balance!`);
+      toast(`🎉 Target Achieved! +${formatTon(rewTON)} TON credited to your balance!`);
       if (currentModalGameId === gameId) openTaskModal(gameId);
       if (tab === 'home') renderGameTasksCards();
     }
