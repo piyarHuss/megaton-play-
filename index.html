@@ -2,7 +2,7 @@
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
-<title>MegaTon Play - Reward Fix 20261029</title>
+<title>MegaTon Play</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap">
 <!-- TON Connect UI SDK (Automatic Wallet Connection) -->
 <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
@@ -44,178 +44,25 @@ nav button.on::before{content:"";position:absolute;top:0;left:30%;right:30%;heig
 .task .btn,.task>button.btn,.task>button,adsgram-task .btn,adsgram-task [slot="button"],adsgram-task [slot="claim"],adsgram-task [slot="done"]{box-sizing:border-box!important;flex:0 0 88px!important;width:88px!important;min-width:88px!important;max-width:88px!important;height:38px!important;padding:0 6px!important;font-size:13px!important;font-weight:600!important;white-space:nowrap!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:5px!important;overflow:hidden!important;border-radius:12px!important;border:0!important;cursor:pointer!important}
 
 /* ⭐ DYNAMIC GAME TASK CARD STYLES (SLIM & PROFESSIONAL ANIMATED) ⭐ */
-.gt-card{
-  position:relative;
-  display:flex;
-  align-items:center;
-  gap:10px;
-  padding:8px 12px;
-  min-height:58px;
-  border-radius:18px;
-  background:linear-gradient(135deg,rgba(26,34,52,0.95) 0%,rgba(16,23,37,0.98) 100%);
-  border:1px solid rgba(90,120,170,0.38);
-  margin-bottom:8px;
-  cursor:pointer;
-  transition:transform .15s ease,border-color .2s ease,box-shadow .2s ease;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,0.08),0 4px 14px rgba(0,0,0,0.25);
-  overflow:hidden;
-}
-.gt-card:active{
-  transform:scale(0.98);
-  border-color:rgba(0,152,234,0.65);
-}
-.gt-card::before{
-  content:"";
-  position:absolute;
-  top:0;
-  left:-130%;
-  width:60%;
-  height:100%;
-  background:linear-gradient(90deg,transparent,rgba(255,255,255,0.06),rgba(0,152,234,0.2),transparent);
-  transform:skewX(-25deg);
-  animation:gtShimmer 4.5s ease-in-out infinite;
-  pointer-events:none;
-}
-@keyframes gtShimmer{
-  0%{left:-130%}
-  40%,100%{left:180%}
-}
-.gt-thumb-wrap{
-  position:relative;
-  flex-shrink:0;
-  width:44px;
-  height:44px;
-}
-.gt-thumb{
-  width:44px;
-  height:44px;
-  border-radius:13px;
-  object-fit:cover;
-  background:#090d16;
-  border:1.5px solid rgba(255,255,255,0.18);
-  box-shadow:0 0 10px rgba(0,152,234,0.25);
-  display:block;
-}
-.gt-live-dot{
-  position:absolute;
-  bottom:-1px;
-  right:-1px;
-  width:8px;
-  height:8px;
-  border-radius:50%;
-  background:#22c55e;
-  border:1.5px solid #101725;
-  box-shadow:0 0 6px #22c55e;
-  animation:gtLivePulse 2s infinite;
-}
-@keyframes gtLivePulse{
-  50%{transform:scale(1.2);box-shadow:0 0 10px #22c55e}
-}
-.gt-live-badge{
-  font-size:9.5px;
-  font-weight:800;
-  color:#22c55e;
-  background:rgba(34,197,94,0.12);
-  border:1px solid rgba(34,197,94,0.3);
-  border-radius:6px;
-  padding:1px 5px;
-  letter-spacing:0.5px;
-  display:inline-flex;
-  align-items:center;
-}
-.gt-body{
-  flex:1;
-  min-width:0;
-  display:flex;
-  flex-direction:column;
-  justify-content:center;
-  gap:2px;
-}
-.gt-top{
-  display:flex;
-  align-items:center;
-  gap:6px;
-  min-width:0;
-}
-.gt-title{
-  font-size:13.5px;
-  font-weight:700;
-  color:#fff;
-  line-height:1.2;
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
-}
-.gt-sub{
-  font-size:10.5px;
-  color:var(--mut);
-  line-height:1.2;
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
-  margin-bottom:2px;
-}
-.gt-pills{
-  display:flex;
-  align-items:center;
-  gap:5px;
-  flex-wrap:nowrap;
-  overflow:hidden;
-}
-.gt-pill-tok{
-  display:inline-flex;
-  align-items:center;
-  gap:3px;
-  background:linear-gradient(135deg,rgba(0,152,234,0.22),rgba(34,197,94,0.18));
-  border:1px solid rgba(0,152,234,0.45);
-  border-radius:12px;
-  padding:1px 6px;
-  font-size:10.5px;
-  font-weight:800;
-  color:#60d2ff;
-  letter-spacing:0.2px;
-  white-space:nowrap;
-  animation:gtPillGlow 3s ease-in-out infinite alternate;
-}
-@keyframes gtPillGlow{
-  0%{box-shadow:0 0 0 rgba(0,152,234,0)}
-  100%{box-shadow:0 0 8px rgba(0,152,234,0.45)}
-}
-.gt-pill-mil{
-  display:inline-flex;
-  align-items:center;
-  gap:3px;
-  background:rgba(255,255,255,0.06);
-  border:1px solid rgba(255,255,255,0.09);
-  border-radius:12px;
-  padding:1px 6px;
-  font-size:10px;
-  font-weight:600;
-  color:#9dafc7;
-  white-space:nowrap;
-}
-.gt-btn{
-  flex:0 0 auto;
-  height:30px;
-  padding:0 12px;
-  border-radius:11px;
-  font-family:inherit;
-  font-weight:700;
-  font-size:12px;
-  color:#fff;
-  background:linear-gradient(180deg,#2b7fff,#0a4ecb);
-  border:1px solid rgba(130,190,255,0.45);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,0.35),0 3px 10px rgba(10,78,203,0.35);
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  gap:3px;
-  cursor:pointer;
-  transition:transform .12s,filter .15s;
-}
-.gt-btn:active{
-  transform:scale(0.92);
-}
+.gt-card{position:relative;display:flex;align-items:center;gap:10px;padding:8px 12px;min-height:58px;border-radius:18px;background:linear-gradient(135deg,rgba(26,34,52,0.95) 0%,rgba(16,23,37,0.98) 100%);border:1px solid rgba(90,120,170,0.38);margin-bottom:8px;cursor:pointer;transition:transform .15s ease,border-color .2s ease,box-shadow .2s ease;box-shadow:inset 0 1px 0 rgba(255,255,255,0.08),0 4px 14px rgba(0,0,0,0.25);overflow:hidden}
+.gt-card:active{transform:scale(0.98);border-color:rgba(0,152,234,0.65)}
+.gt-card::before{content:"";position:absolute;top:0;left:-130%;width:60%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.06),rgba(0,152,234,0.2),transparent);transform:skewX(-25deg);animation:gtShimmer 4.5s ease-in-out infinite;pointer-events:none}
+@keyframes gtShimmer{0%{left:-130%}40%,100%{left:180%}}
+.gt-thumb-wrap{position:relative;flex-shrink:0;width:44px;height:44px}
+.gt-thumb{width:44px;height:44px;border-radius:13px;object-fit:cover;background:#090d16;border:1.5px solid rgba(255,255,255,0.18);box-shadow:0 0 10px rgba(0,152,234,0.25);display:block}
+.gt-live-dot{position:absolute;bottom:-1px;right:-1px;width:8px;height:8px;border-radius:50%;background:#22c55e;border:1.5px solid #101725;box-shadow:0 0 6px #22c55e;animation:gtLivePulse 2s infinite}
+@keyframes gtLivePulse{50%{transform:scale(1.2);box-shadow:0 0 10px #22c55e}}
+.gt-live-badge{font-size:9.5px;font-weight:800;color:#22c55e;background:rgba(34,197,94,0.12);border:1px solid rgba(34,197,94,0.3);border-radius:6px;padding:1px 5px;letter-spacing:0.5px;display:inline-flex;align-items:center}
+.gt-body{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:2px}
+.gt-top{display:flex;align-items:center;gap:6px;min-width:0}
+.gt-title{font-size:13.5px;font-weight:700;color:#fff;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gt-sub{font-size:10.5px;color:var(--mut);line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px}
+.gt-pills{display:flex;align-items:center;gap:5px;flex-wrap:nowrap;overflow:hidden}
+.gt-pill-tok{display:inline-flex;align-items:center;gap:3px;background:linear-gradient(135deg,rgba(0,152,234,0.22),rgba(34,197,94,0.18));border:1px solid rgba(0,152,234,0.45);border-radius:12px;padding:1px 6px;font-size:10.5px;font-weight:800;color:#60d2ff;letter-spacing:0.2px;white-space:nowrap;animation:gtPillGlow 3s ease-in-out infinite alternate}
+@keyframes gtPillGlow{0%{box-shadow:0 0 0 rgba(0,152,234,0)}100%{box-shadow:0 0 8px rgba(0,152,234,0.45)}}
+.gt-pill-mil{display:inline-flex;align-items:center;gap:3px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.09);border-radius:12px;padding:1px 6px;font-size:10px;font-weight:600;color:#9dafc7;white-space:nowrap}
+.gt-btn{flex:0 0 auto;height:30px;padding:0 12px;border-radius:11px;font-family:inherit;font-weight:700;font-size:12px;color:#fff;background:linear-gradient(180deg,#2b7fff,#0a4ecb);border:1px solid rgba(130,190,255,0.45);box-shadow:inset 0 1px 0 rgba(255,255,255,0.35),0 3px 10px rgba(10,78,203,0.35);display:inline-flex;align-items:center;justify-content:center;gap:3px;cursor:pointer;transition:transform .12s,filter .15s}
+.gt-btn:active{transform:scale(0.92)}
 
 /* GAME DETAIL MODAL */
 #taskDetailModal{position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.75);backdrop-filter:blur(8px);display:none;place-items:center;padding:16px}
@@ -229,22 +76,7 @@ nav button.on::before{content:"";position:absolute;top:0;left:30%;right:30%;heig
 .subtask-chk.done{background:#22c55e;border-color:#22c55e;color:#05140d}
 .task-modal-foot{padding:12px 18px calc(env(safe-area-inset-bottom,0px) + 16px);border-top:1px solid var(--line);background:#0c101c}
 
-adsgram-task,adsgram-task.task{
-  display:block!important;
-  width:100%!important;
-  max-width:100%!important;
-  min-width:0!important;
-  box-sizing:border-box!important;
-  overflow:hidden!important;
-  margin:0 0 10px!important;
-  padding:10px 12px!important;
-  min-height:72px!important;
-  --adsgram-task-button-width:88px!important;
-  --adsgram-task-icon-size:48px!important;
-  --adsgram-task-icon-title-gap:12px!important;
-  --adsgram-task-icon-border-radius:14px!important;
-  --adsgram-task-font-size:15px!important
-}
+adsgram-task,adsgram-task.task{display:block!important;width:100%!important;max-width:100%!important;min-width:0!important;box-sizing:border-box!important;overflow:hidden!important;margin:0 0 10px!important;padding:10px 12px!important;min-height:72px!important;--adsgram-task-button-width:88px!important;--adsgram-task-icon-size:48px!important;--adsgram-task-icon-title-gap:12px!important;--adsgram-task-icon-border-radius:14px!important;--adsgram-task-font-size:15px!important}
 adsgram-task [slot="button"] svg,adsgram-task [slot="claim"] svg,adsgram-task [slot="done"] svg{flex:none!important;display:inline-block!important;vertical-align:middle}
 
 .in{animation:in .45s both}.noan .in{animation:none}@keyframes in{from{opacity:0;transform:translateY(14px)}}
@@ -464,6 +296,33 @@ let tonConnectUI=null;
 let ADMIN_TASKS = {};
 let currentModalGameId = null;
 
+/* ===== FIX: Game task reward helpers =====
+   App me 1 TON = 1000 internal points.
+   Admin jo TON set karta hai (50, 150, 0.004...) usko hamesha x1000 karke credit karna hai. */
+const PT = 1000;
+let trustedB = 0;            // last balance jo app ne khud save kiya (game ka raw write ignore karne ke liye)
+let lastGameCreditTs = 0;    // last game-task credit ka time
+const tonToPts = t => Math.round((parseFloat(t) || 0) * PT * 10000) / 10000;
+const toArr=x=>Array.isArray(x)?x:(x&&typeof x==='object'?Object.values(x):[]);
+
+function rewardPtsFor(gameId, target){
+  const task = ADMIN_TASKS[gameId];
+  if(!task) return null;
+  const lv = (task.levels || []).find(l => Number(l.lvl ?? l.target) === Number(target));
+  return lv ? tonToPts(lv.reward) : null;
+}
+
+function findNewTargets(oldGT, newGT){
+  const out = [];
+  Object.keys(newGT || {}).forEach(gid => {
+    const oldArr = toArr((oldGT && oldGT[gid]) || []).map(Number);
+    toArr(newGT[gid]).forEach(t => {
+      if(!oldArr.includes(Number(t))) out.push({gameId: gid, target: Number(t)});
+    });
+  });
+  return out;
+}
+
 try {
   if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
   db=firebase.database();
@@ -477,6 +336,7 @@ function newDay(){if(S.day===day())return false;S.day=day();S.ad={};S.adCd={};S.
 
 const save=()=>{
   if(!userRef||!userStateRef)return Promise.resolve(false);
+  trustedB = Number(S.b) || 0;   // FIX: app ka apna balance yaad rakho
   const snapshot=JSON.parse(JSON.stringify(S));
   pendingSaves++;
   saveQueue=saveQueue.then(async()=>{
@@ -523,6 +383,7 @@ async function loadUserState(){
     S.ad = S.ad || {};
     S.adCd = S.adCd || {};
     newDay();
+    trustedB = Number(S.b) || 0;   // FIX
     firebaseReady=true;
 
     userRef.child('admin/blocked').on('value', bSnap=>{
@@ -531,23 +392,51 @@ async function loadUserState(){
       }
     });
 
+    /* ===== FIX: Realtime state listener (game ka raw reward ignore, sahi reward x1000) ===== */
     if(userStateRef){
-      userStateRef.on('value',sSnap=>{
-        if(pendingSaves>0)return;
-        const stateVal=sSnap.val();
-        if(stateVal && typeof stateVal==='object'){
-          if(Array.isArray(stateVal.wds)){
-            S.wds=stateVal.wds;
+      userStateRef.on('value', sSnap => {
+        if(pendingSaves>0) return;
+        const sv = sSnap.val();
+        if(!sv || typeof sv !== 'object') return;
+
+        if(Array.isArray(sv.wds)) S.wds = sv.wds;
+        if(sv.wallet) S.wallet = sv.wallet;
+
+        const incomingGT = sv.gameTasks || {};
+        const fresh = findNewTargets(S.gameTasks || {}, incomingGT);
+
+        // Game ne naya target complete kiya -> reward hum khud sahi calculate karenge
+        const valid = fresh.map(x => ({...x, pts: rewardPtsFor(x.gameId, x.target)})).filter(x => x.pts !== null);
+
+        if(valid.length){
+          let add = 0;
+          valid.forEach(x => {
+            add += x.pts;
+            const task = ADMIN_TASKS[x.gameId];
+            hist('+' + f(x.pts) + ' TON', ((task && task.title) || 'Game') + ' (' + x.target + ')', 't');
+          });
+          S.gameTasks = incomingGT;
+          S.b = Math.round((trustedB + add) * 10000) / 10000;   // game ka galat/raw amount ignore
+          S.life = Math.round(((Number(S.life) || 0) + add) * 10000) / 10000;
+          lastGameCreditTs = Date.now();
+          save();
+          confetti();
+          toast('🎉 Target Achieved! +' + f(add) + ' TON credited!');
+          if(currentModalGameId) openTaskModal(currentModalGameId);
+        } else {
+          if(sv.gameTasks) S.gameTasks = sv.gameTasks;
+          const incomingB = sv.b !== undefined ? Number(sv.b) || 0 : (sv.balance !== undefined ? Number(sv.balance) || 0 : null);
+          if(incomingB !== null){
+            // Game ne target ke turant baad raw balance badhaya ho to usse wapas sahi value se overwrite karo
+            if(Date.now() - lastGameCreditTs < 20000 && incomingB > trustedB + 0.00001){
+              S.b = trustedB;
+              save();
+            } else {
+              S.b = incomingB;
+            }
           }
-          if(stateVal.b!==undefined){
-            S.b=Number(stateVal.b)||0;
-          }else if(stateVal.balance!==undefined){
-            S.b=Number(stateVal.balance)||0;
-          }
-          if(stateVal.gameTasks) S.gameTasks = stateVal.gameTasks;
-          if(stateVal.wallet) S.wallet=stateVal.wallet;
-          if(tab==='wallet') render(true);
         }
+        if(tab === 'wallet' || tab === 'home') render(true);
       });
     }
 
@@ -643,7 +532,6 @@ const SEG=[{l:'+'+f(5),k:'m',v:5,w:20,c:'#2a5cd8'},{l:'+'+f(1),k:'m',v:1,w:8,c:'
 
 const CONF={adNetworks:{adsgramReward:'56220',adsgramInt:'int-56219',adsgramTask:'task-56221',monetagZone:'12131483',monetagInApp:true,inAppFrequency:2,inAppCapping:0.1,inAppInterval:30,inAppTimeout:5}},DEFT={nav_home:'HOME',nav_game:'GAME',nav_wallet:'WALLET',nav_invite:'INVITE',nav_rank:'RANK',appName:'MegaTon Play',banner1:'Each friend joins & watches ads → +0.0100 TON',banner2:'They get a bonus too · Win real prizes',inviteBtn:'Invite Friends',inviteSub:'Earn 0.01 TON per invite',shareText:'🎮 Join MegaTon Play on Telegram! Jump high, complete tasks and earn real TON coin prizes! 🚀',gameTitle:'Sky Jump',gameSub:'Jump higher and collect TON coins',walletLabel:'TOTAL BALANCE',rankTitle:'Leaderboard',wdOff:'Withdrawals are temporarily disabled'};
 const T=k=>(CONF.text&&CONF.text[k]!=null&&CONF.text[k]!=='')?CONF.text[k]:DEFT[k],FT=k=>!(CONF.ft&&CONF.ft[k]===false),mm=x=>{const n=Number(x)||0;return n>=0.5?n:Math.round(n*10000)/10};
-const toArr=x=>Array.isArray(x)?x:(x&&typeof x==='object'?Object.values(x):[]);
 const CHK=()=>{const a=toArr(CONF.checkin);return a&&a.length==7?a.map(mm):[1,1,2,2,2,3,3]};
 const MD=()=>{const a=toArr(CONF.mDay);return a&&a.length?a.map(([n,r])=>[n,mm(r)]):[[3,6],[5,12],[8,18],[12,24]]};
 const MI=()=>{const a=toArr(CONF.mInv);return a&&a.length?a.map(([n,r])=>[n,mm(r)]):[[3,6],[5,12],[10,8],[25,30],[50,20]]};
@@ -945,7 +833,7 @@ window.openTaskModal = function(taskId) {
                                              mType === 'level' ? '🏆 Level Milestones & Rewards' : '🎯 Score Milestones & Rewards';
   }
 
-  const completed = (S.gameTasks && S.gameTasks[taskId]) || [];
+  const completed = toArr((S.gameTasks && S.gameTasks[taskId]) || []).map(Number);
   const levels = Array.isArray(task.levels) ? task.levels : [];
   let h = '';
   let totalRewardSum = 0;
@@ -1015,64 +903,41 @@ window.startCurrentGameTask = function() {
   toast('🎮 Launching Game... Complete targets to earn TON!');
 };
 
-/* ⭐ In-Game Message Listener (Exact TON Reward Engine) ⭐
-   adminTasks/<id>/levels/<n>/reward is the exact TON amount entered in Admin.
-   award() stores internal milli-TON units; its UI formatter divides by 1000.
-   Therefore 150 TON must be passed to award() as 150000 internal units.
-*/
-function exactGameRewardToInternalUnits(rewardTon) {
-  const ton = Number(rewardTon);
-  if (!Number.isFinite(ton) || ton < 0) return 0;
-  return Math.round(ton * 1000 * 10000) / 10000;
-}
-function exactGameRewardLabel(rewardTon) {
-  const ton = Number(rewardTon);
-  if (!Number.isFinite(ton)) return '0';
-  return String(Number(ton.toFixed(5)));
-}
+/* ⭐ In-Game Message Listener (Reward Engine) ⭐ */
 window.addEventListener('message', function(event) {
-  const data = event && event.data;
-  if (!data || (data.type !== 'LEVEL_COMPLETE' && data.type !== 'TASK_REWARD')) return;
+  if (event.data && (event.data.type === 'LEVEL_COMPLETE' || event.data.type === 'TASK_REWARD')) {
+    const gameId = event.data.gameId;
+    const target = Number(event.data.level ?? event.data.target);
+    if (!gameId || isNaN(target)) return;
 
-  const gameId = String(data.gameId || '');
-  const target = Number(data.level ?? data.target);
-  if (!gameId || !Number.isFinite(target)) return;
+    const task = ADMIN_TASKS[gameId];
+    if (!task) return;
 
-  const task = ADMIN_TASKS[gameId];
-  if (!task || !Array.isArray(task.levels)) return;
+    const targetObj = (task.levels || []).find(l => Number(l.lvl ?? l.target) === target);
+    if (!targetObj) return;
 
-  const targetObj = task.levels.find(item => Number(item.lvl ?? item.target) === target);
-  if (!targetObj) return;
+    S.gameTasks = S.gameTasks || {};
+    const userCompleted = toArr(S.gameTasks[gameId] || []).map(Number);
 
-  const rewTON = Number(targetObj.reward);
-  const internalUnits = exactGameRewardToInternalUnits(rewTON);
-  if (!(internalUnits > 0)) {
-    console.warn('[MegaTon game reward] Invalid reward in adminTasks:', {
-      gameId, target, savedReward: targetObj.reward
-    });
-    return;
+    if (!userCompleted.includes(target)) {
+      userCompleted.push(target);
+      S.gameTasks[gameId] = userCompleted;
+
+      // FIX: Admin TON x 1000 internal points (50 TON -> 50000 pts -> shows 50.0000)
+      const points = tonToPts(targetObj.reward);
+
+      const mType = task.milestoneType || 'score';
+      const typeText = mType === 'coins' ? 'Coins' : mType === 'level' ? 'Level' : 'Score';
+
+      lastGameCreditTs = Date.now();
+      award(points, `${task.title} (${typeText} ${target})`);
+      save();
+      confetti();
+      toast(`🎉 Target Achieved! +${f(points)} TON credited to your balance!`);
+      if (currentModalGameId === gameId) openTaskModal(gameId);
+      if (tab === 'home') renderGameTasksCards();
+    }
   }
-
-  S.gameTasks = S.gameTasks || {};
-  const userCompleted = Array.isArray(S.gameTasks[gameId]) ? S.gameTasks[gameId] : [];
-
-  // Do not pay the same milestone twice.
-  if (userCompleted.includes(target)) return;
-
-  userCompleted.push(target);
-  S.gameTasks[gameId] = userCompleted;
-
-  const mType = task.milestoneType || 'score';
-  const typeText = mType === 'coins' ? 'Coins' : mType === 'level' ? 'Level' : 'Score';
-
-  // Single conversion only: 150 TON -> 150000 internal units -> f() displays 150.0000 TON.
-  award(internalUnits, `${task.title} (${typeText} ${target})`);
-  save();
-  confetti();
-  toast(`🎉 Target Achieved! +${exactGameRewardLabel(rewTON)} TON credited to your balance!`);
-
-  if (currentModalGameId === gameId) openTaskModal(gameId);
-  if (tab === 'home') renderGameTasksCards();
 });
 
 async function boot(){
@@ -1671,6 +1536,7 @@ async wdok(){
     updates['users/'+uid+'/lastActive']=now;
 
     await db.ref().update(updates);
+    trustedB=0;   // FIX: withdrawal ke baad trusted balance bhi 0
 
     closeM();
     confetti();
