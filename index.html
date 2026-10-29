@@ -239,7 +239,9 @@ nav{background:linear-gradient(180deg,rgba(20,28,43,.98),rgba(12,17,29,.99));bor
 <script>
 "use strict";
 const CFG={bot:'MegaTonPlay_bot',app:'ton',channel:'https://t.me/MegaTonPlay',group:'https://t.me/MegaTonPlay',support:'https://t.me/MegaTonPlay',minW:10,spinCost:7,adWait:8,adCooldownHours:1,games:10,tix:.1,cap:40,model:'character.jump.glb',jump:'jump.mp3',bgm:'backgroundsound.mp3',cs:64,turn:.9,inv:10,bgmVol:.35,sfxVol:1};
-const TASK_WAIT=8;
+const TASK_WAIT=8;          // link task: app se bahar kam se kam itne second
+const AD_MIN_SECONDS=10;    // ads: kam se kam itne second dekhne ke baad hi reward
+let adLock=false;
 const FIREBASE_CONFIG = {
   apiKey: "AIzaSyBJrCE4w_QfBqfF3g4O_RuCK4DbjmL9TRg",
   authDomain: "telegram-69052.firebaseapp.com",
@@ -990,110 +992,57 @@ async function boot(){
 
   checkTaskSessionOnReturn();
 
-  const ADSGRAM_WAIT_MS=8000;
-  const ADSGRAM_START_KEY='megaton_adsgram_task_starts';
-  const readAdsgramStarts=()=>{
-    try{return JSON.parse(localStorage.getItem(ADSGRAM_START_KEY)||'{}')||{};}
-    catch(_){return {};}
-  };
-  const writeAdsgramStarts=v=>{
-    try{localStorage.setItem(ADSGRAM_START_KEY,JSON.stringify(v));}catch(_){}
-  };
-  const adsgramStartFor=host=>{
-    const id=host&&(host.getAttribute('data-task-id')||host.dataset.taskId);
-    if(!id)return 0;
-    return Number(readAdsgramStarts()[id]||0);
-  };
+  /* ===== AdsGram task: Claim sirf tab dikhega jab user app se bahar 8 sec raha ho ===== */
   const updateAdsgramClaimButtons=()=>{
+    const s=tsRead();
     document.querySelectorAll('adsgram-task').forEach(host=>{
-      const id=host.getAttribute('data-task-id')||host.dataset.taskId;
+      const id=host.getAttribute('data-task-id');
       const claim=host.querySelector('[slot="claim"]');
       if(!id||!claim)return;
-      const start=adsgramStartFor(host);
-      if(!start){
-        claim.style.setProperty('display','none','important');
-        return;
-      }
-      const remaining=Math.max(0,Math.ceil((ADSGRAM_WAIT_MS-(Date.now()-start))/1000));
-      if(remaining>0){
-        claim.style.setProperty('display','none','important');
-        claim.setAttribute('aria-disabled','true');
-        claim.dataset.waitRemaining=String(remaining);
-      }else{
-        claim.style.setProperty('display','inline-flex','important');
-        claim.removeAttribute('aria-disabled');
-        delete claim.dataset.waitRemaining;
-      }
+      claim.style.setProperty('display',(s[id]&&s[id].ok)?'inline-flex':'none','important');
     });
   };
   setInterval(updateAdsgramClaimButtons,250);
 
   document.addEventListener('click',e=>{
     const go=e.target&&e.target.closest&&e.target.closest('adsgram-task [slot="button"]');
-    const claim=e.target&&e.target.closest&&e.target.closest('adsgram-task [slot="claim"]');
-    if(go){
-      const host=go.closest('adsgram-task');
-      const id=host&&(host.getAttribute('data-task-id')||host.dataset.taskId);
-      if(id){
-        const starts=readAdsgramStarts();
-        starts[id]=Date.now();
-        writeAdsgramStarts(starts);
-        updateAdsgramClaimButtons();
-      }
-      toast('⏱️ Task started. Stay for at least 8 seconds before claiming.');
-      return;
-    }
-    if(claim){
-      const host=claim.closest('adsgram-task');
-      const start=adsgramStartFor(host);
-      if(!start||Date.now()-start<ADSGRAM_WAIT_MS){
-        e.preventDefault();
-        e.stopPropagation();
-        if(e.stopImmediatePropagation)e.stopImmediatePropagation();
-        const remaining=Math.max(1,Math.ceil((ADSGRAM_WAIT_MS-(Date.now()-start))/1000));
-        toast('Please stay on this task for '+remaining+' more second(s).');
-      }
-    }
+    if(!go)return;
+    const id=go.closest('adsgram-task').getAttribute('data-task-id');
+    if(id&&!tsRead()[id])tsStart(id);
+    toast('⏱️ Task par kam se kam '+TASK_WAIT+' second ruko, phir wapas aakar Claim karo.');
   },true);
 
   let rewardLock=false;
   document.addEventListener('reward',(e)=>{
     if(rewardLock)return;
-
     const host=e.target&&e.target.closest&&e.target.closest('adsgram-task');
-    const targetTaskId=host?(host.getAttribute('data-task-id')||host.dataset.taskId):null;
+    const targetTaskId=host?host.getAttribute('data-task-id'):null;
     const rawDetail=e&&e.detail;
-    const detailBlockId=String(
-      (typeof rawDetail==='object'&&rawDetail!==null)?(rawDetail.blockId||''):(rawDetail||'')
-    ).trim();
+    const detailBlockId=String((typeof rawDetail==='object'&&rawDetail!==null)?(rawDetail.blockId||''):(rawDetail||'')).trim();
     const norm=id=>String(id||'').replace(/^task-/,'').trim();
-    const cleanDetailBlock=norm(detailBlockId);
     const allTasks=[...LT,...WT];
     let tk=targetTaskId?allTasks.find(t=>t.id===targetTaskId&&t.net==='adsgram_task'):null;
-    if(!tk&&cleanDetailBlock)tk=allTasks.find(t=>t.net==='adsgram_task'&&norm(t.blockId)===cleanDetailBlock);
+    if(!tk&&detailBlockId)tk=allTasks.find(t=>t.net==='adsgram_task'&&norm(t.blockId)===norm(detailBlockId));
     if(!tk)tk=allTasks.find(t=>t.net==='adsgram_task');
     if(!tk)return;
 
-    const starts=readAdsgramStarts();
-    const start=Number(starts[tk.id]||0);
-    if(!start||Date.now()-start<ADSGRAM_WAIT_MS){
-      if(e.preventDefault)e.preventDefault();
-      if(e.stopPropagation)e.stopPropagation();
-      if(e.stopImmediatePropagation)e.stopImmediatePropagation();
-      toast('Reward locked: stay on the task for at least 8 seconds.');
+    const s=tsRead();
+    if(!s[tk.id]||!s[tk.id].ok){
+      e.preventDefault&&e.preventDefault();
+      e.stopPropagation&&e.stopPropagation();
+      e.stopImmediatePropagation&&e.stopImmediatePropagation();
+      toast('Reward locked: task par kam se kam '+TASK_WAIT+' second rukna zaroori hai.');
       return;
     }
-
-    rewardLock=true;
-    setTimeout(()=>{rewardLock=false;},3000);
-    delete starts[tk.id];
-    writeAdsgramStarts(starts);
+    rewardLock=true;setTimeout(()=>{rewardLock=false},3000);
+    delete s[tk.id];tsWrite(s);
 
     S.dn++;
     award(tk.r,tk.t||'AdsGram Task');
     save();
     toast('🎉 AdsGram task rewarded! +'+f(tk.r)+' TON');
-    render(true);
+    // Task hatao mat: component dobara banao. AdsGram ke paas naya task ho to dikhega, warna wo khud nahi dikhayega
+    setTimeout(()=>refreshAdsgramTask(tk.id,tk.blockId),1500);
   },true);
 
   GM.reinit();
@@ -1138,7 +1087,6 @@ function taskCard(t,type,noAnim){
     }
   }else{
     const isVerified=(S.taskVerified||{})[t.id];
-    const isPending=S.pend&&S.pend[t.id];
     const wait=TASK_WAIT;
     sb=`${amt(t.r,14)} <s>Stay ${wait}s</s>${t.tag?`<span class="pill">${t.tag=='new'?'New':'Limited'}</span>`:''}`;
 
@@ -1146,19 +1094,8 @@ function taskCard(t,type,noAnim){
       btn=`<button class="btn dis">${ic('check',14)}Claimed</button>`;
     }else if(isVerified){
       btn=`<button class="btn grn" data-a="claim" data-id="${t.id}">${ic('check',14)}Claim</button>`;
-    }else if(isPending){
-      const elapsed=Math.floor((Date.now()-Number(isPending))/1000);
-      const remaining=Math.max(0,wait-elapsed);
-      if(remaining<=0){
-        S.taskVerified=S.taskVerified||{};
-        S.taskVerified[t.id]=true;
-        delete S.pend[t.id];
-        save();
-        btn=`<button class="btn grn" data-a="claim" data-id="${t.id}">${ic('check',14)}Claim</button>`;
-      }else{
-        btn=`<button class="btn dis" style="opacity:0.85">Wait ${remaining}s…</button>`;
-      }
     }else{
+      // Pending ho ya na ho, Go hi dikhega. Claim tabhi khulega jab user sach mein task par 8 sec raha ho.
       btn=`<button class="btn" data-a="go" data-id="${t.id}">Go${ic('up',14)}</button>`;
     }
   }
@@ -1310,30 +1247,31 @@ function drawWheel(){const c=$('#wh');if(!c)return;const g=c.getContext('2d'),r=
 /* ===== Actions & Anti-Cheat Task Engine ===== */
 const A={
 tab(e){if(busy)return;tab=e.dataset.v;closeM();render();snd(500,.05);hap()},sub(e){sub=e.dataset.v;render(true)},sec(e){sec=e.dataset.v;render(true)},flt(e){flt=e.dataset.v;render(true)},lb(e){lb=e.dataset.v;render(true)},
+
+/* ===== Ads: kam se kam AD_MIN_SECONDS dekhne ke baad hi reward (AdsGram + Monetag dono) ===== */
 ad(e){
   const t=findT(e.dataset.id);
   if(!t)return;
   if((S.ad[t.id]||0)>=t.max)return;
+  if(adLock)return;
 
   S.adCd=S.adCd||{};
   const cdLeft=Math.max(0,Math.ceil((Number(S.adCd[t.id]||0)-Date.now())/1000));
-  if(cdLeft>0 || (S.ad[t.id]||0)>=t.max){
-    toast('⏳ This ad is on cooldown. Other ads remain available.');
-    return;
-  }
+  if(cdLeft>0){toast('⏳ Ye ad cooldown par hai. Baaki ads available hain.');return;}
 
   const net=t.net||(t.id==='ad1'?'adsgram_reward':t.id==='ad2'?'adsgram_int':'monetag_pop');
   const an=CONF.adNetworks||{};
   const blockId=String(t.blockId||(net==='adsgram_int'?(an.adsgramInt||'int-56219'):net==='adsgram_reward'?(an.adsgramReward||'56220'):(an.monetagZone||'12131483'))).trim();
 
+  adLock=true;
   const adStartTs=Date.now();
-  const isVideoReward=(net==='adsgram_reward'||net==='adsgram_int'||net==='monetag_reward');
-  const minWatchSeconds=isVideoReward?(7+Math.floor(Math.random()*3)):0;
+  const unlock=()=>{adLock=false};
 
   const handleReward=(label)=>{
+    unlock();
     const elapsed=(Date.now()-adStartTs)/1000;
-    if(isVideoReward && elapsed<minWatchSeconds){
-      toast('⚠️ Watch at least '+minWatchSeconds+' seconds to earn the reward.');
+    if(elapsed<AD_MIN_SECONDS){
+      toast('⚠️ Ad poora dekho (kam se kam '+AD_MIN_SECONDS+' sec), tabhi reward milega.');
       return;
     }
     S.adCd=S.adCd||{};
@@ -1349,110 +1287,58 @@ ad(e){
     toast('🎉 Ad reward +'+f(t.r)+' TON added!');
     render(true);
   };
+  const fail=(msg)=>(err)=>{unlock();console.warn('[Ad]',err);toast('⚠️ '+((err&&(err.description||err.message))||msg));};
 
   if(net==='adsgram_reward'||net==='adsgram_int'){
     if(window.Adsgram){
       toast('Opening AdsGram ad…');
       try{
-        const adController=window.Adsgram.init({blockId});
-        adController.show().then(result=>{
-          handleReward('AdsGram Ad');
-        }).catch(err=>{
-          console.warn('[AdsGram Error]',err);
-          const msg=(err&&(err.description||err.message))||'Ad was skipped or unavailable';
-          toast('⚠️ '+msg);
-        });
+        window.Adsgram.init({blockId}).show().then(()=>handleReward('AdsGram Ad')).catch(fail('Ad skip hua ya available nahi'));
         return;
-      }catch(err){
-        console.warn('[AdsGram Init Error]',err);
-      }
+      }catch(err){console.warn('[AdsGram Init Error]',err);}
     }
   }
-
-  if(net==='monetag_reward'){
+  if(net==='monetag_reward'||net==='monetag_pop'){
     const fn=window.show_12131483;
     if(typeof fn==='function'){
       toast('Opening Monetag ad…');
-      Promise.resolve().then(()=>fn()).then(()=>{
-        handleReward('Monetag Rewarded');
-      }).catch(err=>{
-        console.warn('[Monetag Rewarded]',err);
-        toast('⚠️ Ad closed or not available');
-      });
+      Promise.resolve().then(()=>net==='monetag_pop'?fn('pop'):fn())
+        .then(()=>handleReward(net==='monetag_pop'?'Monetag Popup':'Monetag Rewarded'))
+        .catch(fail('Ad band hua ya available nahi'));
       return;
     }
   }
-
-  if(net==='monetag_pop'){
-    const fn=window.show_12131483;
-    if(typeof fn==='function'){
-      toast('Opening Monetag popup…');
-      Promise.resolve().then(()=>fn('pop')).then(()=>{
-        handleReward('Monetag Popup');
-      }).catch(err=>{
-        console.warn('[Monetag Popup]',err);
-        toast('⚠️ Popup closed or not available');
-      });
-      return;
-    }
-  }
-
+  unlock();
   toast('No verified ad is available right now. Please try again later.');
 },
 
+/* ===== Link tasks: Go dabane par session start, Claim tabhi jab user app se bahar 8 sec raha ho ===== */
 go(e){
   const t=findT(e.dataset.id);
   if(!t)return;
-  const wait=TASK_WAIT;
-  const now=Date.now();
-
   S.taskVerified=S.taskVerified||{};
   delete S.taskVerified[t.id];
   S.pend=S.pend||{};
-  S.pend[t.id]=now;
-
-  const sessionObj={
-    id:t.id,
-    startedAt:now,
-    leaveTime:null,
-    wait:wait
-  };
-  window.activeTaskSession=sessionObj;
-  localStorage.setItem('megaton_active_task',JSON.stringify(sessionObj));
-
+  S.pend[t.id]=S.pend[t.id]||Date.now();
+  if(!tsRead()[t.id])tsStart(t.id);   // purana away-time bacha rehta hai
   save();
   render(true);
   openL(t.url||CFG.channel);
-  toast('⏱️ Task started! Stay on the page for at least '+wait+' seconds.');
+  toast('⏱️ Task par kam se kam '+TASK_WAIT+' second ruko, phir wapas aakar Claim karo.');
 },
 
 claim(e){
   const t=findT(e.dataset.id);
   if(!t)return;
-
-  if((t.daily&&S.done[t.id])||S.lt[t.id]){
-    toast('Task already claimed!');
+  if((t.daily&&S.done[t.id])||S.lt[t.id]){toast('Task already claimed!');return;}
+  if(!(S.taskVerified&&S.taskVerified[t.id])){
+    toast('⚠️ Pehle task par '+TASK_WAIT+' second rukna hoga.');
     return;
   }
-
-  const wait=TASK_WAIT;
-  const startedTs=Number((S.pend&&S.pend[t.id])||0);
-  const elapsed=startedTs>0?Math.floor((Date.now()-startedTs)/1000):0;
-  const isVerified=(S.taskVerified&&S.taskVerified[t.id])||(startedTs>0&&elapsed>=wait);
-
-  if(!isVerified){
-    const remaining=Math.max(1,wait-elapsed);
-    toast('⚠️ Task incomplete! Please wait '+remaining+'s more to complete the task.');
-    return;
-  }
-
-  if(t.daily)S.done[t.id]=1;
-  else S.lt[t.id]=1;
-
-  if(S.taskVerified) delete S.taskVerified[t.id];
-  if(S.pend) delete S.pend[t.id];
-  window.activeTaskSession=null;
-  localStorage.removeItem('megaton_active_task');
+  if(t.daily)S.done[t.id]=1;else S.lt[t.id]=1;
+  delete S.taskVerified[t.id];
+  if(S.pend)delete S.pend[t.id];
+  const s=tsRead();delete s[t.id];tsWrite(s);
   S.dn++;
   save();
   award(t.r,t.t||'Completed Task',e);
@@ -1743,66 +1629,59 @@ setInterval(()=>{
   if(busy)return;
   if(newDay()){save();render(true);return}
   if(tab=='home'&&!$('#md').classList.contains('on')){
-    const hasPendingTasks=Object.keys(S.pend||{}).length>0;
+    // Ab sirf ad cooldown ka countdown tick hota hai. Link tasks ka koi auto-timer nahi.
     const hasAdCooldown=Object.keys(S.adCd||{}).some(k=>S.adCd[k]>Date.now());
-    if(hasPendingTasks || hasAdCooldown){
+    if(hasAdCooldown){
       tickTasks();
     }
   }
 },1000);
 
-/* Anti-Cheat Return Check */
-function checkTaskSessionOnReturn(){
-  let sess=window.activeTaskSession;
-  if(!sess){
-    try{
-      const saved=localStorage.getItem('megaton_active_task');
-      if(saved) sess=JSON.parse(saved);
-    }catch(e){}
-  }
-  if(!sess) return;
-
-  if(sess.isAdsgram){
-    window.activeTaskSession=null;
-    localStorage.removeItem('megaton_active_task');
-    return;
-  }
-
-  const now=Date.now();
-  const startedAt=Number(sess.startedAt)||now;
-  const wait=TASK_WAIT;
-  const elapsedOutside=sess.leaveTime?((now-Number(sess.leaveTime))/1000):0;
-  const totalElapsed=(now-startedAt)/1000;
-
-  if(elapsedOutside>=wait || totalElapsed>=wait){
-    S.taskVerified=S.taskVerified||{};
-    S.taskVerified[sess.id]=true;
-    if(S.pend) delete S.pend[sess.id];
-    window.activeTaskSession=null;
-    localStorage.removeItem('megaton_active_task');
-    save();
-    render(true);
-    toast('🎉 Task verified! Tap Claim to receive your reward.');
-    snd(880,0.2);
-    hap('medium');
-  }else{
-    const remaining=Math.max(1,Math.ceil(wait-Math.max(elapsedOutside,totalElapsed)));
-    toast('⏳ Please stay on the page for '+remaining+'s more to verify.');
-    render(true);
-  }
+/* ===== Task session engine: sirf task par bitaya hua (app se bahar) time ginta hai ===== */
+const MIN_AWAY_MS = TASK_WAIT * 1000; // 8 sec
+const TS_KEY = 'megaton_task_sessions';
+const tsRead = () => { try { return JSON.parse(localStorage.getItem(TS_KEY) || '{}') || {}; } catch (_) { return {}; } };
+const tsWrite = v => { try { localStorage.setItem(TS_KEY, JSON.stringify(v)); } catch (_) {} };
+function tsStart(id) { const s = tsRead(); s[id] = { startedAt: Date.now(), leave: 0, away: 0, ok: false }; tsWrite(s); }
+function tsLeave() {
+  const s = tsRead(), now = Date.now(); let ch = false;
+  Object.values(s).forEach(x => { if (!x.ok && !x.leave) { x.leave = now; ch = true; } });
+  if (ch) tsWrite(s);
 }
+function checkTaskSessionOnReturn() {
+  const s = tsRead(), now = Date.now(); let ch = false, waiting = 0; const verified = [];
+  Object.entries(s).forEach(([id, x]) => {
+    if (x.ok || !x.leave) return;
+    x.away = (x.away || 0) + (now - x.leave); x.leave = 0; ch = true;
+    if (x.away >= MIN_AWAY_MS) { x.ok = true; verified.push(id); }
+    else waiting = Math.max(waiting, Math.ceil((MIN_AWAY_MS - x.away) / 1000));
+  });
+  if (ch) tsWrite(s);
+  verified.forEach(id => {
+    const t = findT(id);
+    if (t && t.net === 'adsgram_task') return;       // AdsGram ka Claim button alag handle hota hai
+    S.taskVerified = S.taskVerified || {};
+    S.taskVerified[id] = true;
+    if (S.pend) delete S.pend[id];
+  });
+  if (verified.length) { save(); render(true); toast('🎉 Task verified! Ab Claim dabao.'); snd(880, .2); hap('medium'); }
+  else if (waiting) toast('⏳ Task par ' + waiting + 's aur rukna tha. Dobara Go dabao.');
+}
+document.addEventListener('visibilitychange', () => { document.hidden ? tsLeave() : checkTaskSessionOnReturn(); });
+if (tg && tg.onEvent) { tg.onEvent('deactivated', tsLeave); tg.onEvent('activated', checkTaskSessionOnReturn); }
 
-document.addEventListener('visibilitychange',()=>{
-  if(document.hidden){
-    if(window.activeTaskSession && !window.activeTaskSession.leaveTime){
-      window.activeTaskSession.leaveTime=Date.now();
-      localStorage.setItem('megaton_active_task',JSON.stringify(window.activeTaskSession));
-    }
-  }else{
-    checkTaskSessionOnReturn();
-  }
-});
-window.addEventListener('focus',checkTaskSessionOnReturn);
+function refreshAdsgramTask(id, blockId) {
+  const old = document.querySelector('adsgram-task[data-task-id="' + id + '"]');
+  const tk = findT(id);
+  if (!old || !tk) return;
+  const n = document.createElement('adsgram-task');
+  n.setAttribute('data-task-id', id);
+  n.setAttribute('data-block-id', blockId || 'task-56221');
+  n.setAttribute('data-debug', 'false');
+  n.className = 'task';
+  n.innerHTML = `<span slot="reward" class="am">${TON(14)}${f(tk.r)}</span><button slot="button" class="btn">Go${ic('up',14)}</button><button slot="claim" class="btn grn">${ic('check',14)}Claim</button><button slot="done" class="btn dis">Done</button>`;
+  old.replaceWith(n);   // naya component AdsGram se agla task maangega; na ho to AdsGram khud nahi dikhayega
+}
 
 boot();
 </script></body></html>
