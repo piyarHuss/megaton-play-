@@ -1036,7 +1036,7 @@ window.addEventListener('message', function(event) {
       S.gameTasks[gameId] = userCompleted;
 
       // In MegaTon Play: 1 TON = 1000 internal points
-      // Admin sets exact TON in reward (e.g., 0.005, 0.55005, 1.0)
+      // Admin sets exact TON in reward (e.g., 50, 0.004, 0.55005, 1.0)
       const rewTON = parseFloat(targetObj.reward) || 0;
       const points = Math.round(rewTON * 1000 * 10000) / 10000;
 
@@ -1622,7 +1622,7 @@ async wdok(){
   const newWd={id:wid,a:bal,amount:bal,wallet:wallet,status:'pending',ts:now};
 
   S.b=0;
-  S.wds=Array.isArray(S.wds)?S.wds.slice():[],
+  S.wds=Array.isArray(S.wds)?S.wds.slice():[];
   S.wds.unshift(newWd);
   hist('-'+f(bal)+' TON','Withdrawal request','w');
 
