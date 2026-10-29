@@ -8,10 +8,10 @@
 <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
 <!-- AdsGram SDK -->
 <script src="https://sad.adsgram.ai/js/sad.min.js"></script>
-<!-- Onclicka TMA ad SDK -->
-<script src="https://js.onclckvd.com/in-stream-admanager/tma.js"></script>
 <!-- Monetag SDK -->
 <script src="https://libtl.com/sdk.js" data-zone="12131483" data-sdk="show_12131483"></script>
+<!-- OnClicka SDK -->
+<script src="https://js.onclckvd.com/in-stream-ad-admanager/tma.js"></script>
 <style>
 :root{--bg:#0a0d14;--bg2:#121722;--card:#131720;--card2:#1b202c;--line:#252b38;--tx:#fff;--mut:#8a92a6;--acc:#1a5cff;--ton:#0098ea;--gold:#ffb21a;--grn:#22c55e;--red:#ef4444;color-scheme:dark}
 :root[data-t=light]{--bg:#f2f4f9;--bg2:#fff;--card:#fff;--card2:#eef1f7;--line:#dde2ec;--tx:#10131a;--mut:#667085;color-scheme:light}
@@ -526,7 +526,7 @@ const xb=`<button class="x" data-a="x">${ic('x',18)}</button>`;
 const fmtT=ts=>{const d=new Date(ts);return d.toLocaleDateString(undefined,{month:'short',day:'numeric'}).toUpperCase()+'|'+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')};
 document.addEventListener('pointerdown',e=>{const b=e.target.closest('.btn');if(!b||b.classList.contains('dis'))return;const r=b.getBoundingClientRect(),d=Math.max(r.width,r.height)*2,s=document.createElement('span');s.className='rp';s.style.cssText=`width:${d}px;height:${d}px;left:${e.clientX-r.left-d/2}px;top:${e.clientY-r.top-d/2}px`;b.appendChild(s);setTimeout(()=>s.remove(),600)});
 
-const ADS=[{id:'ad1',t:'Watch AdsGram video sponsor',net:'adsgram_reward',blockId:'56220',r:3,max:15,ic:'play',bg:'linear-gradient(135deg,#6d4aff,#c026d3)'},{id:'ad2',t:'Watch AdsGram interstitial',net:'adsgram_int',blockId:'int-56219',r:2,max:10,ic:'clock',bg:'linear-gradient(135deg,#3b3b8a,#6366f1)'},{id:'ad3',t:'Watch Monetag popup sponsor',net:'monetag_pop',blockId:'12131483',r:3,max:10,ic:'film',bg:'linear-gradient(135deg,#16a34a,#22c55e)'},{id:'ad4',t:'Watch Onclicka video ad',net:'onclicka_reward',blockId:'',r:3,max:10,ic:'play',bg:'linear-gradient(135deg,#f59e0b,#ea580c)'}];
+const ADS=[{id:'ad1',t:'Watch AdsGram video sponsor',net:'adsgram_reward',blockId:'56220',r:3,max:15,ic:'play',bg:'linear-gradient(135deg,#6d4aff,#c026d3)'},{id:'ad2',t:'Watch AdsGram interstitial',net:'adsgram_int',blockId:'int-56219',r:2,max:10,ic:'clock',bg:'linear-gradient(135deg,#3b3b8a,#6366f1)'},{id:'ad3',t:'Watch Monetag popup sponsor',net:'monetag_pop',blockId:'12131483',r:3,max:10,ic:'film',bg:'linear-gradient(135deg,#16a34a,#22c55e)'},{id:'ad4',t:'Watch OnClicka video sponsor',net:'onclicka',blockId:'6154381',r:3,max:10,ic:'play',bg:'linear-gradient(135deg,#f59e0b,#ea580c)'}];
 const LT=[{id:'t_adsg',t:'AdsGram Partner Mission',net:'adsgram_task',blockId:'task-56221',r:5,url:'',img:'',ic:'zap',bg:'linear-gradient(135deg,#6366f1,#a855f7)',tag:'new',wait:TASK_WAIT},{id:'t1',t:'Play to explore the bonus game',net:'link',blockId:'',r:3,url:CFG.channel,ic:'target',bg:'linear-gradient(135deg,#f59e0b,#16a34a)',tag:'new',wait:TASK_WAIT},{id:'t2',t:'Join our Telegram channel',net:'link',blockId:'',r:4,url:CFG.channel,ic:'send',bg:'linear-gradient(135deg,#2a7bff,#1a5cff)',tag:'new',wait:TASK_WAIT},{id:'t3',t:'Join the community group',net:'link',blockId:'',r:4,url:CFG.group,ic:'msg',bg:'linear-gradient(135deg,#8b5cf6,#7c3aed)',wait:TASK_WAIT},{id:'t4',t:'Open the partner mini app',net:'link',blockId:'',r:8,url:CFG.channel,ic:'grid',bg:'linear-gradient(135deg,#38bdf8,#0ea5e9)',tag:'limited',wait:TASK_WAIT},{id:'t5',t:'Daily FREE reward just for visiting',net:'link',blockId:'',r:4,url:CFG.channel,ic:'link',bg:'linear-gradient(135deg,#3b82f6,#2a7bff)',daily:true,wait:TASK_WAIT}];
 const WT=[{id:'w1',t:'World task: follow a partner channel',net:'link',blockId:'',r:5,url:CFG.channel,ic:'globe',bg:'linear-gradient(135deg,#06b6d4,#0891b2)',tag:'new',wait:TASK_WAIT},{id:'w2',t:'World task: try a partner app',net:'link',blockId:'',r:6,url:CFG.channel,ic:'globe',bg:'linear-gradient(135deg,#8b5cf6,#7c3aed)',tag:'limited',wait:TASK_WAIT}];
 const allLT=()=>S.world&&FT('m_world')?[...LT,...WT]:LT;
@@ -534,7 +534,7 @@ const ST=[{n:'Alex',h:'@alex_92',tk:6637,iv:140,sp:420},{n:'Sarah',h:'@sarah_k',
 const AVC=['#6d4aff','#f59e0b','#ef4444','#0ea5e9','#22c55e','#ec4899','#14b8a6'];
 const SEG=[{l:'+'+f(5),k:'m',v:5,w:20,c:'#2a5cd8'},{l:'+'+f(1),k:'m',v:1,w:8,c:'#0ea5e9'},{l:'+'+f(10),k:'m',v:10,w:10,c:'#f59e0b'},{l:'Free Spin',k:'fs',w:8,c:'#22c55e'},{l:'+'+f(2),k:'m',v:2,w:4,c:'#ec4899'},{l:'2× Boost',k:'bo',w:10,c:'#a855f7'},{l:'+'+f(3),k:'m',v:3,w:25,c:'#14b8a6'},{l:'Try again',k:'no',w:15,c:'#475569'}];
 
-const CONF={adNetworks:{adsgramReward:'56220',adsgramInt:'int-56219',adsgramTask:'task-56221',monetagZone:'12131483',onclickaZone:'615438',monetagInApp:true,inAppFrequency:2,inAppCapping:0.1,inAppInterval:30,inAppTimeout:5}},DEFT={nav_home:'HOME',nav_game:'GAME',nav_wallet:'WALLET',nav_invite:'INVITE',nav_rank:'RANK',appName:'MegaTon Play',banner1:'Each friend joins & watches ads → +0.0100 TON',banner2:'They get a bonus too · Win real prizes',inviteBtn:'Invite Friends',inviteSub:'Earn 0.01 TON per invite',shareText:'🎮 Join MegaTon Play on Telegram! Jump high, complete tasks and earn real TON coin prizes! 🚀',gameTitle:'Sky Jump',gameSub:'Jump higher and collect TON coins',walletLabel:'TOTAL BALANCE',rankTitle:'Leaderboard',wdOff:'Withdrawals are temporarily disabled'};
+const CONF={adNetworks:{adsgramReward:'56220',adsgramInt:'int-56219',adsgramTask:'task-56221',monetagZone:'12131483',monetagInApp:true,inAppFrequency:2,inAppCapping:0.1,inAppInterval:30,inAppTimeout:5}},DEFT={nav_home:'HOME',nav_game:'GAME',nav_wallet:'WALLET',nav_invite:'INVITE',nav_rank:'RANK',appName:'MegaTon Play',banner1:'Each friend joins & watches ads → +0.0100 TON',banner2:'They get a bonus too · Win real prizes',inviteBtn:'Invite Friends',inviteSub:'Earn 0.01 TON per invite',shareText:'🎮 Join MegaTon Play on Telegram! Jump high, complete tasks and earn real TON coin prizes! 🚀',gameTitle:'Sky Jump',gameSub:'Jump higher and collect TON coins',walletLabel:'TOTAL BALANCE',rankTitle:'Leaderboard',wdOff:'Withdrawals are temporarily disabled'};
 const T=k=>(CONF.text&&CONF.text[k]!=null&&CONF.text[k]!=='')?CONF.text[k]:DEFT[k],FT=k=>!(CONF.ft&&CONF.ft[k]===false),mm=x=>{const n=Number(x)||0;return n>=0.5?n:Math.round(n*10000)/10};
 const CHK=()=>{const a=toArr(CONF.checkin);return a&&a.length==7?a.map(mm):[1,1,2,2,2,3,3]};
 const MD=()=>{const a=toArr(CONF.mDay);return a&&a.length?a.map(([n,r])=>[n,mm(r)]):[[3,6],[5,12],[8,18],[12,24]]};
@@ -1246,6 +1246,16 @@ document.documentElement.dataset.t=S.theme}
 function countUp(){const e=$('#cnt'),to=S.b,from=shown,t0=performance.now();if(!e)return;shown=to;if(from===to){e.textContent=f(to);return}(function st(t){const k=Math.min(1,(t-t0)/900),v=from+(to-from)*(1-Math.pow(1-k,3));if(!e.isConnected)return;e.textContent=f(v);if(k<1)requestAnimationFrame(st)})(t0)}
 function drawWheel(){const c=$('#wh');if(!c)return;const g=c.getContext('2d'),r=320,n=SEG.length,a=6.2832/n;g.translate(r,r);SEG.forEach((s,i)=>{g.beginPath();g.moveTo(0,0);g.arc(0,0,r-8,-1.5708+i*a,-1.5708+(i+1)*a);g.fillStyle=s.c;g.fill();g.strokeStyle='rgba(255,255,255,.35)';g.lineWidth=4;g.stroke();g.save();g.rotate(-1.5708+(i+.5)*a);g.fillStyle='#fff';g.font='bold 32px Outfit,sans-serif';g.textAlign='right';g.fillText(s.l,r-40,11);g.restore()});g.lineWidth=14;g.strokeStyle='#f5b400';g.beginPath();g.arc(0,0,r-6,0,6.3);g.stroke()}
 
+/* ===== OnClicka: SDK ek baar init hota hai, phir har ad ke liye show() chalta hai ===== */
+const OCA={};
+function ocaShow(id){
+  if(!OCA[id]){
+    if(typeof window.initCdTma!=='function')return Promise.reject(new Error('OnClicka SDK load nahi hua'));
+    OCA[id]=Promise.resolve(window.initCdTma({id:String(id)})).catch(err=>{delete OCA[id];throw err;});
+  }
+  return OCA[id];
+}
+
 /* ===== Actions & Anti-Cheat Task Engine ===== */
 const A={
 tab(e){if(busy)return;tab=e.dataset.v;closeM();render();snd(500,.05);hap()},sub(e){sub=e.dataset.v;render(true)},sec(e){sec=e.dataset.v;render(true)},flt(e){flt=e.dataset.v;render(true)},lb(e){lb=e.dataset.v;render(true)},
@@ -1263,7 +1273,7 @@ ad(e){
 
   const net=t.net||(t.id==='ad1'?'adsgram_reward':t.id==='ad2'?'adsgram_int':'monetag_pop');
   const an=CONF.adNetworks||{};
-  const blockId=String(t.blockId||(net==='adsgram_int'?(an.adsgramInt||'int-56219'):net==='adsgram_reward'?(an.adsgramReward||'56220'):net==='onclicka_reward'?(an.onclickaZone||'615438'):(an.monetagZone||'12131483'))).trim();
+  const blockId=String(t.blockId||(net==='adsgram_int'?(an.adsgramInt||'int-56219'):net==='adsgram_reward'?(an.adsgramReward||'56220'):(an.monetagZone||'12131483'))).trim();
 
   adLock=true;
   const adStartTs=Date.now();
@@ -1300,6 +1310,11 @@ ad(e){
       }catch(err){console.warn('[AdsGram Init Error]',err);}
     }
   }
+  if(net==='onclicka'){
+    toast('Opening OnClicka ad…');
+    ocaShow(blockId).then(show=>show()).then(()=>handleReward('OnClicka Ad')).catch(fail('OnClicka ad available nahi'));
+    return;
+  }
   if(net==='monetag_reward'||net==='monetag_pop'){
     const fn=window.show_12131483;
     if(typeof fn==='function'){
@@ -1307,20 +1322,6 @@ ad(e){
       Promise.resolve().then(()=>net==='monetag_pop'?fn('pop'):fn())
         .then(()=>handleReward(net==='monetag_pop'?'Monetag Popup':'Monetag Rewarded'))
         .catch(fail('Ad band hua ya available nahi'));
-      return;
-    }
-  }
-  if(net==='onclicka_reward'){
-    if(typeof window.InitCdTma==='function'){
-      toast('Opening Onclicka video ad…');
-      Promise.resolve()
-        .then(()=>window.InitCdTma({id:blockId}))
-        .then(show=>{
-          if(typeof show!=='function') throw new Error('Onclicka ad show function unavailable');
-          return show();
-        })
-        .then(()=>handleReward('Onclicka Video Ad'))
-        .catch(fail('Onclicka ad skip hua ya available nahi'));
       return;
     }
   }
