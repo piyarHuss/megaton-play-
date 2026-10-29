@@ -2,7 +2,7 @@
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
-<title>MegaTon Play</title>
+<title>MegaTon Play - Reward Fix 20261029</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap">
 <!-- TON Connect UI SDK (Automatic Wallet Connection) -->
 <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
@@ -450,16 +450,8 @@ if (!U.id) {
 }
 
 const $=(s,r=document)=>r.querySelector(s),dayAt=d=>{const p=Object.fromEntries(new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Kolkata',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(d).map(x=>[x.type,x.value]));return p.year+'-'+p.month+'-'+p.day},day=()=>dayAt(new Date()),esc=s=>String(s).replace(/[&<>"']/g,c=>'&#'+c.charCodeAt(0)+';');
-// Balance storage uses milli-TON points: 1000 internal points = 1 TON.
-// Admin game milestone rewards are configured in TON, not in internal points.
-const TON_INTERNAL_SCALE = 1000;
-const gameRewardTON = item => {
-  const raw = Number(item && item.reward);
-  return Number.isFinite(raw) && raw > 0 ? raw : 0;
-};
-const tonToInternalPoints = ton => Math.round((Number(ton) || 0) * TON_INTERNAL_SCALE * 10000) / 10000;
 const f=n=>{
-  const v=(Number(n)||0)/TON_INTERNAL_SCALE;
+  const v=(Number(n)||0)/1000;
   const s4=v.toFixed(4);
   if(Math.abs(v-Number(s4))>1e-6){
     return parseFloat(v.toFixed(6)).toString();
@@ -906,7 +898,7 @@ function renderGameTasksCards() {
 
     const token = task.rewardToken || 'TON';
     const mType = task.milestoneType || 'score';
-    const totalReward = Array.isArray(task.levels) ? task.levels.reduce((sum, level) => sum + gameRewardTON(level), 0) : 0;
+    const totalReward = Array.isArray(task.levels) ? task.levels.reduce((s,l) => s + (parseFloat(l.reward) || 0), 0) : 0;
     const cleanTotal = parseFloat(totalReward.toFixed(5));
     const completedList = (S.gameTasks && S.gameTasks[k]) || [];
     const totalLevels = Array.isArray(task.levels) ? task.levels.length : 0;
@@ -959,7 +951,7 @@ window.openTaskModal = function(taskId) {
   let totalRewardSum = 0;
 
   levels.forEach(item => {
-    const rew = gameRewardTON(item);
+    const rew = parseFloat(item.reward) || 0;
     totalRewardSum += rew;
     const targetVal = Number(item.lvl ?? item.target);
     const isDone = completed.includes(targetVal);
@@ -1023,43 +1015,64 @@ window.startCurrentGameTask = function() {
   toast('🎮 Launching Game... Complete targets to earn TON!');
 };
 
-/* ⭐ In-Game Message Listener (Reward Engine) ⭐ */
+/* ⭐ In-Game Message Listener (Exact TON Reward Engine) ⭐
+   adminTasks/<id>/levels/<n>/reward is the exact TON amount entered in Admin.
+   award() stores internal milli-TON units; its UI formatter divides by 1000.
+   Therefore 150 TON must be passed to award() as 150000 internal units.
+*/
+function exactGameRewardToInternalUnits(rewardTon) {
+  const ton = Number(rewardTon);
+  if (!Number.isFinite(ton) || ton < 0) return 0;
+  return Math.round(ton * 1000 * 10000) / 10000;
+}
+function exactGameRewardLabel(rewardTon) {
+  const ton = Number(rewardTon);
+  if (!Number.isFinite(ton)) return '0';
+  return String(Number(ton.toFixed(5)));
+}
 window.addEventListener('message', function(event) {
-  if (event.data && (event.data.type === 'LEVEL_COMPLETE' || event.data.type === 'TASK_REWARD')) {
-    const gameId = event.data.gameId;
-    const target = Number(event.data.level ?? event.data.target);
-    if (!gameId || isNaN(target)) return;
+  const data = event && event.data;
+  if (!data || (data.type !== 'LEVEL_COMPLETE' && data.type !== 'TASK_REWARD')) return;
 
-    const task = ADMIN_TASKS[gameId];
-    if (!task) return;
+  const gameId = String(data.gameId || '');
+  const target = Number(data.level ?? data.target);
+  if (!gameId || !Number.isFinite(target)) return;
 
-    const targetObj = (task.levels || []).find(l => Number(l.lvl ?? l.target) === target);
-    if (!targetObj) return;
+  const task = ADMIN_TASKS[gameId];
+  if (!task || !Array.isArray(task.levels)) return;
 
-    S.gameTasks = S.gameTasks || {};
-    const userCompleted = S.gameTasks[gameId] || [];
+  const targetObj = task.levels.find(item => Number(item.lvl ?? item.target) === target);
+  if (!targetObj) return;
 
-    if (!userCompleted.includes(target)) {
-      userCompleted.push(target);
-      S.gameTasks[gameId] = userCompleted;
-
-      // IMPORTANT: admin milestone reward is already expressed in TON.
-      // Convert TON -> internal balance points exactly once before award().
-      // Example: 50 TON -> 50000 points -> UI/history shows +50 TON (not +0.0500).
-      const rewTON = gameRewardTON(targetObj);
-      const points = tonToInternalPoints(rewTON);
-
-      const mType = task.milestoneType || 'score';
-      const typeText = mType === 'coins' ? 'Coins' : mType === 'level' ? 'Level' : 'Score';
-
-      award(points, `${task.title} (${typeText} ${target})`);
-      save();
-      confetti();
-      toast(`🎉 Target Achieved! +${rewTON} TON credited to your balance!`);
-      if (currentModalGameId === gameId) openTaskModal(gameId);
-      if (tab === 'home') renderGameTasksCards();
-    }
+  const rewTON = Number(targetObj.reward);
+  const internalUnits = exactGameRewardToInternalUnits(rewTON);
+  if (!(internalUnits > 0)) {
+    console.warn('[MegaTon game reward] Invalid reward in adminTasks:', {
+      gameId, target, savedReward: targetObj.reward
+    });
+    return;
   }
+
+  S.gameTasks = S.gameTasks || {};
+  const userCompleted = Array.isArray(S.gameTasks[gameId]) ? S.gameTasks[gameId] : [];
+
+  // Do not pay the same milestone twice.
+  if (userCompleted.includes(target)) return;
+
+  userCompleted.push(target);
+  S.gameTasks[gameId] = userCompleted;
+
+  const mType = task.milestoneType || 'score';
+  const typeText = mType === 'coins' ? 'Coins' : mType === 'level' ? 'Level' : 'Score';
+
+  // Single conversion only: 150 TON -> 150000 internal units -> f() displays 150.0000 TON.
+  award(internalUnits, `${task.title} (${typeText} ${target})`);
+  save();
+  confetti();
+  toast(`🎉 Target Achieved! +${exactGameRewardLabel(rewTON)} TON credited to your balance!`);
+
+  if (currentModalGameId === gameId) openTaskModal(gameId);
+  if (tab === 'home') renderGameTasksCards();
 });
 
 async function boot(){
