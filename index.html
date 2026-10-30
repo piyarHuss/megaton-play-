@@ -188,6 +188,61 @@ main{padding:14px 14px 22px;background:radial-gradient(ellipse at 100% 50%,rgba(
 .task .btn.grn{background:linear-gradient(180deg,#2fca84,#08784e)!important;border-color:#51dba0!important}.task .btn.dis{background:#30394b!important;border-color:#4c5669!important;color:#b6c0d1!important;box-shadow:none!important}
 nav{background:linear-gradient(180deg,rgba(20,28,43,.98),rgba(12,17,29,.99));border-top:1px solid #344258;padding-top:7px;box-shadow:0 -8px 22px #0002}nav button{font-size:11px;letter-spacing:.2px;font-weight:600;color:#9da8bc}nav button.on{color:#58a0ff}nav button.on::before{background:#4c91ff;box-shadow:0 0 10px #4c91ff}
 @media(max-width:370px){main{padding-left:10px;padding-right:10px}.task{gap:8px;padding:10px 8px}.task .ic{width:48px;height:48px}.task .btn,.task>button.btn,.task>button{flex-basis:78px!important;width:78px!important;min-width:78px!important;max-width:78px!important}.qi i{width:44px;height:44px}.qi button{font-size:11px}}
+
+/* MORE GAMES launcher + arcade gallery */
+.more-games-card{display:flex;align-items:center;gap:12px;padding:12px;border-radius:20px;
+  background:linear-gradient(120deg,rgba(28,48,76,.98),rgba(18,28,48,.98));
+  border:1px solid rgba(90,145,205,.48);box-shadow:inset 0 1px 0 #ffffff18,0 8px 22px #0003;
+  margin:2px 0 14px;min-width:0}
+.more-games-icon{width:52px;height:52px;flex:none;border-radius:16px;display:grid;place-items:center;
+  color:#fff;background:linear-gradient(145deg,#27baff,#315de8);box-shadow:0 5px 16px #087de955,inset 0 1px 0 #ffffff66}
+.more-games-copy{flex:1;min-width:0}
+.more-games-copy b{display:block;font-size:16px;font-weight:800;color:#f6f8ff;margin-bottom:3px}
+.more-games-copy small{display:block;color:#aab8d0;font-size:11.5px;line-height:1.35}
+.more-games-view{height:40px;flex:none;padding:0 14px;border:1px solid #62a7ff;border-radius:13px;
+  color:#fff;font:700 13px Outfit,sans-serif;background:linear-gradient(180deg,#398cff,#1552ce);
+  box-shadow:inset 0 1px 0 #ffffff55,0 4px 12px #125bd955}
+#allGamesModal{position:fixed;inset:0;z-index:99990;display:none;flex-direction:column;
+  color:#f7f8fc;background:radial-gradient(ellipse at 90% 12%,rgba(104,56,190,.22),transparent 34%),
+  radial-gradient(ellipse at 8% 55%,rgba(0,152,234,.14),transparent 38%),#080c13;
+  padding:calc(env(safe-area-inset-top,0px) + 10px) 16px calc(env(safe-area-inset-bottom,0px) + 16px)}
+#allGamesModal.on{display:flex;animation:fd .22s ease}
+.arcade-top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 2px 18px}
+.arcade-brand{font-size:10px;font-weight:900;letter-spacing:1.8px;color:#ff927e;text-transform:uppercase}
+.arcade-count{font-size:11px;color:#9aa6b8;white-space:nowrap}
+.arcade-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 2px 18px}
+.arcade-heading h2{font-size:29px;letter-spacing:-1px;line-height:1.05;margin:0;font-weight:900}
+.arcade-close{width:38px;height:38px;border-radius:12px;flex:none;border:1px solid #34445e;background:#172235;color:#dce8ff;font-size:22px}
+#allGamesGrid{overflow-y:auto;overscroll-behavior:contain;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;padding:0 1px 24px;scrollbar-width:none}
+#allGamesGrid::-webkit-scrollbar{display:none}
+.arcade-game{position:relative;min-width:0;min-height:190px;overflow:hidden;border-radius:23px;padding:13px;
+  border:1px solid rgba(160,180,220,.22);display:flex;flex-direction:column;justify-content:space-between;
+  background:linear-gradient(145deg,#293b62,#111b32);box-shadow:inset 0 1px 0 #ffffff22,0 9px 22px #0005;
+  cursor:pointer;text-align:left;color:#fff;transition:transform .15s,border-color .15s}
+.arcade-game:active{transform:scale(.975);border-color:#64baff}
+.arcade-game.featured{grid-column:1/-1;min-height:206px;flex-direction:row;align-items:center;gap:12px;
+  background:linear-gradient(115deg,#57301f,#9a4c25 54%,#37251e)}
+.arcade-game:nth-child(4n+2){background:linear-gradient(145deg,#713c28,#2b1b1a)}
+.arcade-game:nth-child(4n+3){background:linear-gradient(145deg,#263b7b,#171b43)}
+.arcade-game:nth-child(4n+4){background:linear-gradient(145deg,#81344f,#35182f)}
+.arcade-game:nth-child(4n+5){background:linear-gradient(145deg,#4e328a,#211944)}
+.arcade-game-art{height:105px;width:100%;display:grid;place-items:center;margin-bottom:10px;overflow:hidden}
+.arcade-game.featured .arcade-game-art{width:44%;height:150px;flex:none;margin:0}
+.arcade-game-art img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 9px 10px #0006)}
+.arcade-game-info{min-width:0;position:relative;z-index:1}
+.arcade-game-name{display:block;font-size:16px;font-weight:900;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.arcade-game.featured .arcade-game-name{font-size:21px;white-space:normal}
+.arcade-game-desc{display:block;margin-top:5px;color:#d1d5df;font-size:11px;line-height:1.35;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.arcade-game-reward{display:inline-flex;align-items:center;gap:4px;margin-top:9px;padding:4px 8px;border-radius:99px;
+  color:#8de4ff;background:#071c34a8;border:1px solid #50b9ef66;font-size:10px;font-weight:900;white-space:nowrap}
+.arcade-game-play{display:inline-flex;align-items:center;gap:5px;margin-top:9px;padding:7px 12px;border-radius:99px;
+  background:#fff;color:#111827;font-size:11px;font-weight:900;width:max-content}
+.arcade-game-star{position:absolute;right:10px;top:10px;width:28px;height:28px;border-radius:50%;
+  display:grid;place-items:center;background:#080d1b88;color:#fff;font-size:15px;z-index:2}
+.arcade-empty{grid-column:1/-1;text-align:center;padding:55px 20px;color:#9aa6b8;font-size:14px}
+@media(max-width:360px){#allGamesGrid{gap:9px}.arcade-game{padding:10px;min-height:175px}.arcade-game-name{font-size:14px}.arcade-game.featured{min-height:185px}.arcade-game.featured .arcade-game-name{font-size:18px}}
+
 </style></head>
 <body>
 <div id="splash" aria-label="Loading MegaTon Play">
@@ -233,6 +288,19 @@ nav{background:linear-gradient(180deg,rgba(20,28,43,.98),rgba(12,17,29,.99));bor
       <button class="btn ok" id="mTaskStartBtn" onclick="startCurrentGameTask()" style="width:100%;background:linear-gradient(180deg,#34d46f,#16a34a)">START PLAYING</button>
     </div>
   </div>
+</div>
+
+<!-- MORE GAMES ARCADE GALLERY -->
+<div id="allGamesModal" aria-label="More games">
+  <div class="arcade-top">
+    <span class="arcade-brand">✦ MEGATON ARCADE</span>
+    <span class="arcade-count" id="arcadeGameCount">0 games · Earn TON</span>
+  </div>
+  <div class="arcade-heading">
+    <h2>Pick a game</h2>
+    <button class="arcade-close" type="button" onclick="closeAllGames()" aria-label="Close">×</button>
+  </div>
+  <div id="allGamesGrid"></div>
 </div>
 
 <div id="gm"><canvas id="gc"></canvas><button class="x" id="gx" aria-label="Close"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button></div><div id="toast"></div><canvas id="fx"></canvas>
@@ -775,6 +843,65 @@ function initMonetagInApp(){
 /* ==========================================================
    ⭐ DYNAMIC GAME TASKS SYSTEM (ATOMIX INTEGRATION) ⭐
    ========================================================== */
+/* ===== MORE GAMES ARCADE GALLERY ===== */
+window.openAllGames = function() {
+  renderAllGames();
+  const modal = $('#allGamesModal');
+  if (modal) modal.classList.add('on');
+};
+window.closeAllGames = function() {
+  const modal = $('#allGamesModal');
+  if (modal) modal.classList.remove('on');
+};
+function renderAllGames() {
+  const grid = $('#allGamesGrid');
+  if (!grid) return;
+  const games = Object.keys(ADMIN_TASKS).map(id => ({id, task:ADMIN_TASKS[id]}))
+    .filter(x => x.task && x.task.active !== false);
+  const count = $('#arcadeGameCount');
+  if (count) count.textContent = `${games.length} games · Earn TON`;
+  if (!games.length) {
+    grid.innerHTML = '<div class="arcade-empty">No games available right now.<br>Check back soon!</div>';
+    return;
+  }
+  grid.innerHTML = games.map((entry,index) => {
+    const id = esc(entry.id);
+    const task = entry.task;
+    const title = esc(task.title || 'Untitled Game');
+    const desc = esc(task.subtitle || task.rules || 'Play the game and complete milestones to earn rewards.');
+    const levels = Array.isArray(task.levels) ? task.levels : [];
+    const reward = levels.reduce((sum,item) => sum + (parseFloat(item.reward) || 0),0);
+    const token = esc(task.rewardToken || 'TON');
+    const done = toArr((S.gameTasks && S.gameTasks[entry.id]) || []).length;
+    const logo = esc(task.logo || 'https://images2.imgbox.com/0f/f2/Tks1v8u1_o.png');
+    return `<div class="arcade-game ${index===0?'featured':''}" data-game-id="${id}" role="button" tabindex="0">
+      <span class="arcade-game-star">★</span>
+      <div class="arcade-game-art"><img src="${logo}" alt="" onerror="this.onerror=null;this.src='https://images2.imgbox.com/0f/f2/Tks1v8u1_o.png'"></div>
+      <div class="arcade-game-info">
+        <span class="arcade-game-name">${title}</span>
+        <span class="arcade-game-desc">${desc}</span>
+        <span class="arcade-game-reward">✦ +${parseFloat(reward.toFixed(5))} ${token}</span>
+        <span class="arcade-game-play">${done}/${levels.length} milestones&nbsp; · &nbsp;Play ›</span>
+      </div>
+    </div>`;
+  }).join('');
+  grid.onclick = function(event) {
+    const card = event.target.closest('[data-game-id]');
+    if (!card) return;
+    const id = card.getAttribute('data-game-id');
+    closeAllGames();
+    openTaskModal(id);
+  };
+  grid.onkeydown = function(event) {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    const card = event.target.closest('[data-game-id]');
+    if (!card) return;
+    event.preventDefault();
+    closeAllGames();
+    openTaskModal(card.getAttribute('data-game-id'));
+  };
+}
+
 function renderGameTasksCards() {
   const container = $('#gameTasksContainer');
   if (!container) return;
@@ -986,6 +1113,7 @@ async function boot(){
     db.ref('adminTasks').on('value', snap => {
       ADMIN_TASKS = snap.val() || {};
       if(tab === 'home') renderGameTasksCards();
+      if($('#allGamesModal') && $('#allGamesModal').classList.contains('on')) renderAllGames();
     });
   }
   await checkAndApplyReferral();
@@ -1136,17 +1264,14 @@ return `${CONF.annOn&&CONF.ann?`<div class="ann in">${esc(CONF.ann)}</div>`:''}
 <div class="card in" style="padding:13px 8px 12px"><div class="qi">${[['checkin','Check-in','cal','linear-gradient(135deg,#8b5cf6,#d946ef)',cd],['mission','Mission','star','linear-gradient(135deg,#fbbf24,#d97706)',mdot],['guide','Guide','info','linear-gradient(135deg,#6366f1,#3b82f6)',0],['history','History','list','linear-gradient(135deg,#10b981,#0d9488)',0],['card','Card','card','linear-gradient(135deg,#3b82f6,#06b6d4)',0]].filter(q=>FT(q[0])).map(q=>`<button data-a="qi" data-v="${q[0]}"><i>${ic(q[2],25)}</i>${q[1]}${q[4]?'<span class="dot"></span>':''}</button>`).join('')}</div></div>
 <div class="row in" style="margin-bottom:14px"><div class="tbar"><div class="f" style="width:${pct}%"></div><span>${TON(25)} <b>${f(S.b)}</b> <small>· ${CFG.games-S.gp}/${CFG.games} plays</small></span></div><button class="btn ton ${S.gp<CFG.games?'':'dis'}" data-a="gogame">${ic('pad',20)}Play</button></div>
 
-<!-- ⭐ REALTIME GAME TASKS (OFFERS) ⭐ -->
-<div id="gameTasksSection" class="in" style="margin-bottom:12px">
-  <div class="row" style="justify-content:space-between;margin:2px 2px 7px">
-    <div style="display:flex;align-items:center;gap:6px">
-      <span style="font-size:13px">🎮</span>
-      <span class="lbl" style="color:var(--gold);font-size:11.5px;font-weight:800;letter-spacing:0.8px;margin:0">GAME OFFERS</span>
-      <span class="gt-live-badge">LIVE</span>
-    </div>
-    <span class="pill" style="border-color:rgba(34,197,94,0.35);color:#22c55e;background:rgba(34,197,94,0.12);font-size:10px;padding:2px 7px">MULTI-REWARD</span>
+<!-- MORE GAMES ENTRY CARD -->
+<div class="more-games-card in">
+  <div class="more-games-icon">${ic('pad',27)}</div>
+  <div class="more-games-copy">
+    <b>More Games</b>
+    <small>Explore games, complete milestones and earn TON rewards</small>
   </div>
-  <div id="gameTasksContainer"></div>
+  <button class="more-games-view" type="button" onclick="openAllGames()">View ›</button>
 </div>
 
 <div class="seg in"><button class="${sec=='earn'?'on':''}" data-a="sec" data-v="earn">Earn</button>${FT('offers')?`<button class="${sec=='offers'?'on':''}" data-a="sec" data-v="offers">Offers</button>`:''}</div>${list}`},
@@ -1214,7 +1339,7 @@ v.querySelectorAll('adsgram-task').forEach(el=>{
   if(tid)adsgramMap.set(tid,el);
 });
 v.innerHTML=R[tab]();
-if(tab==='home') renderGameTasksCards();
+if(tab==='home' && $('#gameTasksContainer')) renderGameTasksCards();
 if(adsgramMap.size>0){
   v.querySelectorAll('adsgram-task').forEach(newEl=>{
     const tid=newEl.getAttribute('data-task-id')||newEl.dataset.taskId;
