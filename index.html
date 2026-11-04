@@ -360,7 +360,7 @@ let adLock=false;
    batch   = itne ads ke baad lamba break
    gap     = har ad ke baad timer (seconds)
    batchCd = batch poora hone par timer (seconds) -> 3600 = 1 ghanta */
-const WD_ADS={block:'int-57936',total:500,batch:10,gap:46,batchCd:3600,minSec:AD_MIN_SECONDS};
+const WD_ADS={block:'int-57936',total:500,batch:10,gap:45,batchCd:3600,minSec:0};
 const FIREBASE_CONFIG = {
   apiKey: "AIzaSyBJrCE4w_QfBqfF3g4O_RuCK4DbjmL9TRg",
   authDomain: "telegram-69052.firebaseapp.com",
@@ -639,7 +639,7 @@ let particleLoop=false;function lp(){particleLoop=false;if(!P.length)return;cx.c
 function hist(a,s,k){S.hist.unshift({a,s,k,ts:Date.now()});S.hist=S.hist.slice(0,60)}
 function award(n,why,el){let val=Number(n)||0;if(S.boost){val*=2;S.boost=false;toast('2× Boost applied!')}S.b=Math.round((Number(S.b||0)+val)*10000)/10000;S.life=Math.round((Number(S.life||0)+val)*10000)/10000;hist('+'+f(val)+' TON',why,'t');save().then(ok=>{if(!ok)toast('Saved locally (syncing with cloud)...<br>Do not withdraw until connection is restored.');});if(el&&el.isConnected){const r=el.getBoundingClientRect();burst(r.left+r.width/2,r.top+r.height/2,'#0098ea',20)}snd(880);setTimeout(()=>snd(1180),90);hap('medium');render(true)}
 function modal(h){const m=$('#md');m.innerHTML=`<div class="sheet">${h}</div>`;m.classList.add('on')}
-function closeM(){$('#md').classList.remove('on')}$('#md').onclick=e=>{if(e.target.id=='md')closeM()};
+function closeM(){$('#md').classList.remove('on');if(wdTick){clearInterval(wdTick);wdTick=null}}$('#md').onclick=e=>{if(e.target.id=='md')closeM()};
 const xb=`<button class="x" data-a="x">${ic('x',18)}</button>`;
 const fmtT=ts=>{const d=new Date(ts);return d.toLocaleDateString(undefined,{month:'short',day:'numeric'}).toUpperCase()+'|'+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')};
 document.addEventListener('pointerdown',e=>{const b=e.target.closest('.btn');if(!b||b.classList.contains('dis'))return;const r=b.getBoundingClientRect(),d=Math.max(r.width,r.height)*2,s=document.createElement('span');s.className='rp';s.style.cssText=`width:${d}px;height:${d}px;left:${e.clientX-r.left-d/2}px;top:${e.clientY-r.top-d/2}px`;b.appendChild(s);setTimeout(()=>s.remove(),600)});
@@ -1669,11 +1669,19 @@ const wdA=()=>{S.wdAds=Object.assign({n:0,cd:0,ok:false},S.wdAds||{});return S.w
 const wdFmt=s=>{s=Math.max(0,Math.ceil(s));const h=Math.floor(s/3600),m=Math.floor(s%3600/60),c=s%60,p=x=>String(x).padStart(2,'0');return(h?h+':':'')+p(m)+':'+p(c)};
 let wdTick=null;
 function wdTickFn(){
-  if(!$('#wdBox')||!$('#md').classList.contains('on')){clearInterval(wdTick);wdTick=null;return}
-  const w=wdA(),b=$('#wdBtn'),left=(w.cd-Date.now())/1000;
-  if(!b||w.ok)return;
-  if(left>0)b.textContent='Next ad in '+wdFmt(left);
-  else if(b.classList.contains('dis'))M.wdunlock();   // timer khatam -> Watch ad button dikhao
+  const box=$('#wdBox'),modalEl=$('#md');
+  if(!box||!modalEl||!modalEl.classList.contains('on')){
+    if(wdTick){clearInterval(wdTick);wdTick=null;}
+    return;
+  }
+  const w=wdA(),b=$('#wdBtn');
+  if(w.ok||!b)return;
+  const left=Math.max(0,Math.ceil(((Number(w.cd)||0)-Date.now())/1000));
+  if(left>0){
+    b.textContent='Next ad in '+wdFmt(left);
+  }else if(b.classList.contains('dis')){
+    M.wdunlock();
+  }
 }
 M.wdunlock=function(){
   const w=wdA(),left=Math.max(0,(w.cd-Date.now())/1000),pct=Math.min(100,w.n/WD_ADS.total*100);
@@ -1692,37 +1700,59 @@ M.wdunlock=function(){
   if(!wdTick)wdTick=setInterval(wdTickFn,1000);
 };
 A.wdgo=()=>{closeM();A.wd()};
-A.wdad=function(){
+A.wdad=async function(){
   const w=wdA();
   if(w.ok||adLock)return;
-  if(w.cd>Date.now()){toast('⏳ Timer khatam hone ka wait karo');return}
-  if(!window.Adsgram){toast('Ad SDK load nahi hua. Dobara try karo.');return}
+  if(Number(w.cd)>Date.now()){toast('⏳ Timer khatam hone ka wait karo');return}
+  if(!window.Adsgram || typeof window.Adsgram.init!=='function'){
+    toast('⚠️ AdsGram SDK load nahi hua. App reload karke try karo.');
+    return;
+  }
+
   adLock=true;
-  const t0=Date.now();
-  toast('Opening ad…');
-  let p;
-  try{p=window.Adsgram.init({blockId:WD_ADS.block}).show();}
-  catch(err){adLock=false;toast('⚠️ Ad available nahi hai, thodi der baad try karo.');return}
-  p.then(()=>{
-    adLock=false;
-    if((Date.now()-t0)/1000<WD_ADS.minSec){toast('⚠️ Ad poora dekho, tabhi count hoga.');return}
-    w.n++;
+  const btn=$('#wdBtn');
+  if(btn){btn.disabled=true;btn.textContent='Loading ad…';}
+  toast('Opening withdrawal ad…');
+
+  try{
+    const controller=window.Adsgram.init({blockId:WD_ADS.block});
+    if(!controller || typeof controller.show!=='function'){
+      throw new Error('AdsGram controller unavailable');
+    }
+    const result=await controller.show();
+
+    // AdsGram interstitial returns done=true only after a completed view.
+    // A dismissed/skipped ad must never increase the withdrawal counter.
+    if(!result || result.done!==true){
+      toast('⚠️ Ad complete nahi hua, isliye count nahi hua.');
+      M.wdunlock();
+      return;
+    }
+
+    w.n=Math.max(0,Number(w.n)||0)+1;
     if(w.n>=WD_ADS.total){
-      w.ok=true;w.cd=0;
+      w.ok=true;
+      w.cd=0;
       confetti();snd(880,.2);hap('medium');
       toast('🎉 Withdrawal unlocked!');
     }else{
-      w.cd=Date.now()+(w.n%WD_ADS.batch===0?WD_ADS.batchCd:WD_ADS.gap)*1000;
-      toast(w.n%WD_ADS.batch===0
-        ?'✅ '+WD_ADS.batch+' ads poore! '+(WD_ADS.batchCd/3600)+' ghante ka break.'
-        :'✅ Ad counted: '+w.n+'/'+WD_ADS.total);
+      const batchComplete=(w.n%WD_ADS.batch)===0;
+      const waitSeconds=batchComplete?WD_ADS.batchCd:WD_ADS.gap;
+      w.cd=Date.now()+waitSeconds*1000;
+      toast(batchComplete
+        ?'✅ '+WD_ADS.batch+' ads complete! Ab 1 hour ka break.'
+        :'✅ Ad counted: '+w.n+'/'+WD_ADS.total+'. Next ad in 45 seconds.');
     }
-    save();
+
+    await Promise.resolve(save());
     M.wdunlock();
-  }).catch(err=>{
+  }catch(err){
+    console.warn('[Withdrawal AdsGram]',err);
+    toast('⚠️ '+((err&&(err.description||err.message))||'Ad available nahi hai. Thodi der baad try karo.'));
+    M.wdunlock();
+  }finally{
     adLock=false;
-    toast('⚠️ '+((err&&(err.description||err.message))||'Ad available nahi hai, thodi der baad try karo.'));
-  });
+  }
 };
 
 /* ===== Sky Jump Game ===== */
