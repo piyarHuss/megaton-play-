@@ -2,6 +2,35 @@
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
+<!-- RichAds Telegram Mini App SDK -->
+<script src="https://richinfo.co/richpartners/telegram/js/tg-ob.js"></script>
+<script>
+(function () {
+  function initRichAds() {
+    try {
+      if (typeof window.TelegramAdsController !== 'function') {
+        console.warn('[RichAds] SDK/controller is not available yet.');
+        return false;
+      }
+      window.TelegramAdsController = new window.TelegramAdsController();
+      window.TelegramAdsController.initialize({
+        pubId: "997172",
+        appId: "9568"
+      });
+      console.log('[RichAds] Telegram Ads initialized.');
+      return true;
+    } catch (error) {
+      console.error('[RichAds] Initialization failed:', error);
+      return false;
+    }
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initRichAds, { once: true });
+  } else {
+    initRichAds();
+  }
+})();
+</script>
 <title>MegaTon Play</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap">
 <!-- TON Connect UI SDK (Automatic Wallet Connection) -->
