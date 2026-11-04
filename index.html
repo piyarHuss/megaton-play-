@@ -45,7 +45,7 @@ nav button.on::before{content:"";position:absolute;top:0;left:30%;right:30%;heig
 .task>.t{flex:1 1 0!important;width:0;min-width:0!important;max-width:100%;padding-right:0!important;overflow:hidden}
 .task .btn,.task>button.btn,.task>button,adsgram-task .btn,adsgram-task [slot="button"],adsgram-task [slot="claim"],adsgram-task [slot="done"]{box-sizing:border-box!important;flex:0 0 88px!important;width:88px!important;min-width:88px!important;max-width:88px!important;height:38px!important;padding:0 6px!important;font-size:13px!important;font-weight:600!important;white-space:nowrap!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:5px!important;overflow:hidden!important;border-radius:12px!important;border:0!important;cursor:pointer!important}
 
-/* ⭐ DYNAMIC GAME TASK CARD STYLES (SLIM & PROFESSIONAL ANIMATED) ⭐ */
+/* ⭐ DYNAMIC GAME TASK CARD STYLES ⭐ */
 .gt-card{position:relative;display:flex;align-items:center;gap:10px;padding:8px 12px;min-height:58px;border-radius:18px;background:linear-gradient(135deg,rgba(26,34,52,0.95) 0%,rgba(16,23,37,0.98) 100%);border:1px solid rgba(90,120,170,0.38);margin-bottom:8px;cursor:pointer;transition:transform .15s ease,border-color .2s ease,box-shadow .2s ease;box-shadow:inset 0 1px 0 rgba(255,255,255,0.08),0 4px 14px rgba(0,0,0,0.25);overflow:hidden}
 .gt-card:active{transform:scale(0.98);border-color:rgba(0,152,234,0.65)}
 .gt-card::before{content:"";position:absolute;top:0;left:-130%;width:60%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.06),rgba(0,152,234,0.2),transparent);transform:skewX(-25deg);animation:gtShimmer 4.5s ease-in-out infinite;pointer-events:none}
@@ -357,11 +357,10 @@ const AD_MIN_SECONDS=10;    // ads: kam se kam itne second dekhne ke baad hi rew
 let adLock=false;
 /* ===== Withdrawal unlock via ads (AdsGram int-57936) =====
    total   = withdrawal unlock hone ke liye kul ads
-   batch   = itne ads ke baad lamba break
-   gap     = har ad ke baad timer (seconds)  -> 45 sec
-   batchCd = batch poora hone par timer (seconds) -> 3600 = 1 ghanta
-   minSec  = 0 (ad ke time ki shart hata di, AdsGram khud verify karta hai) */
-const WD_ADS={block:'int-57936',total:500,batch:10,gap:45,batchCd:3600,minSec:0};
+   batch   = itne ads ke baad lamba break (10 ads)
+   gap     = har ad ke baad timer (45 seconds)
+   batchCd = batch poora hone par timer (3600 seconds = 1 ghanta) */
+const WD_ADS={block:'int-57936',total:500,batch:10,gap:45,batchCd:3600};
 const FIREBASE_CONFIG = {
   apiKey: "AIzaSyBJrCE4w_QfBqfF3g4O_RuCK4DbjmL9TRg",
   authDomain: "telegram-69052.firebaseapp.com",
@@ -505,6 +504,17 @@ async function loadUserState(){
     S.ad = S.ad || {};
     S.adCd = S.adCd || {};
     S.wdAds = Object.assign({n:0,cd:0,ok:false}, S.wdAds || {});
+    try{
+      const localWd = localStorage.getItem('rh_wdads_' + U.id);
+      if(localWd){
+        const pw = JSON.parse(localWd);
+        if(pw && typeof pw === 'object'){
+          if((pw.n || 0) > (S.wdAds.n || 0)) S.wdAds.n = pw.n;
+          if((pw.cd || 0) > (S.wdAds.cd || 0)) S.wdAds.cd = pw.cd;
+          if(pw.ok) S.wdAds.ok = true;
+        }
+      }
+    }catch(e){}
     newDay();
     trustedB = Number(S.b) || 0;   // FIX
     firebaseReady=true;
@@ -1295,7 +1305,31 @@ spin(){const ok=S.b>=CFG.spinCost||S.fs;return `<div class="card in" style="text
 
 wallet(){
   const p=Math.min(100,S.b/CFG.minW*100),wd=(Array.isArray(S.wds)?S.wds:[]).reduce((a,w)=>a+(w.a!=null?Number(w.a):Number(w.amount)||0),0),can=S.b>=CFG.minW;
+  const w=wdA();
+  const unlockCard = !w.ok ? `
+  <div class="card in" style="border:1px solid #3478ff;padding:12px 14px;cursor:pointer;margin-bottom:12px;background:linear-gradient(135deg,#131f33,#0d1524)" data-a="wdunlock">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="ic" style="width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,#0098ea,#1a5cff)">${ic('shield',20)}</div>
+        <div>
+          <b style="font-size:14.5px;color:#fff;display:block">Withdrawal Status: Locked</b>
+          <small style="color:#60d2ff;font-weight:600">Watch ads to unlock (${w.n}/${WD_ADS.total} ads)</small>
+        </div>
+      </div>
+      <button class="btn" data-a="wdunlock" style="height:34px;padding:0 12px;font-size:12px;border-radius:10px">Unlock ›</button>
+    </div>
+  </div>` : `
+  <div class="card in" style="border:1px solid #16a34a;padding:12px 14px;margin-bottom:12px;background:linear-gradient(135deg,#0d2818,#101e16)">
+    <div style="display:flex;align-items:center;gap:10px">
+      <div class="ic" style="width:36px;height:36px;border-radius:10px;background:#16a34a">${ic('check',20)}</div>
+      <div>
+        <b style="font-size:14.5px;color:#4ade80">Withdrawal Unlocked ✅</b>
+        <small style="color:var(--mut);display:block">All ${WD_ADS.total} ads completed.</small>
+      </div>
+    </div>
+  </div>`;
   return `<div class="wc in"><div class="wglow"></div><div class="coin">${TON(62)}</div><small class="lbl">${esc(T('walletLabel'))}</small><div class="big"><span id="cnt">${f(shown)}</span><em>TON</em></div><div class="pbar"><i style="width:${p}%"></i></div><div class="pl"><span>Minimum withdrawal ${f(CFG.minW)} TON</span><span>${Math.round(p)}%</span></div><button class="btn ${can?'':'dis'}" data-a="wd" style="width:100%;margin-top:16px;height:50px;font-size:16px">${ic('up',18)}Withdraw</button></div>
+  ${unlockCard}
   <div class="stats"><div>${ic('zap',22)}<b>${f(S.life)}</b><small>Earned</small></div><div>${ic('down',22)}<b>${f(wd)}</b><small>Withdrawn</small></div><div>${ic('clock',22)}<b>${S.wds.length}</b><small>Requests</small></div></div>
   <div class="card in"><div class="sec" style="margin-top:0">${ic('wallet',15)}WITHDRAWAL WALLET</div>${S.wallet?`<div class="addr"><span style="color:var(--grn)">${ic('check',20)}</span><span>${S.wallet}</span></div>`:`<div class="empty" style="padding:8px 0 14px">${ic('wallet',34)}<div>No wallet added yet</div></div>`}<div class="row"><button class="btn ton" data-a="conn" style="flex:1">${ic('link',17)}Connect</button><button class="btn ghost" data-a="manual" style="flex:1">${ic('copy',17)}Enter manually</button></div></div>
   <div class="card in"><div class="sec" style="margin-top:0">${ic('info',15)}WITHDRAWAL INFO</div>
@@ -1555,6 +1589,7 @@ async wdok(){
 
   S.b=0;
   S.wdAds={n:0,cd:0,ok:false};   // agle withdrawal ke liye dobara ads dekhne honge
+  try{ localStorage.removeItem('rh_wdads_' + U.id); }catch(e){}
   S.wds=Array.isArray(S.wds)?S.wds.slice():[];
   S.wds.unshift(newWd);
   hist('-'+f(bal)+' TON','Withdrawal request','w');
@@ -1662,75 +1697,146 @@ document.addEventListener('click',e=>{const el=e.target.closest('[data-a]');if(!
 /* =====================================================================
    ⭐ WITHDRAWAL UNLOCK VIA ADS (AdsGram int-57936) ⭐
    - 500 ads dekhne par withdrawal unlock
-   - Har ad ke baad 45 sec timer (is dauran Watch ad button band rehta hai)
-   - Har 10 ads ke baad 1 ghante ka timer
+   - Har ad ke baad 45 sec timer (Watch button me countdown dikhega aur disabled rahega)
+   - Har 10 ads ke baad 1 ghante (3600 sec) ka timer lagega
    - Progress S.wdAds = {n: ads dekhe, cd: next ad kab, ok: unlocked?}
    ===================================================================== */
-const wdA=()=>{S.wdAds=Object.assign({n:0,cd:0,ok:false},S.wdAds||{});return S.wdAds};
-const wdFmt=s=>{s=Math.max(0,Math.ceil(s));const h=Math.floor(s/3600),m=Math.floor(s%3600/60),c=s%60,p=x=>String(x).padStart(2,'0');return(h?h+':':'')+p(m)+':'+p(c)};
+const wdA=()=>{
+  S.wdAds = Object.assign({n:0,cd:0,ok:false}, S.wdAds || {});
+  return S.wdAds;
+};
+
+const wdFmt=s=>{
+  s = Math.max(0, Math.ceil(s));
+  if(s >= 3600){
+    const h = Math.floor(s / 3600);
+    const m = Math.floor((s % 3600) / 60);
+    const c = s % 60;
+    return h + 'h ' + String(m).padStart(2,'0') + 'm ' + String(c).padStart(2,'0') + 's';
+  }
+  if(s >= 60){
+    const m = Math.floor(s / 60);
+    const c = s % 60;
+    return m + 'm ' + String(c).padStart(2,'0') + 's';
+  }
+  return s + 's';
+};
+
 let wdTick=null;
 function wdTickFn(){
-  if(!$('#wdBox')||!$('#md').classList.contains('on')){clearInterval(wdTick);wdTick=null;return}
-  const w=wdA(),b=$('#wdBtn'),left=(w.cd-Date.now())/1000;
-  if(!b||w.ok)return;
-  if(left>0)b.textContent='Next ad in '+wdFmt(left);
-  else if(b.classList.contains('dis'))M.wdunlock();   // timer khatam -> Watch ad button dikhao
+  if(!$('#wdBox') || !$('#md').classList.contains('on')){
+    clearInterval(wdTick);
+    wdTick = null;
+    return;
+  }
+  const w = wdA(), b = $('#wdBtn'), left = (w.cd - Date.now()) / 1000;
+  if(!b || w.ok) return;
+  if(left > 0){
+    b.textContent = 'Next ad in ' + wdFmt(left);
+    if(!b.classList.contains('dis')){
+      b.className = 'btn dis';
+      b.removeAttribute('data-a');
+    }
+  } else {
+    clearInterval(wdTick);
+    wdTick = null;
+    M.wdunlock();   // timer khatam -> Watch ad button active ho jayega
+  }
 }
+
 M.wdunlock=function(){
-  const w=wdA(),left=Math.max(0,(w.cd-Date.now())/1000),pct=Math.min(100,w.n/WD_ADS.total*100);
-  const inBatch=w.n%WD_ADS.batch,hrs=WD_ADS.batchCd/3600;
-  const btn=w.ok
-    ?`<button class="btn grn" data-a="wdgo" style="width:100%;height:50px">${ic('check',18)}Withdraw now</button>`
-    :left>0
-      ?`<button class="btn dis" id="wdBtn" style="width:100%;height:50px">Next ad in ${wdFmt(left)}</button>`
-      :`<button class="btn" id="wdBtn" data-a="wdad" style="width:100%;height:50px">${ic('play',18)}Watch ad</button>`;
+  const w = wdA(), left = Math.max(0, (w.cd - Date.now()) / 1000), pct = Math.min(100, w.n / WD_ADS.total * 100);
+  const inBatch = (w.n > 0 && w.n % WD_ADS.batch === 0 && left > 0) ? WD_ADS.batch : (w.n % WD_ADS.batch);
+  const hrs = WD_ADS.batchCd / 3600;
+
+  const btn = w.ok
+    ? `<button class="btn grn" data-a="wdgo" style="width:100%;height:50px">${ic('check',18)}Withdraw now</button>`
+    : left > 0
+      ? `<button class="btn dis" id="wdBtn" style="width:100%;height:50px;pointer-events:none">Next ad in ${wdFmt(left)}</button>`
+      : `<button class="btn" id="wdBtn" data-a="wdad" style="width:100%;height:50px">${ic('play',18)}Watch ad</button>`;
+
   modal(`<div id="wdBox"><h3><span>${ic('shield',22)}Unlock Withdrawal</span>${xb}</h3>
-    <p style="color:var(--mut);margin-top:0;font-size:14px">Withdraw unlock karne ke liye ${WD_ADS.total} ads dekhna zaroori hai. Har ad ke baad ${WD_ADS.gap} sec ka timer, aur har ${WD_ADS.batch} ads ke baad ${hrs} ghante ka timer lagega.</p>
+    <p style="color:var(--mut);margin-top:0;font-size:14px">Withdraw unlock karne ke liye ${WD_ADS.total} ads dekhna zaroori hai. Har ad ke baad ${WD_ADS.gap}s ka timer lagega, aur har ${WD_ADS.batch} ads ke baad ${hrs} ghante ka break timer lagega.</p>
     <div style="text-align:center;margin:10px 0 4px"><b style="font-size:38px">${w.n}</b><span style="color:var(--mut);font-size:18px"> / ${WD_ADS.total} ads</span></div>
     <div style="height:10px;background:var(--card2);border-radius:6px;overflow:hidden"><div style="height:100%;width:${pct}%;background:linear-gradient(90deg,#3d86ff,#22d3ee);transition:width .5s"></div></div>
     <div style="display:flex;justify-content:space-between;color:var(--mut);font-size:13px;margin:8px 0 14px"><span>Current batch: ${w.ok?WD_ADS.batch:inBatch}/${WD_ADS.batch}</span><span>${w.ok?'Unlocked ✅':(WD_ADS.total-w.n)+' ads left'}</span></div>
     ${btn}</div>`);
-  if(!wdTick)wdTick=setInterval(wdTickFn,1000);
+
+  if(left > 0){
+    if(!wdTick) wdTick = setInterval(wdTickFn, 1000);
+  } else {
+    if(wdTick){ clearInterval(wdTick); wdTick = null; }
+  }
 };
+
 A.wdgo=()=>{closeM();A.wd()};
+A.wdunlock=()=>{M.wdunlock()};
+
 A.wdad=function(){
-  const w=wdA();
-  if(w.ok)return;
-  if(adLock){toast('Ad pehle se khula hai, thoda ruko');return}
+  const w = wdA();
+  if(w.ok) return;
+  if(adLock) return;
+  const left = (w.cd - Date.now()) / 1000;
+  if(left > 0){
+    toast('⏳ Timer chal raha hai: ' + wdFmt(left) + ' ka wait karein.');
+    return;
+  }
+  if(!window.Adsgram){
+    toast('⚠️ Ad SDK load nahi hua. Page refresh karein.');
+    return;
+  }
 
-  // Timer chal raha hai to koi ad nahi khulega
-  const left=Math.ceil((w.cd-Date.now())/1000);
-  if(left>0){toast('⏳ Next ad '+wdFmt(left)+' baad milega');return}
-
-  if(!window.Adsgram){toast('Ad SDK load nahi hua. Dobara try karo.');return}
-
-  adLock=true;
+  adLock = true;
+  const btn = $('#wdBtn');
+  if(btn){
+    btn.className = 'btn dis';
+    btn.textContent = 'Loading ad…';
+  }
   toast('Opening ad…');
-  let p;
-  try{p=window.Adsgram.init({blockId:WD_ADS.block}).show();}
-  catch(err){adLock=false;toast('⚠️ Ad available nahi hai, thodi der baad try karo.');return}
 
-  p.then(()=>{
-    adLock=false;
-    w.n++;
-    if(w.n>=WD_ADS.total){
-      w.ok=true;w.cd=0;
-      confetti();snd(880,.2);hap('medium');
-      toast('🎉 Withdrawal unlocked!');
-    }else{
-      const batchDone=(w.n%WD_ADS.batch===0);
-      // har ad ke baad 45 sec, har 10 ads ke baad 1 ghanta
-      w.cd=Date.now()+(batchDone?WD_ADS.batchCd:WD_ADS.gap)*1000;
-      toast(batchDone
-        ?'✅ '+WD_ADS.batch+' ads poore! '+(WD_ADS.batchCd/3600)+' ghante ka break.'
-        :'✅ Ad counted: '+w.n+'/'+WD_ADS.total);
-    }
-    save();
-    M.wdunlock();   // button ab "Next ad in 00:45" timer dikhayega
-  }).catch(err=>{
-    adLock=false;
-    toast('⚠️ '+((err&&(err.description||err.message))||'Ad available nahi hai, thodi der baad try karo.'));
-  });
+  try {
+    const controller = window.Adsgram.init({ blockId: WD_ADS.block });
+    controller.show().then(()=>{
+      adLock = false;
+      w.n = (Number(w.n) || 0) + 1;
+
+      if(w.n >= WD_ADS.total){
+        w.ok = true;
+        w.cd = 0;
+        confetti();
+        snd(880, .2);
+        hap('medium');
+        toast('🎉 Withdrawal unlocked!');
+      } else {
+        const isBatch = (w.n % WD_ADS.batch === 0);
+        const waitSec = isBatch ? WD_ADS.batchCd : WD_ADS.gap;
+        w.cd = Date.now() + waitSec * 1000;
+        
+        if(isBatch){
+          toast('✅ 10 ads poore hue! ' + (WD_ADS.batchCd/3600) + ' ghante ka break timer shuru.');
+        } else {
+          toast('✅ Ad counted: ' + w.n + '/' + WD_ADS.total + ' (Wait 45s)');
+        }
+      }
+
+      try {
+        localStorage.setItem('rh_wdads_' + U.id, JSON.stringify(w));
+      } catch(e){}
+
+      save();
+      M.wdunlock();
+    }).catch(err => {
+      adLock = false;
+      console.warn('[AdsGram Withdrawal Ad]', err);
+      toast('⚠️ ' + ((err && (err.description || err.message)) || 'Ad available nahi hai ya cancel hua.'));
+      M.wdunlock();
+    });
+  } catch(err) {
+    adLock = false;
+    console.warn('[AdsGram Init Error]', err);
+    toast('⚠️ Ad load nahi ho saka. Dobara try karein.');
+    M.wdunlock();
+  }
 };
 
 /* ===== Sky Jump Game ===== */
