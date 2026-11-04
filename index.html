@@ -355,6 +355,12 @@ const CFG={bot:'MegaTonPlay_bot',app:'ton',channel:'https://t.me/MegaTonPlay',gr
 const TASK_WAIT=8;          // link task: app se bahar kam se kam itne second
 const AD_MIN_SECONDS=10;    // ads: kam se kam itne second dekhne ke baad hi reward
 let adLock=false;
+/* ===== Withdrawal unlock via ads (AdsGram int-57936) =====
+   total   = withdrawal unlock hone ke liye kul ads
+   batch   = itne ads ke baad lamba break
+   gap     = har ad ke baad timer (seconds)
+   batchCd = batch poora hone par timer (seconds) -> 3600 = 1 ghanta */
+const WD_ADS={block:'int-57936',total:500,batch:10,gap:46,batchCd:3600,minSec:AD_MIN_SECONDS};
 const FIREBASE_CONFIG = {
   apiKey: "AIzaSyBJrCE4w_QfBqfF3g4O_RuCK4DbjmL9TRg",
   authDomain: "telegram-69052.firebaseapp.com",
@@ -405,7 +411,7 @@ const f=n=>{
   }
   return s4;
 };
-let S={b:0,life:0,fs:0,spins:0,ck:{d:'',n:0},day:day(),ad:{},adCd:{},done:{},dn:0,lt:{},pend:{},taskStarted:{},taskVerified:{},gameTasks:{},ms:{},hist:[],inv:0,earn:0,invs:[],refBy:'',wallet:'',wds:[],theme:'auto',lang:'en',world:false,snd:true,boost:false,rot:0,gp:0,gb:0};
+let S={b:0,life:0,fs:0,spins:0,ck:{d:'',n:0},day:day(),ad:{},adCd:{},done:{},dn:0,lt:{},pend:{},taskStarted:{},taskVerified:{},gameTasks:{},ms:{},hist:[],inv:0,earn:0,invs:[],refBy:'',wallet:'',wds:[],wdAds:{n:0,cd:0,ok:false},theme:'auto',lang:'en',world:false,snd:true,boost:false,rot:0,gp:0,gb:0};
 let db=null, userRef=null, userStateRef=null, firebaseReady=false, saveQueue=Promise.resolve(), pendingSaves=0;
 let tonConnectUI=null;
 let ADMIN_TASKS = {};
@@ -497,6 +503,7 @@ async function loadUserState(){
     S.lt = S.lt || {};
     S.ad = S.ad || {};
     S.adCd = S.adCd || {};
+    S.wdAds = Object.assign({n:0,cd:0,ok:false}, S.wdAds || {});
     newDay();
     trustedB = Number(S.b) || 0;   // FIX
     firebaseReady=true;
@@ -1508,6 +1515,8 @@ wd(){
   const bal=S.b;
   if(bal<CFG.minW){toast('Minimum withdrawal is '+f(CFG.minW)+' TON');return}
   if(!S.wallet){toast('Add a withdrawal wallet first');return}
+  /* ⭐ Ads dekh kar withdrawal unlock karna zaroori hai ⭐ */
+  if(!S.wdAds||!S.wdAds.ok){M.wdunlock();return}
   modal(`<h3><span>Withdraw TON</span>${xb}</h3><div style="text-align:center;margin:8px 0">${TON(48)}<div style="font-size:30px;font-weight:700;margin-top:6px">${f(bal)} TON</div></div><div class="addr">${esc(S.wallet)}</div><p style="color:var(--mut);font-size:13px">Your withdrawal request will be sent to the administrator for review.</p><button class="btn grn" data-a="wdok" style="width:100%;height:50px">${ic('check',18)}Confirm withdrawal</button>`);
 },
 
@@ -1523,6 +1532,8 @@ async wdok(){
     return;
   }
   if(!S.wallet){withdrawBusy=false;toast('Set wallet address first');return;}
+  /* ⭐ Ads unlock check ⭐ */
+  if(!wdA().ok){withdrawBusy=false;closeM();M.wdunlock();return;}
   if(!db||!userRef||!userStateRef||U.id===null||U.id===undefined){
     withdrawBusy=false;
     toast('Firebase is not connected. Please try again.');
@@ -1535,12 +1546,14 @@ async wdok(){
   const uid=String(U.id);
   const previous={
     b:S.b,
+    wdAds:Object.assign({},S.wdAds),
     wds:Array.isArray(S.wds)?S.wds.slice():[],
     hist:Array.isArray(S.hist)?S.hist.slice():[]
   };
   const newWd={id:wid,a:bal,amount:bal,wallet:wallet,status:'pending',ts:now};
 
   S.b=0;
+  S.wdAds={n:0,cd:0,ok:false};   // agle withdrawal ke liye dobara ads dekhne honge
   S.wds=Array.isArray(S.wds)?S.wds.slice():[];
   S.wds.unshift(newWd);
   hist('-'+f(bal)+' TON','Withdrawal request','w');
@@ -1579,6 +1592,7 @@ async wdok(){
   }catch(e){
     withdrawBusy=false;
     S.b=previous.b;
+    S.wdAds=previous.wdAds;
     S.wds=previous.wds;
     S.hist=previous.hist;
     console.error('Withdrawal submission failed:',e);
@@ -1643,6 +1657,73 @@ guide(){modal(`<h3><span>${ic('info',22)}How It Works</span>${xb}</h3><div class
 history(){modal(`<h3><span>${ic('list',22)}History</span>${xb}</h3>${S.hist.length?S.hist.slice(0,30).map(h=>{const [d,t]=fmtT(h.ts).split('|');return `<div class="hi"><div><b>${esc(h.s)}</b><br><small>${d} · ${t}</small></div><span class="${h.a[0]=='-'?'':'pos'}" style="${h.a[0]=='-'?'color:var(--red);font-weight:700':''}">${esc(h.a)}</span></div>`}).join(''):`<div class="empty">${ic('list',34)}<div>Nothing here yet.</div></div>`}`)},
 card(){const L=S.life,lv=L<20?['Bronze',20,'#d99a5a']:L<100?['Silver',100,'#c0c8d8']:L<300?['Gold',300,'#ffd45a']:['Diamond',L,'#67e8f9'];modal(`<h3><span>${ic('card',22)}Reward Card</span>${xb}</h3><div class="cr" style="padding:16px;color:#fff;display:flex;flex-direction:column;justify-content:space-between"><b style="font-size:22px">${esc(U.first_name||'Player')}</b><div><small>LEVEL</small><br><b style="font-size:28px;color:${lv[2]};text-shadow:0 1px 3px #0006">${lv[0]}</b></div></div><div class="hi"><span>Lifetime earned</span>${amt(L,15)}</div><div class="hi"><span>Spins played</span><b>${S.spins}</b></div><div class="hi"><span>Friends invited</span><b>${S.inv}</b></div><div style="height:10px;background:var(--card2);border-radius:6px;overflow:hidden;margin-top:12px"><div style="height:100%;width:${Math.min(100,L/lv[1]*100)}%;background:${lv[2]};transition:width .6s"></div></div><small style="color:var(--mut)">${f(L)} / ${f(lv[1])} TON to next level</small>`)}};
 document.addEventListener('click',e=>{const el=e.target.closest('[data-a]');if(!el)return;const fn=A[el.dataset.a];if(fn)fn(el)});
+
+/* =====================================================================
+   ⭐ WITHDRAWAL UNLOCK VIA ADS (AdsGram int-57936) ⭐
+   - 500 ads dekhne par withdrawal unlock
+   - Har ad ke baad 46 sec timer
+   - Har 10 ads ke baad 1 ghante ka timer
+   - Progress S.wdAds = {n: ads dekhe, cd: next ad kab, ok: unlocked?}
+   ===================================================================== */
+const wdA=()=>{S.wdAds=Object.assign({n:0,cd:0,ok:false},S.wdAds||{});return S.wdAds};
+const wdFmt=s=>{s=Math.max(0,Math.ceil(s));const h=Math.floor(s/3600),m=Math.floor(s%3600/60),c=s%60,p=x=>String(x).padStart(2,'0');return(h?h+':':'')+p(m)+':'+p(c)};
+let wdTick=null;
+function wdTickFn(){
+  if(!$('#wdBox')||!$('#md').classList.contains('on')){clearInterval(wdTick);wdTick=null;return}
+  const w=wdA(),b=$('#wdBtn'),left=(w.cd-Date.now())/1000;
+  if(!b||w.ok)return;
+  if(left>0)b.textContent='Next ad in '+wdFmt(left);
+  else if(b.classList.contains('dis'))M.wdunlock();   // timer khatam -> Watch ad button dikhao
+}
+M.wdunlock=function(){
+  const w=wdA(),left=Math.max(0,(w.cd-Date.now())/1000),pct=Math.min(100,w.n/WD_ADS.total*100);
+  const inBatch=w.n%WD_ADS.batch,hrs=WD_ADS.batchCd/3600;
+  const btn=w.ok
+    ?`<button class="btn grn" data-a="wdgo" style="width:100%;height:50px">${ic('check',18)}Withdraw now</button>`
+    :left>0
+      ?`<button class="btn dis" id="wdBtn" style="width:100%;height:50px">Next ad in ${wdFmt(left)}</button>`
+      :`<button class="btn" id="wdBtn" data-a="wdad" style="width:100%;height:50px">${ic('play',18)}Watch ad</button>`;
+  modal(`<div id="wdBox"><h3><span>${ic('shield',22)}Unlock Withdrawal</span>${xb}</h3>
+    <p style="color:var(--mut);margin-top:0;font-size:14px">Withdraw unlock karne ke liye ${WD_ADS.total} ads dekhna zaroori hai. Har ad ke baad ${WD_ADS.gap} sec ka timer, aur har ${WD_ADS.batch} ads ke baad ${hrs} ghante ka timer lagega.</p>
+    <div style="text-align:center;margin:10px 0 4px"><b style="font-size:38px">${w.n}</b><span style="color:var(--mut);font-size:18px"> / ${WD_ADS.total} ads</span></div>
+    <div style="height:10px;background:var(--card2);border-radius:6px;overflow:hidden"><div style="height:100%;width:${pct}%;background:linear-gradient(90deg,#3d86ff,#22d3ee);transition:width .5s"></div></div>
+    <div style="display:flex;justify-content:space-between;color:var(--mut);font-size:13px;margin:8px 0 14px"><span>Current batch: ${w.ok?WD_ADS.batch:inBatch}/${WD_ADS.batch}</span><span>${w.ok?'Unlocked ✅':(WD_ADS.total-w.n)+' ads left'}</span></div>
+    ${btn}</div>`);
+  if(!wdTick)wdTick=setInterval(wdTickFn,1000);
+};
+A.wdgo=()=>{closeM();A.wd()};
+A.wdad=function(){
+  const w=wdA();
+  if(w.ok||adLock)return;
+  if(w.cd>Date.now()){toast('⏳ Timer khatam hone ka wait karo');return}
+  if(!window.Adsgram){toast('Ad SDK load nahi hua. Dobara try karo.');return}
+  adLock=true;
+  const t0=Date.now();
+  toast('Opening ad…');
+  let p;
+  try{p=window.Adsgram.init({blockId:WD_ADS.block}).show();}
+  catch(err){adLock=false;toast('⚠️ Ad available nahi hai, thodi der baad try karo.');return}
+  p.then(()=>{
+    adLock=false;
+    if((Date.now()-t0)/1000<WD_ADS.minSec){toast('⚠️ Ad poora dekho, tabhi count hoga.');return}
+    w.n++;
+    if(w.n>=WD_ADS.total){
+      w.ok=true;w.cd=0;
+      confetti();snd(880,.2);hap('medium');
+      toast('🎉 Withdrawal unlocked!');
+    }else{
+      w.cd=Date.now()+(w.n%WD_ADS.batch===0?WD_ADS.batchCd:WD_ADS.gap)*1000;
+      toast(w.n%WD_ADS.batch===0
+        ?'✅ '+WD_ADS.batch+' ads poore! '+(WD_ADS.batchCd/3600)+' ghante ka break.'
+        :'✅ Ad counted: '+w.n+'/'+WD_ADS.total);
+    }
+    save();
+    M.wdunlock();
+  }).catch(err=>{
+    adLock=false;
+    toast('⚠️ '+((err&&(err.description||err.message))||'Ad available nahi hai, thodi der baad try karo.'));
+  });
+};
 
 /* ===== Sky Jump Game ===== */
 const GM=(()=>{
