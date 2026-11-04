@@ -1305,31 +1305,7 @@ spin(){const ok=S.b>=CFG.spinCost||S.fs;return `<div class="card in" style="text
 
 wallet(){
   const p=Math.min(100,S.b/CFG.minW*100),wd=(Array.isArray(S.wds)?S.wds:[]).reduce((a,w)=>a+(w.a!=null?Number(w.a):Number(w.amount)||0),0),can=S.b>=CFG.minW;
-  const w=wdA();
-  const unlockCard = !w.ok ? `
-  <div class="card in" style="border:1px solid #3478ff;padding:12px 14px;cursor:pointer;margin-bottom:12px;background:linear-gradient(135deg,#131f33,#0d1524)" data-a="wdunlock">
-    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
-      <div style="display:flex;align-items:center;gap:10px">
-        <div class="ic" style="width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,#0098ea,#1a5cff)">${ic('shield',20)}</div>
-        <div>
-          <b style="font-size:14.5px;color:#fff;display:block">Withdrawal Status: Locked</b>
-          <small style="color:#60d2ff;font-weight:600">Watch ads to unlock (${w.n}/${WD_ADS.total} ads)</small>
-        </div>
-      </div>
-      <button class="btn" data-a="wdunlock" style="height:34px;padding:0 12px;font-size:12px;border-radius:10px">Unlock ›</button>
-    </div>
-  </div>` : `
-  <div class="card in" style="border:1px solid #16a34a;padding:12px 14px;margin-bottom:12px;background:linear-gradient(135deg,#0d2818,#101e16)">
-    <div style="display:flex;align-items:center;gap:10px">
-      <div class="ic" style="width:36px;height:36px;border-radius:10px;background:#16a34a">${ic('check',20)}</div>
-      <div>
-        <b style="font-size:14.5px;color:#4ade80">Withdrawal Unlocked ✅</b>
-        <small style="color:var(--mut);display:block">All ${WD_ADS.total} ads completed.</small>
-      </div>
-    </div>
-  </div>`;
   return `<div class="wc in"><div class="wglow"></div><div class="coin">${TON(62)}</div><small class="lbl">${esc(T('walletLabel'))}</small><div class="big"><span id="cnt">${f(shown)}</span><em>TON</em></div><div class="pbar"><i style="width:${p}%"></i></div><div class="pl"><span>Minimum withdrawal ${f(CFG.minW)} TON</span><span>${Math.round(p)}%</span></div><button class="btn ${can?'':'dis'}" data-a="wd" style="width:100%;margin-top:16px;height:50px;font-size:16px">${ic('up',18)}Withdraw</button></div>
-  ${unlockCard}
   <div class="stats"><div>${ic('zap',22)}<b>${f(S.life)}</b><small>Earned</small></div><div>${ic('down',22)}<b>${f(wd)}</b><small>Withdrawn</small></div><div>${ic('clock',22)}<b>${S.wds.length}</b><small>Requests</small></div></div>
   <div class="card in"><div class="sec" style="margin-top:0">${ic('wallet',15)}WITHDRAWAL WALLET</div>${S.wallet?`<div class="addr"><span style="color:var(--grn)">${ic('check',20)}</span><span>${S.wallet}</span></div>`:`<div class="empty" style="padding:8px 0 14px">${ic('wallet',34)}<div>No wallet added yet</div></div>`}<div class="row"><button class="btn ton" data-a="conn" style="flex:1">${ic('link',17)}Connect</button><button class="btn ghost" data-a="manual" style="flex:1">${ic('copy',17)}Enter manually</button></div></div>
   <div class="card in"><div class="sec" style="margin-top:0">${ic('info',15)}WITHDRAWAL INFO</div>
